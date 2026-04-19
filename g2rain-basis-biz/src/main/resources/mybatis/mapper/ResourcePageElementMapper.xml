@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.g2rain.basis.dao.ResourcePageElementDao">
+    <!-- 通用结果集映射（包含所有字段：主键+基础字段+业务字段） -->
+    <resultMap id="BaseResultMap" type="com.g2rain.basis.dao.po.ResourcePageElementPo">
+        <!-- 主键字段 -->
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <!-- 基础字段（createTime、updateTime） -->
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <!-- 业务字段（其他自定义字段） -->
+        <result column="application_id" property="applicationId" jdbcType="BIGINT"/>
+        <result column="page_code" property="pageCode" jdbcType="VARCHAR"/>
+        <result column="page_element_name" property="pageElementName" jdbcType="VARCHAR"/>
+        <result column="page_element_code" property="pageElementCode" jdbcType="VARCHAR"/>
+        <!-- deleteFlag字段（如果存在） -->
+        <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
+        <!-- version字段（如果存在） -->
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 授权页面元素查询结果（若 SQL 未选出 create_time/update_time/delete_flag/version 则对应属性为 null） -->
+    <resultMap id="AuthorityPageElementResultMap" type="com.g2rain.basis.dao.po.AuthorityPageElementPo">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="application_id" property="applicationId" jdbcType="BIGINT"/>
+        <result column="page_code" property="pageCode" jdbcType="VARCHAR"/>
+        <result column="page_element_name" property="pageElementName" jdbcType="VARCHAR"/>
+        <result column="page_element_code" property="pageElementCode" jdbcType="VARCHAR"/>
+        <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 定义可复用排序方向片段 -->
+    <sql id="directionClause">
+        <choose>
+            <when test="item.direction == 'DESC'">DESC</when>
+            <otherwise>ASC</otherwise>
+        </choose>
+    </sql>
+
+    <!-- 可复用的动态排序 SQL 片段 -->
+    <sql id="dynamicOrderBy">
+        <trim prefix="ORDER BY" suffixOverrides=",">
+            <foreach collection="safeSorts" item="item" separator=",">
+                <choose>
+                    <when test="item.column == 'id'">
+                        id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'createTime'">
+                        create_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'updateTime'">
+                        update_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'applicationId'">
+                        application_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'pageCode'">
+                        page_code
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'pageElementName'">
+                        page_element_name
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'pageElementCode'">
+                        page_element_code
+                        <include refid="directionClause"/>
+                    </when>
+                </choose>
+            </foreach>
+        </trim>
+    </sql>
+
+    <!-- 公共的查询条件 -->
+    <sql id="commonWhereClause">
+        <where>
+            <!-- 主键筛选 -->
+            <if test="id != null">
+                AND id = #{id, jdbcType=BIGINT}
+            </if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
+            <!-- 基础字段筛选（createTime和updateTime时间筛选） -->
+            <if test="createTime != null">
+                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
+                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
+                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
+                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
+                    AND #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="updateTime != null">
+                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
+                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
+                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
+                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
+                    AND #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <!-- 业务字段筛选 -->
+            <if test="applicationId != null">
+                AND application_id = #{applicationId, jdbcType=BIGINT}
+            </if>
+            <if test="pageCode != null">
+                AND page_code = #{pageCode, jdbcType=VARCHAR}
+            </if>
+            <if test="pageElementName != null">
+                AND page_element_name = #{pageElementName, jdbcType=VARCHAR}
+            </if>
+            <if test="pageElementCode != null">
+                AND page_element_code = #{pageElementCode, jdbcType=VARCHAR}
+            </if>
+            <!-- 批量 pageElementCode 条件 -->
+            <if test="pageElementCodes != null and pageElementCodes.size() > 0">
+                AND page_element_code IN
+                <foreach collection="pageElementCodes" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=VARCHAR}
+                </foreach>
+            </if>
+            <!-- 过滤已删除的记录 -->
+            AND (delete_flag = 0 OR delete_flag IS NULL)
+        </where>
+    </sql>
+
+    <!-- 插入单条记录 -->
+    <insert id="insert" parameterType="com.g2rain.basis.dao.po.ResourcePageElementPo">
+        INSERT INTO resource_page_element (
+        <!-- 主键字段（自增主键不包含在插入语句中） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        application_id, page_code, page_element_name, page_element_code,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES (
+        <!-- 主键值（自增主键不包含） -->
+        #{id, jdbcType=BIGINT},
+        <!-- 基础字段值 -->
+        #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
+        <!-- 业务字段值 -->
+        #{applicationId, jdbcType=BIGINT}, #{pageCode, jdbcType=VARCHAR}, #{pageElementName, jdbcType=VARCHAR},
+        #{pageElementCode, jdbcType=VARCHAR},
+        <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
+        0,
+        <!-- version字段值（如果存在，设置默认值为0） -->
+        0
+        )
+    </insert>
+
+    <!-- 批量插入记录 -->
+    <insert id="insertMultiple" parameterType="java.util.List">
+        INSERT INTO resource_page_element (
+        <!-- 主键字段（自增主键不包含） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        application_id, page_code, page_element_name, page_element_code,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            <!-- 主键值（自增主键不包含） -->
+            #{item.id, jdbcType=BIGINT},
+            <!-- 基础字段值 -->
+            #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
+            <!-- 业务字段值 -->
+            #{item.applicationId, jdbcType=BIGINT}, #{item.pageCode, jdbcType=VARCHAR},
+            #{item.pageElementName, jdbcType=VARCHAR}, #{item.pageElementCode, jdbcType=VARCHAR},
+            <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
+            0,
+            <!-- version字段值（如果存在，设置默认值为0） -->
+            0
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据ID更新记录（包含基础字段和业务字段） -->
+    <update id="update" parameterType="com.g2rain.basis.dao.po.ResourcePageElementPo">
+        UPDATE resource_page_element
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="applicationId != null">
+                application_id = #{applicationId, jdbcType=BIGINT},
+            </if>
+            <if test="pageCode != null">
+                page_code = #{pageCode, jdbcType=VARCHAR},
+            </if>
+            <if test="pageElementName != null">
+                page_element_name = #{pageElementName, jdbcType=VARCHAR},
+            </if>
+            <if test="pageElementCode != null">
+                page_element_code = #{pageElementCode, jdbcType=VARCHAR},
+            </if>
+            <!-- version字段更新（如果存在，版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+    </update>
+
+    <update id="updateBatchCase" parameterType="java.util.List">
+        UPDATE resource_page_element
+        <set>
+            page_code = CASE id
+            <foreach collection="list" item="item">
+                WHEN #{item.id} THEN #{item.pageCode}
+            </foreach>
+            END,
+
+            update_time = CASE id
+            <foreach collection="list" item="item">
+                WHEN #{item.id} THEN #{item.updateTime}
+            </foreach>
+            END
+        </set>
+        WHERE id IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.id}
+        </foreach>
+    </update>
+
+    <!-- 根据ID和Version更新记录（乐观锁更新，包含基础字段和业务字段） -->
+    <update id="updateByVersion" parameterType="com.g2rain.basis.dao.po.ResourcePageElementPo">
+        UPDATE resource_page_element
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="applicationId != null">
+                application_id = #{applicationId, jdbcType=BIGINT},
+            </if>
+            <if test="pageCode != null">
+                page_code = #{pageCode, jdbcType=VARCHAR},
+            </if>
+            <if test="pageElementName != null">
+                page_element_name = #{pageElementName, jdbcType=VARCHAR},
+            </if>
+            <if test="pageElementCode != null">
+                page_element_code = #{pageElementCode, jdbcType=VARCHAR},
+            </if>
+            <!-- version字段更新（乐观锁版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        AND version = #{version, jdbcType=INTEGER}
+    </update>
+
+    <!-- 根据ID删除记录（逻辑删除：将delete_flag设置为true） -->
+    <update id="delete" parameterType="Long">
+        UPDATE resource_page_element
+        <set>
+            delete_flag = 1, version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        <!-- 只删除未删除的记录 -->
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </update>
+
+    <!-- 根据ID查询记录（查询所有字段） -->
+    <select id="selectById" parameterType="Long" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        application_id, page_code, page_element_name, page_element_code,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        FROM resource_page_element
+        WHERE id = #{id, jdbcType=BIGINT}
+        <!-- 过滤已删除的记录 -->
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </select>
+
+    <!-- 根据 SelectDto 条件查询列表 -->
+    <select id="selectList" parameterType="com.g2rain.basis.dto.ResourcePageElementSelectDto" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        application_id, page_code, page_element_name, page_element_code,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        FROM resource_page_element
+        <include refid="commonWhereClause"/>
+        <include refid="dynamicOrderBy"/>
+    </select>
+
+    <!-- 根据 SelectDto 条件查询列表 -->
+    <select id="checkPageElementExists" parameterType="com.g2rain.basis.dto.ResourcePageElementSelectDto"
+            resultType="Long">
+        SELECT count(1) TOTAL FROM resource_page_element
+        <include refid="commonWhereClause"/>
+    </select>
+
+    <!--
+        查询指定用户的授权页面元素(通过角色分配的页面元素权限)
+        仅返回用户角色关联控制单元对应的页面元素资源
+    -->
+    <select id="selectAuthorizedPageElementsWithUserId" parameterType="java.util.Map"
+            resultMap="AuthorityPageElementResultMap">
+        SELECT t.id, t.application_id, t.page_code, t.page_element_name, t.page_element_code, t.status
+        FROM (
+        SELECT rpe.id, rpe.application_id, rpe.page_code, rpe.page_element_name, rpe.page_element_code, curr.status,
+        ROW_NUMBER() OVER (PARTITION BY rpe.id ORDER BY CASE curr.status WHEN 'ENABLED' THEN 1 ELSE 2 END) AS rn
+        FROM user_role_relation urr
+        JOIN role_control_unit_relation rcur
+        ON urr.`role_id` = rcur.`role_id` AND rcur.`delete_flag` = 0 AND rcur.`status` = 'ACTIVATED'
+        JOIN control_unit_resource_relation curr
+        ON rcur.`control_unit_id` = curr.`control_unit_id` AND curr.`delete_flag` = 0 AND
+        curr.`resource_type` = 'PAGE_ELEMENT'
+        JOIN resource_page_element rpe
+        ON curr.`resource_id` = rpe.`id` AND rpe.`delete_flag` = 0 AND
+        rpe.`application_id` = #{applicationId}
+        WHERE urr.`delete_flag` = 0
+        AND urr.`user_id` = #{userId}
+        ) t
+        WHERE t.rn = 1
+    </select>
+
+    <!--
+        查询指定应用的常驻授权页面元素(landing=1 的控制单元页面元素)
+        不依赖用户角色, 常驻功能直接可用
+    -->
+    <select id="listAuthorizedPageElementsWithLanding" parameterType="java.lang.Long"
+            resultMap="AuthorityPageElementResultMap">
+        SELECT t.id, t.application_id, t.page_code, t.page_element_name, t.page_element_code, t.status
+        FROM (
+        SELECT rpe.id, rpe.application_id, rpe.page_code, rpe.page_element_name, rpe.page_element_code, curr.status,
+        ROW_NUMBER() OVER (PARTITION BY rpe.id ORDER BY CASE curr.status WHEN 'ENABLED' THEN 1 ELSE 2 END) AS rn
+        FROM control_unit cu
+        JOIN control_unit_resource_relation curr
+        ON cu.`id` = curr.`control_unit_id` AND curr.`delete_flag` = 0 AND
+        curr.`resource_type` = 'PAGE_ELEMENT'
+        JOIN resource_page_element rpe ON curr.`resource_id` = rpe.`id` AND rpe.`delete_flag` = 0
+        WHERE cu.delete_flag = 0
+        AND cu.`landing` = 1
+        AND cu.`control_unit_scope` = 'PERPETUAL'
+        AND cu.`status` = 'PUBLISHED'
+        AND cu.`application_id` = #{applicationId}
+        ) t
+        WHERE t.rn = 1
+    </select>
+</mapper>

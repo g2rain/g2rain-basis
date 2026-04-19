@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.g2rain.basis.dao.OrganClosureDao">
+    <!-- 通用结果集映射（包含所有字段：主键+基础字段+业务字段） -->
+    <resultMap id="BaseResultMap" type="com.g2rain.basis.dao.po.OrganClosurePo">
+        <!-- 主键字段 -->
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <!-- 基础字段（createTime、updateTime） -->
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <!-- 业务字段（其他自定义字段） -->
+        <result column="ancestor_id" property="ancestorId" jdbcType="BIGINT"/>
+        <result column="descendant_id" property="descendantId" jdbcType="BIGINT"/>
+        <result column="descendant_type" property="descendantType" jdbcType="VARCHAR"/>
+        <result column="relation_type" property="relationType" jdbcType="VARCHAR"/>
+        <result column="path_count" property="pathCount" jdbcType="INTEGER"/>
+        <!-- deleteFlag字段（如果存在） -->
+        <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
+        <!-- version字段（如果存在） -->
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 定义可复用排序方向片段 -->
+    <sql id="directionClause">
+        <choose>
+            <when test="item.direction == 'DESC'">DESC</when>
+            <otherwise>ASC</otherwise>
+        </choose>
+    </sql>
+
+    <!-- 可复用的动态排序 SQL 片段 -->
+    <sql id="dynamicOrderBy">
+        <trim prefix="ORDER BY" suffixOverrides=",">
+            <foreach collection="safeSorts" item="item" separator=",">
+                <choose>
+                    <when test="item.column == 'id'">
+                        id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'createTime'">
+                        create_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'updateTime'">
+                        update_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'ancestorId'">
+                        ancestor_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'descendantId'">
+                        descendant_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'descendantType'">
+                        descendant_type
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'relationType'">
+                        relation_type
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'pathCount'">
+                        path_count
+                        <include refid="directionClause"/>
+                    </when>
+                </choose>
+            </foreach>
+        </trim>
+    </sql>
+
+    <!-- 公共的查询条件 -->
+    <sql id="commonWhereClause">
+        <where>
+            <!-- 主键筛选 -->
+            <if test="id != null">
+                AND id = #{id, jdbcType=BIGINT}
+            </if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
+            <!-- 基础字段筛选（createTime和updateTime时间筛选） -->
+            <if test="createTime != null">
+                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
+                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
+                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
+                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
+                    AND #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="updateTime != null">
+                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
+                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
+                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
+                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
+                    AND #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <!-- 业务字段筛选 -->
+            <if test="ancestorId != null">
+                AND ancestor_id = #{ancestorId, jdbcType=BIGINT}
+            </if>
+            <if test="descendantId != null">
+                AND descendant_id = #{descendantId, jdbcType=BIGINT}
+            </if>
+            <if test="descendantType != null">
+                AND descendant_type = #{descendantType, jdbcType=VARCHAR}
+            </if>
+            <if test="relationType != null">
+                AND relation_type = #{relationType, jdbcType=VARCHAR}
+            </if>
+            <if test="pathCount != null">
+                AND path_count = #{pathCount, jdbcType=INTEGER}
+            </if>
+            <!-- 过滤已删除的记录 -->
+            AND (delete_flag = 0 OR delete_flag IS NULL)
+        </where>
+    </sql>
+
+    <!-- 插入单条记录 -->
+    <insert id="insert" parameterType="com.g2rain.basis.dao.po.OrganClosurePo">
+        INSERT INTO organ_closure (
+        <!-- 主键字段（自增主键不包含在插入语句中） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        ancestor_id, descendant_id, descendant_type, relation_type, path_count,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES (
+        <!-- 主键值（自增主键不包含） -->
+        #{id, jdbcType=BIGINT},
+        <!-- 基础字段值 -->
+        #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
+        <!-- 业务字段值 -->
+        #{ancestorId, jdbcType=BIGINT}, #{descendantId, jdbcType=BIGINT}, #{descendantType, jdbcType=VARCHAR},
+        #{relationType, jdbcType=VARCHAR}, #{pathCount, jdbcType=INTEGER},
+        <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
+        0,
+        <!-- version字段值（如果存在，设置默认值为0） -->
+        0
+        )
+    </insert>
+
+    <!-- 批量插入记录 -->
+    <insert id="insertMultiple" parameterType="java.util.List">
+        INSERT INTO organ_closure (
+        <!-- 主键字段（自增主键不包含） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        ancestor_id, descendant_id, descendant_type, relation_type, path_count,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            <!-- 主键值（自增主键不包含） -->
+            #{item.id, jdbcType=BIGINT},
+            <!-- 基础字段值 -->
+            #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
+            <!-- 业务字段值 -->
+            #{item.ancestorId, jdbcType=BIGINT}, #{item.descendantId, jdbcType=BIGINT},
+            #{item.descendantType, jdbcType=VARCHAR}, #{item.relationType, jdbcType=VARCHAR},
+            #{item.pathCount, jdbcType=INTEGER},
+            <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
+            0,
+            <!-- version字段值（如果存在，设置默认值为0） -->
+            0
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据ID更新记录（包含基础字段和业务字段） -->
+    <update id="update" parameterType="com.g2rain.basis.dao.po.OrganClosurePo">
+        UPDATE organ_closure
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="ancestorId != null">
+                ancestor_id = #{ancestorId, jdbcType=BIGINT},
+            </if>
+            <if test="descendantId != null">
+                descendant_id = #{descendantId, jdbcType=BIGINT},
+            </if>
+            <if test="descendantType != null">
+                descendant_type = #{descendantType, jdbcType=VARCHAR},
+            </if>
+            <if test="relationType != null">
+                relation_type = #{relationType, jdbcType=VARCHAR},
+            </if>
+            <if test="pathCount != null">
+                path_count = #{pathCount, jdbcType=INTEGER},
+            </if>
+            <!-- version字段更新（如果存在，版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+    </update>
+
+    <!-- 根据ID和Version更新记录（乐观锁更新，包含基础字段和业务字段） -->
+    <update id="updateByVersion" parameterType="com.g2rain.basis.dao.po.OrganClosurePo">
+        UPDATE organ_closure
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="ancestorId != null">
+                ancestor_id = #{ancestorId, jdbcType=BIGINT},
+            </if>
+            <if test="descendantId != null">
+                descendant_id = #{descendantId, jdbcType=BIGINT},
+            </if>
+            <if test="descendantType != null">
+                descendant_type = #{descendantType, jdbcType=VARCHAR},
+            </if>
+            <if test="relationType != null">
+                relation_type = #{relationType, jdbcType=VARCHAR},
+            </if>
+            <if test="pathCount != null">
+                path_count = #{pathCount, jdbcType=INTEGER},
+            </if>
+            <!-- version字段更新（乐观锁版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        AND version = #{version, jdbcType=INTEGER}
+    </update>
+
+    <!-- 根据ID删除记录（逻辑删除：将delete_flag设置为true） -->
+    <update id="delete" parameterType="Long">
+        UPDATE organ_closure
+        <set>
+            delete_flag = 1, version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        <!-- 只删除未删除的记录 -->
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </update>
+
+    <!-- 根据ID查询记录（查询所有字段） -->
+    <select id="selectById" parameterType="Long" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        ancestor_id, descendant_id, descendant_type, relation_type, path_count,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        FROM organ_closure
+        WHERE id = #{id, jdbcType=BIGINT}
+        <!-- 过滤已删除的记录 -->
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </select>
+
+    <!-- 根据 SelectDto 条件查询列表 -->
+    <select id="selectList" parameterType="com.g2rain.basis.dto.OrganClosureSelectDto" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        ancestor_id, descendant_id, descendant_type, relation_type, path_count,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        FROM organ_closure
+        <include refid="commonWhereClause"/>
+        <include refid="dynamicOrderBy"/>
+    </select>
+
+    <!-- 检查机构关系是否存在 -->
+    <select id="checkOrganRelationExists" parameterType="com.g2rain.basis.dto.OrganClosureSelectDto" resultType="Long">
+        SELECT count(1) TOTAL FROM organ_closure
+        <include refid="commonWhereClause"/>
+    </select>
+
+    <!--
+        获取所有机构的层级关系
+        只取零件(SELF)和胶水(DIRECT), 这是全量组装的关键
+        根据业务决定是否包含租户(目前只是组装树形结构, 租户存在倒树的场景, 不太好组装树形结构, 先不组装租户的数据)
+    -->
+    <select id="fetchAllHierarchicalRelations" resultType="com.g2rain.basis.dao.po.OrganHierarchicalRelationPo">
+        SELECT DISTINCT
+        r1.ancestor_id AS parent_id, r1.descendant_id AS organ_id, o.organ_name, r1.descendant_type AS organ_type,
+        r1.relation_type
+        FROM organ_closure r1
+        INNER JOIN organ o ON r1.descendant_id = o.id
+        WHERE r1.delete_flag = 0 AND o.delete_flag = 0
+        AND r1.relation_type IN ('SELF_ASSOCIATION', 'DIRECT_SUBORDINATE') AND r1.descendant_type != 'TENANT'
+    </select>
+
+    <!--
+        获取指定机构的层级关系
+        先把所有相关 ID 拿出来作为一个内存派生表 t
+        只取零件(SELF)和胶水(DIRECT), 这是全量组装的关键
+        根据业务决定是否包含租户(目前只是组装树形结构, 租户存在倒树的场景, 不太好组装树形结构, 先不组装租户的数据)
+    -->
+    <select id="fetchHierarchicalRelations" parameterType="Long"
+            resultType="com.g2rain.basis.dao.po.OrganHierarchicalRelationPo">
+        SELECT DISTINCT
+        r1.ancestor_id AS parent_id, r1.descendant_id AS organ_id, o.organ_name, r1.descendant_type AS organ_type,
+        r1.relation_type
+        FROM (SELECT descendant_id AS node_id FROM organ_closure WHERE ancestor_id = #{organId} AND delete_flag = 0) t
+        INNER JOIN organ_closure r1 ON r1.descendant_id = t.node_id
+        INNER JOIN organ o ON r1.descendant_id = o.id
+        WHERE r1.delete_flag = 0 AND o.delete_flag = 0
+        AND r1.relation_type IN ('SELF_ASSOCIATION', 'DIRECT_SUBORDINATE') AND r1.descendant_type != 'TENANT'
+    </select>
+
+    <!--
+        查询指定父子关系是否存在。
+        这是挂载、卸载、迁移前的基础校验，用于判断某条具体的父子关系是否已经建立。
+        若存在交叉挂载或多重挂载，本查询用于快速确认两节点之间是否存在直接或间接记录。
+    -->
+    <select id="hasFlatRelation" parameterType="map" resultMap="BaseResultMap">
+        SELECT *
+        FROM organ_closure
+        WHERE delete_flag = 0
+        AND descendant_id = #{descendantId}
+        AND ancestor_id = #{ancestorId}
+    </select>
+
+    <!--
+        查询与 descendantId、targetAncestorId、sourceAncestorId 相关的所有平铺层级关系，并加锁（FOR UPDATE）。
+
+        该 SQL 是挂载、卸载、迁移操作中最关键的一个，作用包括：
+          1. 读取子节点的所有下级节点记录（用于防止循环依赖）。
+          2. 读取目标父节点的所有祖先节点（用于检查挂载是否合法）。
+          3. 读取源父节点的所有祖先节点（用于迁移前删除旧链路）。
+
+        使用 FOR UPDATE 的原因：
+          - 避免并发修改导致的层级关系错乱或 path_count 不一致。
+          - 保证在挂载/迁移/卸载过程中数据强一致性。
+
+        为什么使用 UNION ALL 而不是 OR/IN：
+          1. 性能优势：
+             - OR 或 IN 查询可能导致索引失效，尤其是 ancestor_id 和 descendant_id 上有索引时。
+             - UNION ALL 可以拆分成多条单条件查询，各自利用索引，查询效率更高。
+          2. 数据去重考虑：
+             - 这里使用 UNION ALL 而不是 UNION，因为 path_count 允许重复引用（同一个子节点可能被多个祖节点挂载），去重会改变业务含义。
+          3. 可维护性：
+             - 每个子查询单独负责一个逻辑（下级/祖先/源父节点），清晰易懂，便于后续扩展。
+
+        总结：
+          - 此 SQL 保证了在复杂层级操作时，既高效又安全。
+          - 索引：descendant_id 和 ancestor_id 的索引可以充分发挥作用。
+          - ORDER BY id 保证结果顺序稳定，便于处理 path_count 或批量操作。
+    -->
+    <select id="selectRelationsWithLock" parameterType="map" resultMap="BaseResultMap">
+        SELECT *
+        FROM (
+        SELECT * FROM organ_closure WHERE delete_flag = 0 AND ancestor_id = #{descendantId}
+        <if test="targetAncestorId != null">
+            UNION ALL
+            SELECT * FROM organ_closure WHERE delete_flag = 0 AND descendant_id = #{targetAncestorId}
+        </if>
+        <if test="sourceAncestorId != null">
+            UNION ALL
+            SELECT * FROM organ_closure WHERE delete_flag = 0 AND descendant_id = #{sourceAncestorId}
+        </if>
+        ) AS union_table
+        ORDER BY id
+        FOR UPDATE
+    </select>
+
+    <!--
+        查询父节点集合与子节点集合之间是否存在已建立的平铺层级关系。
+        用于挂载/迁移前验证是否会创建重复关系，或避免产生循环依赖。
+        这是防止破坏组织树结构的重要校验。
+    -->
+    <select id="selectRelationsForCheck" parameterType="map" resultMap="BaseResultMap">
+        SELECT * FROM organ_closure
+        WHERE delete_flag = 0
+        AND ancestor_id IN
+        <foreach collection="superiors" item="superior" open="(" close=")" separator=",">
+            #{superior}
+        </foreach>
+        AND descendant_id IN
+        <foreach collection="subordinates" item="subordinate" open="(" close=")" separator=",">
+            #{subordinate}
+        </foreach>
+    </select>
+
+    <!--
+        批量增加 path_count，用于挂载操作。
+        挂载后子节点会新增与所有祖先节点的关系，因此相关记录需要 path_count + 1。
+        path_count 的存在是为了支持交叉挂载、多重挂载等复杂场景。
+        SQL 中同步更新 version 用于乐观锁，确保并发下结果正确。
+    -->
+    <update id="incrementPathCountBatch" parameterType="map">
+        UPDATE organ_closure SET update_time = NOW(), path_count = path_count + 1, version = version + 1
+        WHERE delete_flag = 0 AND id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <!--
+        批量减少 path_count，用于卸载操作。
+        当子节点从某个父链路移除时，与祖先的所有平铺关系计数需要 - 1。
+        若 path_count 减至 0，会由上层业务通过 deleteBatch 将该记录逻辑删除。
+        同步 version +1 用于避免并发覆盖。
+    -->
+    <update id="decrementPathCountBatch" parameterType="map">
+        UPDATE organ_closure SET update_time = NOW(), path_count = path_count - 1, version = version + 1
+        WHERE delete_flag = 0 AND id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <!--
+        批量逻辑删除平铺层级关系。
+        该 SQL 是“卸载”和“迁移”操作中的关键步骤：
+          - 卸载时：删除子节点与旧父节点及其祖先节点的所有层级关系。
+          - 迁移时：先删除旧链路，再插入新链路，保持树结构一致。
+        使用 delete_flag=1 逻辑删除，可确保历史记录可追溯、并避免主键占用。
+    -->
+    <update id="deleteBatch" parameterType="map">
+        UPDATE organ_closure SET update_time = NOW(), delete_flag = 1
+        WHERE delete_flag = 0 AND id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <!--
+        删除指定组织节点的所有层级关系（逻辑删除）。
+        该 SQL 用于删除组织机构本身（非挂载/卸载/迁移）时的清理操作。
+        删除一个组织节点必须保证其为“叶子节点”，因此其不会作为任何节点的父节点。
+        此操作主要用于删除：
+          - 自关联关系 SELF_ASSOCIATION
+          - 该节点与其所有父节点形成的平铺关系
+        不处理子节点，因为前置业务已保证该节点无下级。
+    -->
+    <update id="deleteByOrganId" parameterType="Long">
+        UPDATE organ_closure
+        SET update_time = NOW(), delete_flag = 1
+        WHERE delete_flag = 0 AND descendant_id = #{descendantId}
+    </update>
+</mapper>

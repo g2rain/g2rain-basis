@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.g2rain.basis.dao.LoginTokenDao">
+    <!-- 通用结果集映射（包含所有字段：主键+基础字段+业务字段） -->
+    <resultMap id="BaseResultMap" type="com.g2rain.basis.dao.po.LoginTokenPo">
+        <!-- 主键字段 -->
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <!-- 基础字段（createTime、updateTime） -->
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <!-- 业务字段（其他自定义字段） -->
+        <result column="session_type" property="sessionType" jdbcType="VARCHAR"/>
+        <result column="organ_id" property="organId" jdbcType="BIGINT"/>
+        <result column="organ_type" property="organType" jdbcType="VARCHAR"/>
+        <result column="admin_company" property="adminCompany" jdbcType="TINYINT"/>
+        <result column="passport_id" property="passportId" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="real_name" property="realName" jdbcType="VARCHAR"/>
+        <result column="admin_user" property="adminUser" jdbcType="TINYINT"/>
+        <result column="application_id" property="applicationId" jdbcType="BIGINT"/>
+        <result column="application_organ_id" property="applicationOrganId" jdbcType="BIGINT"/>
+        <result column="client_id" property="clientId" jdbcType="VARCHAR"/>
+        <result column="lastest_refresh_time" property="lastestRefreshTime" jdbcType="TIMESTAMP"/>
+        <!-- deleteFlag字段（如果存在） -->
+        <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
+        <!-- version字段（如果存在） -->
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 定义可复用排序方向片段 -->
+    <sql id="directionClause">
+        <choose>
+            <when test="item.direction == 'DESC'">DESC</when>
+            <otherwise>ASC</otherwise>
+        </choose>
+    </sql>
+
+    <!-- 可复用的动态排序 SQL 片段 -->
+    <sql id="dynamicOrderBy">
+        <trim prefix="ORDER BY" suffixOverrides=",">
+            <foreach collection="safeSorts" item="item" separator=",">
+                <choose>
+                    <when test="item.column == 'id'">
+                        id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'createTime'">
+                        create_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'updateTime'">
+                        update_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'sessionType'">
+                        session_type
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'organId'">
+                        organ_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'organType'">
+                        organ_type
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'adminCompany'">
+                        admin_company
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'passportId'">
+                        passport_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'userId'">
+                        user_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'realName'">
+                        real_name
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'adminUser'">
+                        admin_user
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'applicationId'">
+                        application_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'applicationOrganId'">
+                        application_organ_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'clientId'">
+                        client_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'lastestRefreshTime'">
+                        lastest_refresh_time
+                        <include refid="directionClause"/>
+                    </when>
+                </choose>
+            </foreach>
+        </trim>
+    </sql>
+
+    <!-- 插入单条记录 -->
+    <insert id="insert" parameterType="com.g2rain.basis.dao.po.LoginTokenPo">
+        INSERT INTO login_token (
+        <!-- 主键字段（自增主键不包含在插入语句中） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id, application_organ_id, client_id, lastest_refresh_time,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES (
+        <!-- 主键值（自增主键不包含） -->
+        #{id, jdbcType=BIGINT},
+        <!-- 基础字段值 -->
+        #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
+        <!-- 业务字段值 -->
+        #{sessionType, jdbcType=VARCHAR}, #{organId, jdbcType=BIGINT}, #{organType, jdbcType=VARCHAR}, #{adminCompany, jdbcType=TINYINT}, #{passportId, jdbcType=BIGINT}, #{userId, jdbcType=BIGINT}, #{realName, jdbcType=VARCHAR}, #{adminUser, jdbcType=TINYINT}, #{applicationId, jdbcType=BIGINT}, #{applicationOrganId, jdbcType=BIGINT}, #{clientId, jdbcType=VARCHAR}, #{lastestRefreshTime, jdbcType=TIMESTAMP},
+        <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
+        0,
+        <!-- version字段值（如果存在，设置默认值为0） -->
+        0
+        )
+    </insert>
+
+    <!-- 批量插入记录 -->
+    <insert id="insertMultiple" parameterType="java.util.List">
+        INSERT INTO login_token (
+        <!-- 主键字段（自增主键不包含） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id, application_organ_id, client_id, lastest_refresh_time,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            <!-- 主键值（自增主键不包含） -->
+            #{item.id, jdbcType=BIGINT},
+            <!-- 基础字段值 -->
+            #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
+            <!-- 业务字段值 -->
+            #{item.sessionType, jdbcType=VARCHAR}, #{item.organId, jdbcType=BIGINT}, #{item.organType, jdbcType=VARCHAR}, #{item.adminCompany, jdbcType=TINYINT}, #{item.passportId, jdbcType=BIGINT}, #{item.userId, jdbcType=BIGINT}, #{item.realName, jdbcType=VARCHAR}, #{item.adminUser, jdbcType=TINYINT}, #{item.applicationId, jdbcType=BIGINT}, #{item.applicationOrganId, jdbcType=BIGINT}, #{item.clientId, jdbcType=VARCHAR}, #{item.lastestRefreshTime, jdbcType=TIMESTAMP},
+            <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
+            0,
+            <!-- version字段值（如果存在，设置默认值为0） -->
+            0
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据ID更新记录（包含基础字段和业务字段） -->
+    <update id="update" parameterType="com.g2rain.basis.dao.po.LoginTokenPo">
+        UPDATE login_token
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="sessionType != null">
+                session_type = #{sessionType, jdbcType=VARCHAR},
+            </if>
+            <if test="organId != null">
+                organ_id = #{organId, jdbcType=BIGINT},
+            </if>
+            <if test="organType != null">
+                organ_type = #{organType, jdbcType=VARCHAR},
+            </if>
+            <if test="adminCompany != null">
+                admin_company = #{adminCompany, jdbcType=TINYINT},
+            </if>
+            <if test="passportId != null">
+                passport_id = #{passportId, jdbcType=BIGINT},
+            </if>
+            <if test="userId != null">
+                user_id = #{userId, jdbcType=BIGINT},
+            </if>
+            <if test="realName != null">
+                real_name = #{realName, jdbcType=VARCHAR},
+            </if>
+            <if test="adminUser != null">
+                admin_user = #{adminUser, jdbcType=TINYINT},
+            </if>
+            <if test="applicationId != null">
+                application_id = #{applicationId, jdbcType=BIGINT},
+            </if>
+            <if test="applicationOrganId != null">
+                application_organ_id = #{applicationOrganId, jdbcType=BIGINT},
+            </if>
+            <if test="clientId != null">
+                client_id = #{clientId, jdbcType=VARCHAR},
+            </if>
+            <if test="lastestRefreshTime != null">
+                lastest_refresh_time = #{lastestRefreshTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- version字段更新（如果存在，版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+    </update>
+
+    <!-- 根据ID和Version更新记录（乐观锁更新，包含基础字段和业务字段） -->
+    <update id="updateByVersion" parameterType="com.g2rain.basis.dao.po.LoginTokenPo">
+        UPDATE login_token
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="sessionType != null">
+                session_type = #{sessionType, jdbcType=VARCHAR},
+            </if>
+            <if test="organId != null">
+                organ_id = #{organId, jdbcType=BIGINT},
+            </if>
+            <if test="organType != null">
+                organ_type = #{organType, jdbcType=VARCHAR},
+            </if>
+            <if test="adminCompany != null">
+                admin_company = #{adminCompany, jdbcType=TINYINT},
+            </if>
+            <if test="passportId != null">
+                passport_id = #{passportId, jdbcType=BIGINT},
+            </if>
+            <if test="userId != null">
+                user_id = #{userId, jdbcType=BIGINT},
+            </if>
+            <if test="realName != null">
+                real_name = #{realName, jdbcType=VARCHAR},
+            </if>
+            <if test="adminUser != null">
+                admin_user = #{adminUser, jdbcType=TINYINT},
+            </if>
+            <if test="applicationId != null">
+                application_id = #{applicationId, jdbcType=BIGINT},
+            </if>
+            <if test="applicationOrganId != null">
+                application_organ_id = #{applicationOrganId, jdbcType=BIGINT},
+            </if>
+            <if test="clientId != null">
+                client_id = #{clientId, jdbcType=VARCHAR},
+            </if>
+            <if test="lastestRefreshTime != null">
+                lastest_refresh_time = #{lastestRefreshTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- version字段更新（乐观锁版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        AND version = #{version, jdbcType=INTEGER}
+    </update>
+
+    <!-- 根据ID删除记录（逻辑删除：将delete_flag设置为true） -->
+    <update id="delete" parameterType="Long">
+        UPDATE login_token
+        <set>
+            delete_flag = 1, version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        <!-- 只删除未删除的记录 -->
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </update>
+
+    <!-- 根据ID查询记录（查询所有字段） -->
+    <select id="selectById" parameterType="Long" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id, application_organ_id, client_id, lastest_refresh_time,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        FROM login_token
+        WHERE id = #{id, jdbcType=BIGINT}
+        <!-- 过滤已删除的记录 -->
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </select>
+
+    <!-- 根据SelectDto条件查询列表 -->
+    <select id="selectList" parameterType="com.g2rain.basis.dto.LoginTokenSelectDto" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id, application_organ_id, client_id, lastest_refresh_time,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        FROM login_token
+        <where>
+            <!-- 主键筛选 -->
+            <if test="id != null">
+                AND id = #{id, jdbcType=BIGINT}
+            </if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
+            <!-- 基础字段筛选（createTime和updateTime时间筛选） -->
+            <if test="createTime != null">
+                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
+                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
+                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
+                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
+                    AND #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="updateTime != null">
+                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
+                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
+                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
+                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
+                    AND #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <!-- 业务字段筛选 -->
+            <if test="sessionType != null">
+                AND session_type = #{sessionType, jdbcType=VARCHAR}
+            </if>
+            <if test="organId != null">
+                AND organ_id = #{organId, jdbcType=BIGINT}
+            </if>
+            <if test="organType != null">
+                AND organ_type = #{organType, jdbcType=VARCHAR}
+            </if>
+            <if test="adminCompany != null">
+                AND admin_company = #{adminCompany, jdbcType=TINYINT}
+            </if>
+            <if test="passportId != null">
+                AND passport_id = #{passportId, jdbcType=BIGINT}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId, jdbcType=BIGINT}
+            </if>
+            <if test="realName != null">
+                AND real_name = #{realName, jdbcType=VARCHAR}
+            </if>
+            <if test="adminUser != null">
+                AND admin_user = #{adminUser, jdbcType=TINYINT}
+            </if>
+            <if test="applicationId != null">
+                AND application_id = #{applicationId, jdbcType=BIGINT}
+            </if>
+            <if test="applicationOrganId != null">
+                AND application_organ_id = #{applicationOrganId, jdbcType=BIGINT}
+            </if>
+            <if test="clientId != null">
+                AND client_id = #{clientId, jdbcType=VARCHAR}
+            </if>
+            <if test="lastestRefreshTime != null">
+                AND lastest_refresh_time = #{lastestRefreshTime, jdbcType=TIMESTAMP}
+            </if>
+            <!-- 过滤已删除的记录 -->
+            AND (delete_flag = 0 OR delete_flag IS NULL)
+        </where>
+        <include refid="dynamicOrderBy"/>
+    </select>
+</mapper>

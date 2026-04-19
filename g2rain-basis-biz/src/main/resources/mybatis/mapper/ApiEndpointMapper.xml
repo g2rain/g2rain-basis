@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.g2rain.basis.dao.ApiEndpointDao">
+    <!-- 通用结果集映射（包含所有字段：主键+基础字段+业务字段） -->
+    <resultMap id="BaseResultMap" type="com.g2rain.basis.dao.po.ApiEndpointPo">
+        <!-- 主键字段 -->
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <!-- 基础字段（createTime、updateTime） -->
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <!-- 业务字段（其他自定义字段） -->
+        <result column="api_name" property="apiName" jdbcType="VARCHAR"/>
+        <result column="api_url" property="apiUrl" jdbcType="VARCHAR"/>
+        <result column="request_method" property="requestMethod" jdbcType="VARCHAR"/>
+        <result column="api_tag" property="apiTag" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <!-- deleteFlag字段（如果存在） -->
+        <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
+        <!-- version字段（如果存在） -->
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 定义可复用排序方向片段 -->
+    <sql id="directionClause">
+        <choose>
+            <when test="item.direction == 'DESC'">DESC</when>
+            <otherwise>ASC</otherwise>
+        </choose>
+    </sql>
+
+    <!-- 可复用的动态排序 SQL 片段 -->
+    <sql id="dynamicOrderBy">
+        <trim prefix="ORDER BY" suffixOverrides=",">
+            <foreach collection="safeSorts" item="item" separator=",">
+                <choose>
+                    <when test="item.column == 'id'">
+                        id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'createTime'">
+                        create_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'updateTime'">
+                        update_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'apiName'">
+                        api_name
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'apiUrl'">
+                        api_url
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'requestMethod'">
+                        request_method
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'apiTag'">
+                        api_tag
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'description'">
+                        description
+                        <include refid="directionClause"/>
+                    </when>
+                </choose>
+            </foreach>
+        </trim>
+    </sql>
+
+    <!-- 公共的查询条件 -->
+    <sql id="commonWhereClause">
+        <where>
+            <!-- 主键筛选 -->
+            <if test="id != null">
+                AND id = #{id, jdbcType=BIGINT}
+            </if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
+            <!-- 基础字段筛选（createTime和updateTime时间筛选） -->
+            <if test="createTime != null">
+                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
+                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
+                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
+                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
+                    AND #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="updateTime != null">
+                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
+                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
+                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
+                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
+                    AND #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <!-- 业务字段筛选 -->
+            <if test="apiName != null">
+                AND api_name = #{apiName, jdbcType=VARCHAR}
+            </if>
+            <if test="apiUrl != null">
+                AND api_url = #{apiUrl, jdbcType=VARCHAR}
+            </if>
+            <if test="requestMethod != null">
+                AND request_method = #{requestMethod, jdbcType=VARCHAR}
+            </if>
+            <if test="pairs != null and pairs.size() > 0">
+                AND (
+                <foreach collection="pairs" item="item" separator=" OR ">
+                    (api_url = #{item.apiUrl} AND request_method = #{item.requestMethod})
+                </foreach>
+                )
+            </if>
+            <if test="apiTag != null">
+                AND api_tag = #{apiTag, jdbcType=VARCHAR}
+            </if>
+            <if test="description != null">
+                AND description = #{description, jdbcType=VARCHAR}
+            </if>
+            <!-- 过滤已删除的记录 -->
+            AND (delete_flag = 0 OR delete_flag IS NULL)
+        </where>
+    </sql>
+
+    <!-- 插入单条记录 -->
+    <insert id="insert" parameterType="com.g2rain.basis.dao.po.ApiEndpointPo">
+        INSERT INTO api_endpoint (
+        <!-- 主键字段（自增主键不包含在插入语句中） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        api_name, api_url, request_method, api_tag, description,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES (
+        <!-- 主键值（自增主键不包含） -->
+        #{id, jdbcType=BIGINT},
+        <!-- 基础字段值 -->
+        #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
+        <!-- 业务字段值 -->
+        #{apiName, jdbcType=VARCHAR}, #{apiUrl, jdbcType=VARCHAR}, #{requestMethod, jdbcType=VARCHAR},
+        #{apiTag, jdbcType=VARCHAR}, #{description, jdbcType=VARCHAR},
+        <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
+        0,
+        <!-- version字段值（如果存在，设置默认值为0） -->
+        0
+        )
+    </insert>
+
+    <!-- 批量插入记录 -->
+    <insert id="insertMultiple" parameterType="java.util.List">
+        INSERT INTO api_endpoint (
+        <!-- 主键字段（自增主键不包含） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        api_name, api_url, request_method, api_tag, description,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            <!-- 主键值（自增主键不包含） -->
+            #{item.id, jdbcType=BIGINT},
+            <!-- 基础字段值 -->
+            #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
+            <!-- 业务字段值 -->
+            #{item.apiName, jdbcType=VARCHAR}, #{item.apiUrl, jdbcType=VARCHAR},
+            #{item.requestMethod, jdbcType=VARCHAR}, #{item.apiTag, jdbcType=VARCHAR},
+            #{item.description, jdbcType=VARCHAR},
+            <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
+            0,
+            <!-- version字段值（如果存在，设置默认值为0） -->
+            0
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据ID更新记录（包含基础字段和业务字段） -->
+    <update id="update" parameterType="com.g2rain.basis.dao.po.ApiEndpointPo">
+        UPDATE api_endpoint
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="apiName != null">
+                api_name = #{apiName, jdbcType=VARCHAR},
+            </if>
+            <if test="apiUrl != null">
+                api_url = #{apiUrl, jdbcType=VARCHAR},
+            </if>
+            <if test="requestMethod != null">
+                request_method = #{requestMethod, jdbcType=VARCHAR},
+            </if>
+            <if test="apiTag != null">
+                api_tag = #{apiTag, jdbcType=VARCHAR},
+            </if>
+            description = #{description, jdbcType=VARCHAR},
+            <!-- version字段更新（如果存在，版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+    </update>
+
+    <!-- 根据ID和Version更新记录（乐观锁更新，包含基础字段和业务字段） -->
+    <update id="updateByVersion" parameterType="com.g2rain.basis.dao.po.ApiEndpointPo">
+        UPDATE api_endpoint
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="apiName != null">
+                api_name = #{apiName, jdbcType=VARCHAR},
+            </if>
+            <if test="apiUrl != null">
+                api_url = #{apiUrl, jdbcType=VARCHAR},
+            </if>
+            <if test="requestMethod != null">
+                request_method = #{requestMethod, jdbcType=VARCHAR},
+            </if>
+            <if test="apiTag != null">
+                api_tag = #{apiTag, jdbcType=VARCHAR},
+            </if>
+            description = #{description, jdbcType=VARCHAR},
+            <!-- version字段更新（乐观锁版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        AND version = #{version, jdbcType=INTEGER}
+    </update>
+
+    <!-- 根据ID删除记录（逻辑删除：将delete_flag设置为true） -->
+    <update id="delete" parameterType="Long">
+        UPDATE api_endpoint
+        <set>
+            delete_flag = 1, version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        <!-- 只删除未删除的记录 -->
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </update>
+
+    <!-- 根据ID查询记录（查询所有字段） -->
+    <select id="selectById" parameterType="Long" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        api_name, api_url, request_method, api_tag, description,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        FROM api_endpoint
+        WHERE id = #{id, jdbcType=BIGINT}
+        <!-- 过滤已删除的记录 -->
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </select>
+
+    <!-- 根据 SelectDto 条件查询列表 -->
+    <select id="selectList" parameterType="com.g2rain.basis.dto.ApiEndpointSelectDto" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        api_name, api_url, request_method, api_tag, description,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        FROM api_endpoint
+        <include refid="commonWhereClause"/>
+        <include refid="dynamicOrderBy"/>
+    </select>
+
+    <select id="selectApiTags" resultType="java.lang.String">
+        SELECT DISTINCT api_tag FROM api_endpoint
+    </select>
+
+    <!--
+        查询指定用户的授权接口地址(通过角色分配的接口地址权限)
+        仅返回用户角色关联控制单元对应的接口地址资源
+    -->
+    <select id="selectAuthorizedApiEndpointsWithUserId" parameterType="java.util.Map"
+            resultType="com.g2rain.basis.dao.po.AuthorityApiEndpointPo">
+        SELECT t.api_id, t.api_name, t.api_url, t.request_method, t.api_tag, t.status
+        FROM (
+        SELECT ae.id AS api_id, ae.api_name, ae.api_url, ae.request_method, ae.api_tag, rcur.status,
+        ROW_NUMBER() OVER (PARTITION BY ae.id ORDER BY CASE rcur.status WHEN 'ACTIVATED' THEN 1 ELSE 2 END) AS rn
+        FROM user_role_relation urr
+        JOIN role_control_unit_relation rcur
+        ON urr.`role_id` = rcur.`role_id` AND rcur.`delete_flag` = 0
+        JOIN control_unit_resource_relation curr
+        ON rcur.`control_unit_id` = curr.`control_unit_id` AND curr.`delete_flag` = 0
+        AND curr.`resource_type` = 'API_ENDPOINT'
+        JOIN resource_api_endpoint rae ON curr.resource_id = rae.api_endpoint_id AND rae.delete_flag = 0 AND
+        rae.`application_id` = #{applicationId}
+        JOIN api_endpoint ae ON rae.api_endpoint_id = ae.id AND ae.delete_flag = 0
+        WHERE urr.`delete_flag` = 0 AND urr.`user_id` = #{userId}
+        ) t
+        WHERE t.rn = 1
+    </select>
+
+    <!--
+        查询指定应用的常驻授权接口地址(landing=1 的控制单元接口地址)
+        不依赖用户角色, 常驻功能直接可用
+    -->
+    <select id="listAuthorizedApiEndpointsWithLanding" parameterType="java.lang.Long"
+            resultType="com.g2rain.basis.dao.po.AuthorityApiEndpointPo">
+        SELECT DISTINCT ae.id AS api_id, ae.api_name, ae.api_url, ae.request_method, ae.api_tag, 'ACTIVATED' AS status
+        FROM control_unit cu
+        JOIN control_unit_resource_relation curr
+        ON cu.`id` = curr.`control_unit_id` AND curr.`delete_flag` = 0 AND
+        curr.`resource_type` = 'API_ENDPOINT'
+        JOIN resource_api_endpoint rae ON curr.resource_id = rae.api_endpoint_id AND rae.delete_flag = 0
+        JOIN api_endpoint ae ON rae.api_endpoint_id = ae.id AND ae.delete_flag = 0
+        WHERE cu.delete_flag = 0
+        AND cu.`landing` = 1
+        AND cu.`control_unit_scope` = 'PERPETUAL'
+        AND cu.`status` = 'PUBLISHED'
+        AND cu.`application_id` = #{applicationId}
+    </select>
+</mapper>

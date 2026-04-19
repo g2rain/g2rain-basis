@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.g2rain.basis.dao.ResourceMenuDao">
+    <!-- 通用结果集映射（包含所有字段：主键+基础字段+业务字段） -->
+    <resultMap id="BaseResultMap" type="com.g2rain.basis.dao.po.ResourceMenuPo">
+        <!-- 主键字段 -->
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <!-- 基础字段（createTime、updateTime） -->
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <!-- 业务字段（其他自定义字段） -->
+        <result column="parent_id" property="parentId" jdbcType="BIGINT"/>
+        <result column="application_id" property="applicationId" jdbcType="BIGINT"/>
+        <result column="menu_name" property="menuName" jdbcType="VARCHAR"/>
+        <result column="menu_code" property="menuCode" jdbcType="VARCHAR"/>
+        <result column="link_path" property="linkPath" jdbcType="VARCHAR"/>
+        <result column="icon" property="icon" jdbcType="VARCHAR"/>
+        <result column="menu_sort_order" property="menuSortOrder" jdbcType="INTEGER"/>
+        <!-- deleteFlag字段（如果存在） -->
+        <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
+        <!-- version字段（如果存在） -->
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 定义可复用排序方向片段 -->
+    <sql id="directionClause">
+        <choose>
+            <when test="item.direction == 'DESC'">DESC</when>
+            <otherwise>ASC</otherwise>
+        </choose>
+    </sql>
+
+    <!-- 可复用的动态排序 SQL 片段 -->
+    <sql id="dynamicOrderBy">
+        <trim prefix="ORDER BY" suffixOverrides=",">
+            <foreach collection="safeSorts" item="item" separator=",">
+                <choose>
+                    <when test="item.column == 'id'">
+                        id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'createTime'">
+                        create_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'updateTime'">
+                        update_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'parentId'">
+                        parent_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'applicationId'">
+                        application_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'menuName'">
+                        menu_name
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'menuCode'">
+                        menu_code
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'linkPath'">
+                        link_path
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'icon'">
+                        icon
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'menuSortOrder'">
+                        menu_sort_order
+                        <include refid="directionClause"/>
+                    </when>
+                </choose>
+            </foreach>
+        </trim>
+    </sql>
+
+    <!-- 公共的查询条件 -->
+    <sql id="commonWhereClause">
+        <where>
+            <!-- 主键筛选 -->
+            <if test="id != null">
+                AND id = #{id, jdbcType=BIGINT}
+            </if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
+            <!-- 基础字段筛选（createTime和updateTime时间筛选） -->
+            <if test="createTime != null">
+                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
+                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
+                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
+                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
+                    AND #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="updateTime != null">
+                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
+                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
+                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
+                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
+                    AND #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <!-- 业务字段筛选 -->
+            <if test="parentId != null">
+                AND parent_id = #{parentId, jdbcType=BIGINT}
+            </if>
+            <if test="applicationId != null">
+                AND application_id = #{applicationId, jdbcType=BIGINT}
+            </if>
+            <if test="menuName != null">
+                AND menu_name = #{menuName, jdbcType=VARCHAR}
+            </if>
+            <if test="menuCode != null">
+                AND menu_code = #{menuCode, jdbcType=VARCHAR}
+            </if>
+            <if test="linkPath != null">
+                AND link_path = #{linkPath, jdbcType=VARCHAR}
+            </if>
+            <if test="icon != null">
+                AND icon = #{icon, jdbcType=VARCHAR}
+            </if>
+            <if test="menuSortOrder != null">
+                AND menu_sort_order = #{menuSortOrder, jdbcType=INTEGER}
+            </if>
+            <!-- 过滤已删除的记录 -->
+            AND (delete_flag = 0 OR delete_flag IS NULL)
+        </where>
+    </sql>
+
+    <!-- 插入单条记录 -->
+    <insert id="insert" parameterType="com.g2rain.basis.dao.po.ResourceMenuPo">
+        INSERT INTO resource_menu (
+        <!-- 主键字段（自增主键不包含在插入语句中） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        parent_id, application_id, menu_name, menu_code, link_path, icon, menu_sort_order,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES (
+        <!-- 主键值（自增主键不包含） -->
+        #{id, jdbcType=BIGINT},
+        <!-- 基础字段值 -->
+        #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
+        <!-- 业务字段值 -->
+        #{parentId, jdbcType=BIGINT}, #{applicationId, jdbcType=BIGINT}, #{menuName, jdbcType=VARCHAR},
+        #{menuCode, jdbcType=VARCHAR}, #{linkPath, jdbcType=VARCHAR}, #{icon, jdbcType=VARCHAR},
+        #{menuSortOrder, jdbcType=INTEGER},
+        <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
+        0,
+        <!-- version字段值（如果存在，设置默认值为0） -->
+        0
+        )
+    </insert>
+
+    <!-- 批量插入记录 -->
+    <insert id="insertMultiple" parameterType="java.util.List">
+        INSERT INTO resource_menu (
+        <!-- 主键字段（自增主键不包含） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        parent_id, application_id, menu_name, menu_code, link_path, icon, menu_sort_order,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            <!-- 主键值（自增主键不包含） -->
+            #{item.id, jdbcType=BIGINT},
+            <!-- 基础字段值 -->
+            #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
+            <!-- 业务字段值 -->
+            #{item.parentId, jdbcType=BIGINT}, #{item.applicationId, jdbcType=BIGINT},
+            #{item.menuName, jdbcType=VARCHAR}, #{item.menuCode, jdbcType=VARCHAR}, #{item.linkPath, jdbcType=VARCHAR},
+            #{item.icon, jdbcType=VARCHAR}, #{item.menuSortOrder, jdbcType=INTEGER},
+            <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
+            0,
+            <!-- version字段值（如果存在，设置默认值为0） -->
+            0
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据ID更新记录（包含基础字段和业务字段） -->
+    <update id="update" parameterType="com.g2rain.basis.dao.po.ResourceMenuPo">
+        UPDATE resource_menu
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="applicationId != null">
+                application_id = #{applicationId, jdbcType=BIGINT},
+            </if>
+            <if test="menuName != null">
+                menu_name = #{menuName, jdbcType=VARCHAR},
+            </if>
+            <if test="menuCode != null">
+                menu_code = #{menuCode, jdbcType=VARCHAR},
+            </if>
+            <if test="menuSortOrder != null">
+                menu_sort_order = #{menuSortOrder, jdbcType=INTEGER},
+            </if>
+            parent_id = #{parentId, jdbcType=BIGINT},
+            link_path = #{linkPath, jdbcType=VARCHAR},
+            icon = #{icon, jdbcType=VARCHAR},
+            <!-- version字段更新（如果存在，版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+    </update>
+
+    <!-- 根据ID和Version更新记录（乐观锁更新，包含基础字段和业务字段） -->
+    <update id="updateByVersion" parameterType="com.g2rain.basis.dao.po.ResourceMenuPo">
+        UPDATE resource_menu
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="applicationId != null">
+                application_id = #{applicationId, jdbcType=BIGINT},
+            </if>
+            <if test="menuName != null">
+                menu_name = #{menuName, jdbcType=VARCHAR},
+            </if>
+            <if test="menuCode != null">
+                menu_code = #{menuCode, jdbcType=VARCHAR},
+            </if>
+            <if test="menuSortOrder != null">
+                menu_sort_order = #{menuSortOrder, jdbcType=INTEGER},
+            </if>
+            parent_id = #{parentId, jdbcType=BIGINT},
+            link_path = #{linkPath, jdbcType=VARCHAR},
+            icon = #{icon, jdbcType=VARCHAR},
+            <!-- version字段更新（乐观锁版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        AND version = #{version, jdbcType=INTEGER}
+    </update>
+
+    <!-- 根据ID删除记录（逻辑删除：将delete_flag设置为true） -->
+    <update id="delete" parameterType="Long">
+        UPDATE resource_menu
+        <set>
+            delete_flag = 1, version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        <!-- 只删除未删除的记录 -->
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </update>
+
+    <!-- 根据ID查询记录（查询所有字段） -->
+    <select id="selectById" parameterType="Long" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        parent_id, application_id, menu_name, menu_code, link_path, icon, menu_sort_order,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        FROM resource_menu
+        WHERE id = #{id, jdbcType=BIGINT}
+        <!-- 过滤已删除的记录 -->
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </select>
+
+    <!-- 根据 SelectDto 条件查询列表 -->
+    <select id="selectList" parameterType="com.g2rain.basis.dto.ResourceMenuSelectDto" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        parent_id, application_id, menu_name, menu_code, link_path, icon, menu_sort_order,
+        <!-- deleteFlag字段（如果存在） -->
+        delete_flag,
+        <!-- version字段（如果存在） -->
+        version
+        FROM resource_menu
+        <include refid="commonWhereClause"/>
+        <include refid="dynamicOrderBy"/>
+    </select>
+
+    <!-- 根据 SelectDto 条件查询列表 -->
+    <select id="checkMenuExists" parameterType="com.g2rain.basis.dto.ResourceMenuSelectDto" resultType="java.lang.Long">
+        SELECT count(1) TOTAL FROM resource_menu
+        <include refid="commonWhereClause"/>
+    </select>
+
+    <!--
+        查询指定用户的授权菜单(通过角色分配的菜单权限)
+        仅返回用户角色关联控制单元对应的菜单资源(扁平列表)
+        层级与排序在应用层组装
+    -->
+    <select id="selectAuthorizedMenusWithUserId" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT DISTINCT rm.id, rm.parent_id, rm.application_id, rm.menu_name, rm.menu_code, rm.link_path, rm.icon, rm.menu_sort_order
+        FROM user_role_relation urr
+        JOIN role_control_unit_relation rcur
+        ON urr.`role_id` = rcur.`role_id` AND rcur.`delete_flag` = 0 AND rcur.`status` = 'ACTIVATED'
+        JOIN control_unit_resource_relation curr
+        ON rcur.`control_unit_id` = curr.`control_unit_id` AND curr.`delete_flag` = 0 AND
+        curr.`resource_type` = 'MENU'
+        JOIN resource_menu rm
+        ON curr.`resource_id` = rm.`id` AND rm.`delete_flag` = 0 AND rm.`application_id` in
+        <foreach item="id" collection="applicationIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        WHERE urr.`delete_flag` = 0
+        AND urr.`user_id` = #{userId}
+    </select>
+
+    <!--
+        查询指定应用的常驻授权菜单(landing=1 的控制单元菜单)
+        不依赖用户角色, 常驻功能直接可用(扁平列表)
+        层级与排序在应用层组装
+    -->
+    <select id="listAuthorizedMenusWithLanding" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT DISTINCT rm.id, rm.parent_id, rm.application_id, rm.menu_name, rm.menu_code, rm.link_path, rm.icon, rm.menu_sort_order
+        FROM control_unit cu
+        JOIN control_unit_resource_relation curr
+        ON cu.`id` = curr.`control_unit_id` AND curr.`delete_flag` = 0 AND curr.`resource_type` = 'MENU'
+        JOIN resource_menu rm ON curr.`resource_id` = rm.`id` AND rm.`delete_flag` = 0
+        WHERE cu.delete_flag = 0 AND cu.`landing` = 1 AND cu.`control_unit_scope` = 'PERPETUAL' AND cu.`status` = 'PUBLISHED'
+        AND cu.`application_id` = #{applicationId}
+    </select>
+</mapper>
