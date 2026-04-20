@@ -27,6 +27,15 @@ public interface UserDao {
     int insert(UserPo entity);
 
     /**
+     * 插入单条记录（非隔离语义）
+     *
+     * @param entity 实体对象
+     * @return 影响行数
+     */
+    @IgnoreIsolation
+    int insertWithoutIsolation(UserPo entity);
+
+    /**
      * 批量插入记录
      *
      * @param list 实体对象列表
@@ -41,6 +50,15 @@ public interface UserDao {
      * @return 影响行数
      */
     int update(UserPo entity);
+
+    /**
+     * 根据 ID 更新记录（非隔离语义）
+     *
+     * @param entity 实体对象
+     * @return 影响行数
+     */
+    @IgnoreIsolation
+    int updateWithoutIsolation(UserPo entity);
 
     /**
      * 根据 ID 删除记录
@@ -67,12 +85,30 @@ public interface UserDao {
     UserPo selectById(Long id);
 
     /**
+     * 根据 ID 查询记录（非隔离语义）
+     *
+     * @param id 主键 ID
+     * @return 实体对象
+     */
+    @IgnoreIsolation
+    UserPo selectByIdWithoutIsolation(Long id);
+
+    /**
      * 根据查询入参 DTO 筛选列表
      *
      * @param selectDto 查询条件 DTO
      * @return 实体对象列表
      */
     List<UserPo> selectList(UserSelectDto selectDto);
+
+    /**
+     * 根据查询入参 DTO 筛选列表（非隔离语义）
+     *
+     * @param selectDto 查询条件 DTO
+     * @return 实体对象列表
+     */
+    @IgnoreIsolation
+    List<UserPo> selectListWithoutIsolation(UserSelectDto selectDto);
 
     /**
      * 根据账号标识查询用户数量

@@ -42,12 +42,30 @@ public interface RoleService {
     Long save(RoleDto dto);
 
     /**
-     * 新增或更新数据(内部使用)
+     * 新增或更新数据（隔离语义）
      *
+     * @param roleType 角色类型
      * @param dto 数据传输对象
-     * @return 操作结果（影响行数）
+     * @return 角色标识
      */
-    Long internalSave(RoleType roleType, RoleDto dto);
+    Long saveWithIsolation(RoleType roleType, RoleDto dto);
+
+    /**
+     * 新增或更新数据（非隔离语义）
+     *
+     * @param roleType 角色类型
+     * @param dto 数据传输对象
+     * @return 角色标识
+     */
+    Long saveWithoutIsolation(RoleType roleType, RoleDto dto);
+
+    /**
+     * 列表查询（非隔离语义）。
+     *
+     * @param selectDto 查询条件
+     * @return 角色列表
+     */
+    List<RoleVo> selectListWithoutIsolation(RoleSelectDto selectDto);
 
     /**
      * 根据 ID 删除数据

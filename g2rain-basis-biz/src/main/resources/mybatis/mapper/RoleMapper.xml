@@ -62,6 +62,55 @@
         </trim>
     </sql>
 
+    <!-- 公共的查询条件 -->
+    <sql id="commonWhereClause">
+        <where>
+            <if test="id != null">
+                AND id = #{id, jdbcType=BIGINT}
+            </if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
+            <if test="createTime != null">
+                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
+                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
+                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
+                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
+                    AND #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="updateTime != null">
+                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
+                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
+                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
+                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
+                    AND #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="organId != null">
+                AND organ_id = #{organId, jdbcType=BIGINT}
+            </if>
+            <if test="roleName != null">
+                AND role_name = #{roleName, jdbcType=VARCHAR}
+            </if>
+            <if test="roleType != null">
+                AND role_type = #{roleType, jdbcType=VARCHAR}
+            </if>
+            AND (delete_flag = 0 OR delete_flag IS NULL)
+        </where>
+    </sql>
+
     <!-- 插入单条记录 -->
     <insert id="insert" parameterType="com.g2rain.basis.dao.po.RolePo">
         INSERT INTO role (
@@ -85,6 +134,23 @@
         <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
         0,
         <!-- version字段值（如果存在，设置默认值为0） -->
+        0
+        )
+    </insert>
+
+    <!-- 插入单条记录（非隔离语义） -->
+    <insert id="insertWithoutIsolation" parameterType="com.g2rain.basis.dao.po.RolePo">
+        INSERT INTO role (
+        id,
+        create_time, update_time,
+        organ_id, role_name, role_type,
+        delete_flag,
+        version
+        ) VALUES (
+        #{id, jdbcType=BIGINT},
+        #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
+        #{organId, jdbcType=BIGINT}, #{roleName, jdbcType=VARCHAR}, #{roleType, jdbcType=VARCHAR},
+        0,
         0
         )
     </insert>
@@ -138,6 +204,27 @@
                 role_type = #{roleType, jdbcType=VARCHAR},
             </if>
             <!-- version字段更新（如果存在，版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+    </update>
+
+    <!-- 根据ID更新记录（非隔离语义） -->
+    <update id="updateWithoutIsolation" parameterType="com.g2rain.basis.dao.po.RolePo">
+        UPDATE role
+        <set>
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="organId != null">
+                organ_id = #{organId, jdbcType=BIGINT},
+            </if>
+            <if test="roleName != null">
+                role_name = #{roleName, jdbcType=VARCHAR},
+            </if>
+            <if test="roleType != null">
+                role_type = #{roleType, jdbcType=VARCHAR},
+            </if>
             version = version + 1
         </set>
         WHERE id = #{id, jdbcType=BIGINT}
@@ -212,55 +299,20 @@
         <!-- version字段（如果存在） -->
         version
         FROM role
-        <where>
-            <!-- 主键筛选 -->
-            <if test="id != null">
-                AND id = #{id, jdbcType=BIGINT}
-            </if>
-            <if test="ids != null and ids.size() > 0">
-                AND id IN
-                <foreach collection="ids" item="item" open="(" separator="," close=")">
-                    #{item, jdbcType=BIGINT}
-                </foreach>
-            </if>
-            <!-- 基础字段筛选（createTime和updateTime时间筛选） -->
-            <if test="createTime != null">
-                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
-                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
-                </if>
-                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
-                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
-                </if>
-                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
-                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
-                    AND #{createTime[1], jdbcType=TIMESTAMP}
-                </if>
-            </if>
-            <if test="updateTime != null">
-                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
-                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
-                </if>
-                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
-                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
-                </if>
-                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
-                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
-                    AND #{updateTime[1], jdbcType=TIMESTAMP}
-                </if>
-            </if>
-            <!-- 业务字段筛选 -->
-            <if test="organId != null">
-                AND organ_id = #{organId, jdbcType=BIGINT}
-            </if>
-            <if test="roleName != null">
-                AND role_name = #{roleName, jdbcType=VARCHAR}
-            </if>
-            <if test="roleType != null">
-                AND role_type = #{roleType, jdbcType=VARCHAR}
-            </if>
-            <!-- 过滤已删除的记录 -->
-            AND (delete_flag = 0 OR delete_flag IS NULL)
-        </where>
+        <include refid="commonWhereClause"/>
+        <include refid="dynamicOrderBy"/>
+    </select>
+
+    <!-- 根据 SelectDto 条件查询列表（非隔离语义） -->
+    <select id="selectListWithoutIsolation" parameterType="com.g2rain.basis.dto.RoleSelectDto" resultMap="BaseResultMap">
+        SELECT
+        id,
+        create_time, update_time,
+        organ_id, role_name, role_type,
+        delete_flag,
+        version
+        FROM role
+        <include refid="commonWhereClause"/>
         <include refid="dynamicOrderBy"/>
     </select>
 </mapper>

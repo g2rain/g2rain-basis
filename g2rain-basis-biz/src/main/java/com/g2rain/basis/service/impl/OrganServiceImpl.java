@@ -228,6 +228,24 @@ public class OrganServiceImpl implements OrganService {
     @SuppressWarnings("null")
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Long save(OrganDto dto) {
+        return saveWithIsolation(dto);
+    }
+
+    @Override
+    @SuppressWarnings("null")
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Long saveWithIsolation(OrganDto dto) {
+        return doSave(dto);
+    }
+
+    @Override
+    @SuppressWarnings("null")
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Long saveWithoutIsolation(OrganDto dto) {
+        return doSave(dto);
+    }
+
+    private Long doSave(OrganDto dto) {
         // 参数校验
         OrganType childOrganType = OrganType.fromName(dto.getOrganType());
 

@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * 角色表服务实现类
@@ -65,7 +66,16 @@ public class RoleServiceImpl implements RoleService {
      */
     @Override
     public List<RoleVo> selectList(RoleSelectDto selectDto) {
-        return roleDao.selectList(selectDto)
+        return selectList(selectDto, roleDao::selectList);
+    }
+
+    @Override
+    public List<RoleVo> selectListWithoutIsolation(RoleSelectDto selectDto) {
+        return selectList(selectDto, roleDao::selectListWithoutIsolation);
+    }
+
+    private List<RoleVo> selectList(RoleSelectDto selectDto, Function<RoleSelectDto, List<RolePo>> queryFn) {
+        return queryFn.apply(selectDto)
             .stream()
             .map(RoleConverter.INSTANCE::po2vo)
             .toList();
@@ -98,7 +108,7 @@ public class RoleServiceImpl implements RoleService {
      */
     @Override
     public Long save(RoleDto dto) {
-        return internalSave(RoleType.USER, dto);
+        return saveWithIsolation(RoleType.USER, dto);
     }
 
     /**
@@ -115,7 +125,16 @@ public class RoleServiceImpl implements RoleService {
      * @throws BusinessException 如果角色插入或更新失败，将抛出相应的业务异常
      */
     @Override
-    public Long internalSave(RoleType roleType, RoleDto dto) {
+    public Long saveWithIsolation(RoleType roleType, RoleDto dto) {
+        return doSave(roleType, dto, roleDao::update, roleDao::insert);
+    }
+
+    @Override
+    public Long saveWithoutIsolation(RoleType roleType, RoleDto dto) {
+        return doSave(roleType, dto, roleDao::updateWithoutIsolation, roleDao::insertWithoutIsolation);
+    }
+
+    private Long doSave(RoleType roleType, RoleDto dto, Function<RolePo, Integer> updateFn, Function<RolePo, Integer> insertFn) {
         // 转换 DTO 为 PO
         RolePo entity = RoleConverter.INSTANCE.dto2po(dto);
 
@@ -126,7 +145,7 @@ public class RoleServiceImpl implements RoleService {
         if (Objects.nonNull(id) && id != 0) {
             // 更新：直接更新
             entity.setUpdateTime(Moments.now());
-            int success = roleDao.update(entity);
+            int success = updateFn.apply(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
             return entity.getId();
         }
@@ -137,7 +156,7 @@ public class RoleServiceImpl implements RoleService {
         entity.setUpdateTime(now);
         entity.setCreateTime(now);
         entity.setRoleType(roleType.name());
-        int success = roleDao.insert(entity);
+        int success = insertFn.apply(entity);
         Asserts.greaterThan(success, 0, SystemErrorCode.CREATE_DATA_ERROR);
         return entity.getId();
     }

@@ -3,6 +3,7 @@ package com.g2rain.basis.dao;
 import com.g2rain.basis.dao.po.RolePo;
 import com.g2rain.basis.dto.RoleSelectDto;
 import com.g2rain.data.isolation.annotations.DataIsolation;
+import com.g2rain.data.isolation.annotations.IgnoreIsolation;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -26,6 +27,15 @@ public interface RoleDao {
     int insert(RolePo entity);
 
     /**
+     * 插入单条记录（非隔离语义）
+     *
+     * @param entity 实体对象
+     * @return 影响行数
+     */
+    @IgnoreIsolation
+    int insertWithoutIsolation(RolePo entity);
+
+    /**
      * 批量插入记录
      *
      * @param list 实体对象列表
@@ -40,6 +50,15 @@ public interface RoleDao {
      * @return 影响行数
      */
     int update(RolePo entity);
+
+    /**
+     * 根据 ID 更新记录（非隔离语义）
+     *
+     * @param entity 实体对象
+     * @return 影响行数
+     */
+    @IgnoreIsolation
+    int updateWithoutIsolation(RolePo entity);
 
     /**
      * 根据 ID 删除记录
@@ -72,4 +91,13 @@ public interface RoleDao {
      * @return 实体对象列表
      */
     List<RolePo> selectList(RoleSelectDto selectDto);
+
+    /**
+     * 根据查询入参 DTO 筛选列表（非隔离语义）
+     *
+     * @param selectDto 查询条件 DTO
+     * @return 实体对象列表
+     */
+    @IgnoreIsolation
+    List<RolePo> selectListWithoutIsolation(RoleSelectDto selectDto);
 }

@@ -34,6 +34,14 @@ public interface UserService {
     UserVo selectById(Long id);
 
     /**
+     * 根据 ID 查询用户信息（非隔离语义）
+     *
+     * @param id 主键 ID
+     * @return 用户 VO 对象
+     */
+    UserVo selectByIdWithoutIsolation(Long id);
+
+    /**
      * 根据条件分页查询
      *
      * @param selectDto 查询条件DTO（包含分页参数）
@@ -64,6 +72,14 @@ public interface UserService {
      * @return 操作结果（影响行数）
      */
     Long save(UserDto dto);
+
+    /**
+     * 新增或更新数据（非隔离语义）
+     *
+     * @param dto 数据传输对象
+     * @return 用户标识
+     */
+    Long saveWithoutIsolation(UserDto dto);
 
     /**
      * 检查机构用户是否存在

@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -99,11 +100,12 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserVo selectById(Long id) {
-        UserPo user = userDao.selectById(id);
-        if (user == null) {
-            return null;
-        }
-        return UserConverter.INSTANCE.po2vo(user);
+        return selectById(id, userDao::selectById);
+    }
+
+    @Override
+    public UserVo selectByIdWithoutIsolation(Long id) {
+        return selectById(id, userDao::selectByIdWithoutIsolation);
     }
 
     /**
@@ -195,6 +197,26 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @SuppressWarnings("null")
     public Long save(UserDto dto) {
+        return doSave(dto, userDao::selectList, userDao::update, userDao::insert);
+    }
+
+    @Override
+    @Transactional
+    @SuppressWarnings("null")
+    public Long saveWithoutIsolation(UserDto dto) {
+        return doSave(dto, userDao::selectListWithoutIsolation, userDao::updateWithoutIsolation, userDao::insertWithoutIsolation);
+    }
+
+    private UserVo selectById(Long id, Function<Long, UserPo> selectFn) {
+        UserPo user = selectFn.apply(id);
+        if (Objects.isNull(user)) {
+            return null;
+        }
+
+        return UserConverter.INSTANCE.po2vo(user);
+    }
+
+    private Long doSave(UserDto dto, Function<UserSelectDto, List<UserPo>> selectListFn, Function<UserPo, Integer> updateFn, Function<UserPo, Integer> insertFn) {
         // 校验参数
         PassportPo passport = passportDao.selectById(dto.getPassportId());
         Asserts.isTrue(Objects.nonNull(passport), SystemErrorCode.PARAM_VAL_INVALID, dto.getPassportId());
@@ -205,7 +227,7 @@ public class UserServiceImpl implements UserService {
         UserSelectDto selectDto = new UserSelectDto();
         selectDto.setPassportId(dto.getPassportId());
         selectDto.setOrganId(dto.getOrganId());
-        List<UserPo> users = userDao.selectList(selectDto);
+        List<UserPo> users = selectListFn.apply(selectDto);
         if (users.stream().anyMatch(o -> !Objects.equals(o.getId(), dto.getId()))) {
             throw new BusinessException(SystemErrorCode.DATA_EXISTS);
         }
@@ -220,7 +242,7 @@ public class UserServiceImpl implements UserService {
         if (Objects.nonNull(id) && id != 0) {
             // 更新：直接更新
             entity.setUpdateTime(Moments.now());
-            int success = userDao.update(entity);
+            int success = updateFn.apply(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
             return entity.getId();
         }
@@ -233,7 +255,7 @@ public class UserServiceImpl implements UserService {
         entity.setCreateTime(now);
         entity.setUpdateTime(now);
         entity.setAdmin(ManagerFlag.computeUserAdmin(total));
-        int success = userDao.insert(entity);
+        int success = insertFn.apply(entity);
         Asserts.greaterThan(success, 0, SystemErrorCode.CREATE_DATA_ERROR);
         return entity.getId();
     }

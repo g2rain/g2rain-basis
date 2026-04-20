@@ -6,8 +6,8 @@ import com.g2rain.basis.dto.OrganDto;
 import com.g2rain.basis.dto.OrganIdNameMapSelectDto;
 import com.g2rain.basis.dto.OrganSelectDto;
 import com.g2rain.basis.dto.UpdateStatusDto;
+import com.g2rain.basis.service.OrganProvisionService;
 import com.g2rain.basis.service.OrganService;
-import com.g2rain.basis.service.TenantProvisionService;
 import com.g2rain.basis.vo.OrganHierarchicalRelationVo;
 import com.g2rain.basis.vo.OrganIdNameVo;
 import com.g2rain.basis.vo.OrganVo;
@@ -38,8 +38,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/organ")
 public class OrganController implements OrganApi {
-    @Resource(name = "tenantProvisionServiceImpl")
-    private TenantProvisionService tenantProvisionService;
+    @Resource(name = "organProvisionServiceImpl")
+    private OrganProvisionService organProvisionService;
 
     @Resource(name = "organServiceImpl")
     private OrganService organService;
@@ -121,7 +121,7 @@ public class OrganController implements OrganApi {
     @PostMapping("/save")
     @Operation(summary = "新增或更新机构信息", description = "新增或更新机构基础信息")
     public Result<Long> save(@RequestBody @Validated OrganDto dto) {
-        return Result.success(tenantProvisionService.createOrgan(dto));
+        return Result.success(organProvisionService.createOrganWithIsolation(dto));
     }
 
     /**

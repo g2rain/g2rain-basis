@@ -1,28 +1,18 @@
 package com.g2rain.basis.service.impl;
 
 
-import com.g2rain.basis.dto.ControlUnitSelectDto;
 import com.g2rain.basis.dto.OrganDto;
-import com.g2rain.basis.dto.RoleDto;
 import com.g2rain.basis.dto.RoleSelectDto;
 import com.g2rain.basis.dto.TenantProvisionDto;
 import com.g2rain.basis.dto.UserDto;
 import com.g2rain.basis.dto.UserRoleRelationDto;
 import com.g2rain.basis.enums.BasisErrorCode;
-import com.g2rain.basis.enums.ControlUnitScope;
 import com.g2rain.basis.enums.RoleType;
-import com.g2rain.basis.model.RoleControlUnitRelation;
-import com.g2rain.basis.service.ApplicationAuthorizationService;
-import com.g2rain.basis.service.ControlDomainService;
-import com.g2rain.basis.service.ControlUnitService;
-import com.g2rain.basis.service.OrganService;
-import com.g2rain.basis.service.RoleControlUnitRelationService;
+import com.g2rain.basis.service.OrganProvisionService;
 import com.g2rain.basis.service.RoleService;
 import com.g2rain.basis.service.TenantProvisionService;
 import com.g2rain.basis.service.UserRoleRelationService;
 import com.g2rain.basis.service.UserService;
-import com.g2rain.basis.utils.Constants;
-import com.g2rain.basis.vo.ControlUnitVo;
 import com.g2rain.basis.vo.RoleVo;
 import com.g2rain.basis.vo.UserVo;
 import com.g2rain.common.enums.OrganType;
@@ -38,8 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * 租户账号开通服务实现类
@@ -59,23 +47,13 @@ import java.util.stream.Collectors;
  *     <li>保证幂等性：若机构已有用户，则不会重复分配管理员角色</li>
  * </ul>
  *
- * <p>依赖服务：
- * <ul>
- *     <li>{@link OrganService} - 机构相关操作</li>
- *     <li>{@link UserService} - 用户相关操作</li>
- *     <li>{@link RoleService} - 角色相关操作</li>
- *     <li>{@link UserRoleRelationService} - 用户与角色关联操作</li>
- *     <li>{@link ControlDomainService} - 控制域相关操作</li>
- *     <li>{@link ApplicationAuthorizationService} - 应用权限下发操作</li>
- * </ul>
- *
  * @author alpha
  * @since 2026/1/30
  */
 @Service(value = "tenantProvisionServiceImpl")
 public class TenantProvisionServiceImpl implements TenantProvisionService {
-    @Resource(name = "organServiceImpl")
-    private OrganService organService;
+    @Resource(name = "organProvisionServiceImpl")
+    private OrganProvisionService organProvisionService;
 
     @Resource(name = "userServiceImpl")
     private UserService userService;
@@ -85,12 +63,6 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
 
     @Resource(name = "userRoleRelationServiceImpl")
     private UserRoleRelationService userRoleRelationService;
-
-    @Resource(name = "controlUnitServiceImpl")
-    private ControlUnitService controlUnitService;
-
-    @Resource(name = "roleControlUnitRelationServiceImpl")
-    private RoleControlUnitRelationService roleControlUnitRelationService;
 
     /**
      * 为账号在租户下开通最小可用功能。
@@ -122,7 +94,7 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         OrganDto organDto = new OrganDto();
         organDto.setOrganName(dto.getOrganName());
         organDto.setOrganType(dto.getOrganType());
-        Long organId = createOrgan(organDto);
+        Long organId = organProvisionService.createOrganWithoutIsolation(organDto);
 
         // 2. 新增用户
         UserDto userDto = new UserDto();
@@ -133,18 +105,18 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
             PrincipalContextHolder.getName()
         ));
         userDto.setPassportId(PrincipalContextHolder.getPassportId());
-        long userId = userService.save(userDto);
+        long userId = userService.saveWithoutIsolation(userDto);
 
         // 新增的时候, 需要知道当前是否存在用户, 机构第一个用户通常都是管理员, 这个地方需要用分布式锁锁住可以, 不然并发会导致出现多个管理员
         if (userService.checkUserExists(organId) > 1) {
-            return userService.selectById(userId);
+            return userService.selectByIdWithoutIsolation(userId);
         }
 
         // 通过机构查找默认角色
         RoleSelectDto roleSelect = new RoleSelectDto();
         roleSelect.setOrganId(organId);
         roleSelect.setRoleType(RoleType.ADMIN.name());
-        List<RoleVo> roles = roleService.selectList(roleSelect);
+        List<RoleVo> roles = roleService.selectListWithoutIsolation(roleSelect);
         Asserts.isTrue(Collections.isNotEmpty(roles),
             BasisErrorCode.ADMIN_ROLE_NOT_EXISTS_ILLEGAL
         );
@@ -156,41 +128,6 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         userRoleRelationService.save(userRole);
 
         // 返回 user 信息给调用者
-        return userService.selectById(userId);
-    }
-
-    /**
-     * 创建机构、添加默认管理员角色，并开通最小功能。
-     *
-     * <p>该方法可被其他接口独立调用，内部调用时参与调用方事务。
-     *
-     * @param organDto 机构信息
-     * @return 创建的机构 ID
-     */
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public long createOrgan(OrganDto organDto) {
-        // 1. 创建机构
-        Long organId = organService.save(organDto);
-
-        // 2. 添加机构默认角色
-        RoleDto role = new RoleDto();
-        role.setRoleName(Constants.ADMIN_ROLE_NAME);
-        role.setOrganId(organId);
-        Long roleId = roleService.internalSave(RoleType.ADMIN, role);
-
-        // 3. 查找客户的默认控制单元集合
-        ControlUnitSelectDto select = new ControlUnitSelectDto();
-        select.setLanding(true);
-        select.setControlUnitScope(ControlUnitScope.CUSTOMER.name());
-        Set<Long> ids = controlUnitService.selectList(select).stream()
-            .map(ControlUnitVo::getId).collect(Collectors.toSet());
-        // 4. 为机构开通最小功能
-        RoleControlUnitRelation relation = new RoleControlUnitRelation();
-        relation.setRoleId(roleId);
-        relation.setControlUnitIds(ids);
-        roleControlUnitRelationService.internalSave(relation);
-
-        return organId;
+        return userService.selectByIdWithoutIsolation(userId);
     }
 }

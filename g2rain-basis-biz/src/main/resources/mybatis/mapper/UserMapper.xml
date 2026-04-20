@@ -167,6 +167,24 @@
         )
     </insert>
 
+    <!-- 插入单条记录（非隔离语义） -->
+    <insert id="insertWithoutIsolation" parameterType="com.g2rain.basis.dao.po.UserPo">
+        INSERT INTO user (
+        id,
+        create_time, update_time,
+        passport_id, organ_id, email, mobile, real_name, admin,
+        delete_flag,
+        version
+        ) VALUES (
+        #{id, jdbcType=BIGINT},
+        #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
+        #{passportId, jdbcType=BIGINT}, #{organId, jdbcType=BIGINT}, #{email, jdbcType=VARCHAR},
+        #{mobile, jdbcType=VARCHAR}, #{realName, jdbcType=VARCHAR}, #{admin, jdbcType=TINYINT},
+        0,
+        0
+        )
+    </insert>
+
     <!-- 批量插入记录 -->
     <insert id="insertMultiple" parameterType="java.util.List">
         INSERT INTO user (
@@ -220,6 +238,30 @@
             mobile = #{mobile, jdbcType=VARCHAR},
             real_name = #{realName, jdbcType=VARCHAR},
             <!-- version字段更新（如果存在，版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+    </update>
+
+    <!-- 根据ID更新记录（非隔离语义） -->
+    <update id="updateWithoutIsolation" parameterType="com.g2rain.basis.dao.po.UserPo">
+        UPDATE user
+        <set>
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="passportId != null">
+                passport_id = #{passportId, jdbcType=BIGINT},
+            </if>
+            <if test="organId != null">
+                organ_id = #{organId, jdbcType=BIGINT},
+            </if>
+            <if test="admin != null">
+                admin = #{admin, jdbcType=TINYINT},
+            </if>
+            email = #{email, jdbcType=VARCHAR},
+            mobile = #{mobile, jdbcType=VARCHAR},
+            real_name = #{realName, jdbcType=VARCHAR},
             version = version + 1
         </set>
         WHERE id = #{id, jdbcType=BIGINT}
@@ -283,6 +325,19 @@
         AND (delete_flag = 0 OR delete_flag IS NULL)
     </select>
 
+    <!-- 根据ID查询记录（非隔离语义） -->
+    <select id="selectByIdWithoutIsolation" parameterType="Long" resultMap="BaseResultMap">
+        SELECT
+        id,
+        create_time, update_time,
+        passport_id, organ_id, email, mobile, real_name, admin,
+        delete_flag,
+        version
+        FROM user
+        WHERE id = #{id, jdbcType=BIGINT}
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </select>
+
     <!-- 根据 SelectDto 条件查询列表 -->
     <select id="selectList" parameterType="com.g2rain.basis.dto.UserSelectDto" resultMap="BaseResultMap">
         SELECT
@@ -295,6 +350,19 @@
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
+        version
+        FROM user
+        <include refid="commonWhereClause"/>
+        <include refid="dynamicOrderBy"/>
+    </select>
+
+    <!-- 根据 SelectDto 条件查询列表（非隔离语义） -->
+    <select id="selectListWithoutIsolation" parameterType="com.g2rain.basis.dto.UserSelectDto" resultMap="BaseResultMap">
+        SELECT
+        id,
+        create_time, update_time,
+        passport_id, organ_id, email, mobile, real_name, admin,
+        delete_flag,
         version
         FROM user
         <include refid="commonWhereClause"/>

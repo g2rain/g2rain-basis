@@ -80,6 +80,22 @@ public interface OrganService {
     Long save(OrganDto dto);
 
     /**
+     * 在隔离语义下新增或更新机构。
+     *
+     * @param dto 机构数据
+     * @return 机构标识
+     */
+    Long saveWithIsolation(OrganDto dto);
+
+    /**
+     * 在非隔离语义下新增或更新机构。
+     *
+     * @param dto 机构数据
+     * @return 机构标识
+     */
+    Long saveWithoutIsolation(OrganDto dto);
+
+    /**
      * 根据 ID 删除数据
      *
      * @param id 主键 ID
