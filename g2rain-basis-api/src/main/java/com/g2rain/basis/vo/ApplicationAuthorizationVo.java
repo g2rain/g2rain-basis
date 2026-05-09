@@ -68,7 +68,7 @@ public class ApplicationAuthorizationVo extends BaseVo {
     /**
      * 删除标识[0:未删除, 1:已删除]
      */
-    @ConditionalJsonIgnore(adminCompany = AdminCompanyCondition.TRUE)
     @Schema(description = "删除标识[0:未删除, 1:已删除]")
+    @ConditionalJsonIgnore(adminCompany = AdminCompanyCondition.TRUE)
     private Boolean deleteFlag;
 }

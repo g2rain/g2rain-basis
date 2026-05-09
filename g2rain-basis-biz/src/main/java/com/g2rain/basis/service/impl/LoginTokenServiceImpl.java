@@ -130,32 +130,29 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      *     <li>否则执行更新，更新修改时间</li>
      * </ol>
      *
-     * @param dto 登录信息 DTO
+     * @param applicationCode 应用编码
+     * @param dto             登录信息 DTO
      * @return 保存或更新后的登录信息 ID
      * @throws BusinessException 新增或更新失败时抛出
      */
     @Override
-    public Long save(LoginTokenDto dto) {
-        // 转换 DTO 为 PO
-        LoginTokenPo entity = LoginTokenConverter.INSTANCE.dto2po(dto);
-
-        // 判断是新增还是更新
-        Long id = entity.getId();
-        if (Objects.isNull(id) || id == 0) {
-            // 新增：使用IdGenerator生成主键
-            entity.setId(idGenerator.generateId());
-            LocalDateTime now = Moments.now();
-            entity.setUpdateTime(now);
-            entity.setCreateTime(now);
-            int success = loginTokenDao.insert(entity);
-            Asserts.greaterThan(success, 0, SystemErrorCode.CREATE_DATA_ERROR);
-            return entity.getId();
+    public Long save(String applicationCode, LoginTokenDto dto) {
+        ApplicationSelectDto selectDto = new ApplicationSelectDto();
+        selectDto.setApplicationCode(applicationCode);
+        List<ApplicationVo> applications = applicationService.selectList(selectDto);
+        if (Collections.isEmpty(applications)) {
+            return 0L;
         }
 
-        // 更新：直接更新
-        entity.setUpdateTime(Moments.now());
-        int success = loginTokenDao.update(entity);
-        Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
+        ApplicationVo application = applications.getFirst();
+        LoginTokenPo entity = LoginTokenConverter.INSTANCE.dto2po(dto);
+        entity.setId(idGenerator.generateId());
+        entity.setApplicationId(application.getId());
+        entity.setApplicationOrganId(application.getOrganId());
+        LocalDateTime now = Moments.now();
+        entity.setUpdateTime(now);
+        entity.setCreateTime(now);
+        loginTokenDao.insert(entity);
         return entity.getId();
     }
 

@@ -69,6 +69,11 @@ management:
           - info
 
 g2rain:
+  audit:
+    event:
+      enabled: false
+      topic: gateway.exchange.event
+      group-id: g2rain-basis-audit
   web:
     login-guard-interceptor-enabled: false
     identity-param-injector-enabled: false

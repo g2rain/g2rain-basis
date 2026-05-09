@@ -230,7 +230,7 @@ public class ResourcePageServiceImpl implements ResourcePageService {
             } else if (!Strings.equals(linkPath, entity.getLinkPath())) {
                 // 更新
                 entity.setPageName(pageName);
-                entity.setLinkPath(dto.getLinkPath());
+                entity.setLinkPath(linkPath);
                 entity.setUpdateTime(now);
                 toUpdate.add(entity);
             }

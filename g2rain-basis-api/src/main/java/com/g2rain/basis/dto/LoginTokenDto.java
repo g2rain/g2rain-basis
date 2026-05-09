@@ -87,10 +87,4 @@ public class LoginTokenDto extends BaseDto {
      */
     @Schema(description = "客户端 ID")
     private String clientId;
-
-    /**
-     * 最近一次刷新时间
-     */
-    @Schema(description = "最近一次刷新时间")
-    private LocalDateTime lastestRefreshTime;
 }

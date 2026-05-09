@@ -80,6 +80,10 @@
             <groupId>com.g2rain</groupId>
             <artifactId>g2rain-starter-mybatis-extensions</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

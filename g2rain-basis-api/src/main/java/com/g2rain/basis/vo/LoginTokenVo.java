@@ -92,12 +92,6 @@ public class LoginTokenVo extends BaseVo {
     private String clientId;
 
     /**
-     * 最近一次刷新时间
-     */
-    @Schema(description = "最近一次刷新时间")
-    private LocalDateTime lastestRefreshTime;
-
-    /**
      * 删除标识[0:未删除, 1:已删除]
      */
     @ConditionalJsonIgnore(adminCompany = AdminCompanyCondition.TRUE)

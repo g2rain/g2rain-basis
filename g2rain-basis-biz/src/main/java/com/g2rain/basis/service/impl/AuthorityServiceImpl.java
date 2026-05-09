@@ -1,13 +1,13 @@
 package com.g2rain.basis.service.impl;
 
-import com.g2rain.basis.converter.ApiEndpointConverter;
 import com.g2rain.basis.converter.OrganConverter;
+import com.g2rain.basis.converter.ResourceApiConverter;
 import com.g2rain.basis.converter.ResourceMenuConverter;
 import com.g2rain.basis.converter.ResourcePageConverter;
 import com.g2rain.basis.converter.ResourcePageElementConverter;
 import com.g2rain.basis.converter.UserConverter;
-import com.g2rain.basis.dao.ApiEndpointDao;
 import com.g2rain.basis.dao.OrganDao;
+import com.g2rain.basis.dao.ResourceApiDao;
 import com.g2rain.basis.dao.ResourceMenuDao;
 import com.g2rain.basis.dao.ResourcePageDao;
 import com.g2rain.basis.dao.ResourcePageElementDao;
@@ -31,6 +31,7 @@ import com.g2rain.basis.vo.AuthorityPageElementVo;
 import com.g2rain.basis.vo.AuthorityPageVo;
 import com.g2rain.basis.vo.AuthorityResourceVo;
 import com.g2rain.basis.vo.AuthorityUserVo;
+import com.g2rain.basis.vo.BaseAuthorityApiVo;
 import com.g2rain.basis.vo.PassportVo;
 import com.g2rain.basis.vo.UserVo;
 import com.g2rain.common.exception.BusinessException;
@@ -115,10 +116,10 @@ public class AuthorityServiceImpl implements AuthorityService {
     private RoleControlUnitRelationDao roleControlUnitRelationDao;
 
     /**
-     * API 接口资源 DAO
+     * 资源接口 DAO
      */
-    @Resource(name = "apiEndpointDao")
-    private ApiEndpointDao apiEndpointDao;
+    @Resource(name = "resourceApiDao")
+    private ResourceApiDao resourceApiDao;
 
     /**
      * 机构 DAO
@@ -216,7 +217,7 @@ public class AuthorityServiceImpl implements AuthorityService {
 
         // 构建接口地址权限
         List<AuthorityApiEndpointVo> apiEndpoints = buildResourceApiEndpoints(isDefaultMain, userId, applicationId)
-            .stream().map(ApiEndpointConverter.INSTANCE::po2authVo).toList();
+            .stream().map(ResourceApiConverter.INSTANCE::po2authVo).toList();
 
         // 构建权限集合
         return new AuthorityResourceVo(pages, elements, apiEndpoints);
@@ -230,10 +231,14 @@ public class AuthorityServiceImpl implements AuthorityService {
      * @return AuthorityApiEndpointVo 列表
      */
     @Override
-    public List<AuthorityApiEndpointVo> getApiPermissions(Long userId, Long applicationId) {
+    public List<BaseAuthorityApiVo> getApiPermissions(Long userId, Long applicationId) {
         boolean isDefaultMain = applicationService.hasLandingApplication(applicationId);
-        return buildResourceApiEndpoints(isDefaultMain, userId, applicationId).stream()
-            .map(ApiEndpointConverter.INSTANCE::po2authVo).toList();
+        return buildResourceApiEndpoints(isDefaultMain, userId, applicationId).stream().map(o -> {
+            BaseAuthorityApiVo result = new BaseAuthorityApiVo();
+            result.setId(o.getId());
+            result.setStatus(o.getStatus());
+            return result;
+        }).toList();
     }
 
     /**
@@ -244,10 +249,9 @@ public class AuthorityServiceImpl implements AuthorityService {
     @Override
     public AuthorityUserVo getUser() {
         Long userId = PrincipalContextHolder.getUserId();
-
-        AuthorityUserVo authorityUserVo = null;
-        Long passportId = null;
-        if (userId != null && userId > 0) {
+        AuthorityUserVo authorityUserVo;
+        Long passportId;
+        if (Objects.nonNull(userId) && userId > 0) {
             // 查询 user
             UserVo userVo = Optional.ofNullable(userService.selectById(userId))
                 .orElseThrow(() -> new BusinessException(BasisErrorCode.USER_NOT_EXISTS_ILLEGAL));
@@ -269,8 +273,26 @@ public class AuthorityServiceImpl implements AuthorityService {
         // 查询 passport
         PassportVo passportVo = passportService.selectById(passportId);
         authorityUserVo.setPassport(passportVo);
-
         return authorityUserVo;
+    }
+
+    /**
+     * 查询账号的接口权限集合
+     *
+     * @return 账号的接口权限集合
+     */
+    @Override
+    public List<Long> getPassportApiPermissions() {
+        ApplicationSelectDto selectDto = new ApplicationSelectDto();
+        selectDto.setLanding(Boolean.TRUE);
+        selectDto.setCanIntegrate(Boolean.TRUE);
+        List<ApplicationVo> applications = applicationService.selectList(selectDto);
+        if (Collections.isEmpty(applications)) {
+            return List.of();
+        }
+
+        return resourceApiDao.listAuthorizedApisWithLanding(applications.getFirst().getId())
+            .stream().map(AuthorityApiEndpointPo::getId).toList();
     }
 
     /**
@@ -403,13 +425,13 @@ public class AuthorityServiceImpl implements AuthorityService {
         List<AuthorityApiEndpointPo> apiEndpoints = new ArrayList<>();
         // 如果用户ID和 应用列表存在, 查询菜单权限
         if (Objects.nonNull(userId) && Objects.nonNull(applicationId)) {
-            apiEndpoints.addAll(apiEndpointDao.selectAuthorizedApiEndpointsWithUserId(userId, applicationId));
+            apiEndpoints.addAll(resourceApiDao.selectAuthorizedApisWithUserId(userId, applicationId));
         }
 
         // 针对 默认控制单元, 再追加 landing 接口(去重)
         if (isDefaultMain) {
-            List<AuthorityApiEndpointPo> landingApiEndpoints = apiEndpointDao.
-                listAuthorizedApiEndpointsWithLanding(applicationId);
+            List<AuthorityApiEndpointPo> landingApiEndpoints = resourceApiDao.
+                listAuthorizedApisWithLanding(applicationId);
             mergeWithLanding(apiEndpoints, landingApiEndpoints, AuthorityApiEndpointPo::getId);
         }
 

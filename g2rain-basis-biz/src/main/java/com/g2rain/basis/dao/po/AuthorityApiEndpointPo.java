@@ -1,7 +1,5 @@
 package com.g2rain.basis.dao.po;
 
-import com.g2rain.common.model.BasePo;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,8 +13,11 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class AuthorityApiEndpointPo extends BasePo {
+public class AuthorityApiEndpointPo {
+    /**
+     * 资源接口标识
+     */
+    private Long id;
 
     /**
      * 接口名称
@@ -24,22 +25,32 @@ public class AuthorityApiEndpointPo extends BasePo {
     private String apiName;
 
     /**
-     * 接口路径
+     * 服务名称
      */
-    private String apiUrl;
+    private String serviceName;
+
+    /**
+     * 目标地址
+     */
+    private String endpoint;
+
+    /**
+     * 路由前缀
+     */
+    private String routePrefix;
 
     /**
      * 请求方法
      */
-    private String requestMethod;
+    private String method;
 
     /**
-     * 接口标签, 接口分类
+     * 请求路径
      */
-    private String apiTag;
+    private String path;
 
     /**
-     * 接口地址状态
+     * 接口状态
      */
     private String status;
 }
