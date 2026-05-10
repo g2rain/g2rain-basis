@@ -355,7 +355,7 @@
         SELECT t.id, t.api_name, t.service_name, t.endpoint, t.route_prefix, t.method, t.path, t.status
         FROM (
         SELECT rae.`id`, rae.`name` AS api_name, ae.`name` AS service_name, ae.`endpoint`, ae.`route_prefix`, rae.`method`, rae.`path`, rcur.status,
-        ROW_NUMBER() OVER (PARTITION BY ae.id ORDER BY CASE rcur.status WHEN 'ACTIVATED' THEN 1 ELSE 2 END) AS rn
+        ROW_NUMBER() OVER (PARTITION BY rae.id ORDER BY CASE rcur.status WHEN 'ACTIVATED' THEN 1 ELSE 2 END) AS rn
         FROM user_role_relation urr
         JOIN role_control_unit_relation rcur
         ON urr.`role_id` = rcur.`role_id` AND rcur.`delete_flag` = 0
