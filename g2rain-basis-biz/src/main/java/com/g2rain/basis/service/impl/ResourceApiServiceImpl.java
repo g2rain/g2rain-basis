@@ -128,20 +128,21 @@ public class ResourceApiServiceImpl implements ResourceApiService {
                 BasisSyncerEnum.API_ROUTE.name(),
                 mergeServices(List.of(entity)).getFirst()
             );
-        } else {
-            // 更新：直接更新
-            entity.setUpdateTime(Moments.now());
-            int success = resourceApiDao.update(entity);
-            Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
 
-            // 广播修改`资源接口`信息
-            eventPublisherHub.sendUpdate(
-                Constants.SYNC_OUTPUT_BINDING,
-                BasisSyncerEnum.API_ROUTE.name(),
-                mergeServices(List.of(entity)).getFirst()
-            );
+            return entity.getId();
         }
 
+        // 更新：直接更新
+        entity.setUpdateTime(Moments.now());
+        int success = resourceApiDao.update(entity);
+        Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
+
+        // 广播修改`资源接口`信息
+        eventPublisherHub.sendUpdate(
+            Constants.SYNC_OUTPUT_BINDING,
+            BasisSyncerEnum.API_ROUTE.name(),
+            mergeServices(List.of(entity)).getFirst()
+        );
         return entity.getId();
     }
 

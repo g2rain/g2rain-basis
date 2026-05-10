@@ -1,5 +1,6 @@
 package com.g2rain.basis.service.impl;
 
+import com.g2rain.basis.converter.ResourceApiConverter;
 import com.g2rain.basis.converter.ServiceRegistryConverter;
 import com.g2rain.basis.dao.ResourceApiDao;
 import com.g2rain.basis.dao.ServiceRegistryDao;
@@ -12,6 +13,7 @@ import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.service.ServiceRegistryService;
 import com.g2rain.basis.utils.Constants;
+import com.g2rain.basis.vo.RouteDefinitionVo;
 import com.g2rain.basis.vo.ServiceRegistryVo;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
@@ -150,6 +152,21 @@ public class ServiceRegistryServiceImpl implements ServiceRegistryService {
                 BasisSyncerEnum.INTERNAL_ROUTE.name(),
                 ServiceRegistryConverter.INSTANCE.po2vo(entity)
             );
+
+            // 广播修改`资源接口`信息
+            ResourceApiSelectDto select = new ResourceApiSelectDto();
+            select.setServiceCode(srvRegistry.getServiceCode());
+            List<ResourceApiPo> apis = resourceApiDao.selectList(select);
+            for (ResourceApiPo api : apis) {
+                RouteDefinitionVo routeDefinition = ResourceApiConverter.INSTANCE.po2route(api);
+                routeDefinition.setEndpoint(srvRegistry.getEndpoint());
+                routeDefinition.setRoutePrefix(srvRegistry.getRoutePrefix());
+                eventPublisherHub.sendUpdate(
+                    Constants.SYNC_OUTPUT_BINDING,
+                    BasisSyncerEnum.API_ROUTE.name(),
+                    routeDefinition
+                );
+            }
         }
 
         return entity.getId();
