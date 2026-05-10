@@ -15,8 +15,10 @@ import com.g2rain.basis.enums.ApplicationStatus;
 import com.g2rain.basis.enums.ApplicationType;
 import com.g2rain.basis.enums.AuthorizationStatus;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.service.ApplicationService;
 import com.g2rain.basis.utils.BasisUtils;
+import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.ApplicationIdNameVo;
 import com.g2rain.basis.vo.ApplicationScopeVo;
 import com.g2rain.basis.vo.ApplicationVo;
@@ -26,6 +28,7 @@ import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
+import com.g2rain.common.syncer.EventPublisherHub;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Moments;
@@ -75,6 +78,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Resource(name = "controlDomainDao")
     private ControlDomainDao controlDomainDao;
+
+    @Resource
+    private EventPublisherHub eventPublisherHub;
 
     private IdGenerator idGenerator;
 
@@ -203,6 +209,17 @@ public class ApplicationServiceImpl implements ApplicationService {
             entity.setStatus(ApplicationStatus.UNPUBLISHED.name());
             int success = applicationDao.insert(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.CREATE_DATA_ERROR);
+
+            // 广播新增应用信息
+            eventPublisherHub.sendCreate(
+                Constants.SYNC_OUTPUT_BINDING,
+                BasisSyncerEnum.APP_NAME.name(),
+                new ApplicationIdNameVo(
+                    entity.getId(),
+                    entity.getApplicationName()
+                )
+            );
+
             return entity.getId();
         }
 
@@ -222,6 +239,20 @@ public class ApplicationServiceImpl implements ApplicationService {
         // 更新：直接更新
         int success = applicationDao.update(entity);
         Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
+
+        // 应用名称修改需要推送消息同步广播
+        if (!Strings.equals(app.getApplicationName(), dto.getApplicationName())) {
+            // 广播修改应用信息
+            eventPublisherHub.sendUpdate(
+                Constants.SYNC_OUTPUT_BINDING,
+                BasisSyncerEnum.APP_NAME.name(),
+                new ApplicationIdNameVo(
+                    entity.getId(),
+                    entity.getApplicationName()
+                )
+            );
+        }
+
         return entity.getId();
     }
 
@@ -272,7 +303,19 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationSuiteDao.deleteByApplicationId(id);
 
         // 删除应用记录
-        return applicationDao.delete(id);
+        int result = applicationDao.delete(id);
+
+        // 广播删除应用信息
+        eventPublisherHub.sendDelete(
+            Constants.SYNC_OUTPUT_BINDING,
+            BasisSyncerEnum.APP_NAME.name(),
+            new ApplicationIdNameVo(
+                application.getId(),
+                application.getApplicationName()
+            )
+        );
+
+        return result;
     }
 
     /**

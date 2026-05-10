@@ -6,9 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-import java.time.LocalDate;
-
 /**
  * 登录信息表, 记录了当前登录状态的相关信息返回Po
  * 关联表名: login_token
@@ -76,11 +73,6 @@ public class LoginTokenPo extends BasePo {
      * 客户端 ID
      */
     private String clientId;
-
-    /**
-     * 最近一次刷新时间
-     */
-    private LocalDateTime lastestRefreshTime;
 
     /**
      * 删除标识[0:未删除, 1:已删除]

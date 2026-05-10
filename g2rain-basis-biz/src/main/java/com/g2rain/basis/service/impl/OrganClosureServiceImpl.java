@@ -5,14 +5,18 @@ import com.g2rain.basis.dao.po.OrganClosurePo;
 import com.g2rain.basis.dao.po.OrganHierarchicalRelationPo;
 import com.g2rain.basis.dto.OrganClosureSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.enums.OrganRelation;
 import com.g2rain.basis.model.OrganHierarchyNode;
+import com.g2rain.basis.model.OrganScope;
 import com.g2rain.basis.service.OrganClosureService;
+import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.OrganHierarchicalRelationVo;
 import com.g2rain.common.enums.OrganType;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
+import com.g2rain.common.syncer.EventPublisherHub;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Moments;
 import jakarta.annotation.Resource;
@@ -92,6 +96,9 @@ public class OrganClosureServiceImpl implements OrganClosureService {
      */
     @Resource(name = "organClosureDao")
     private OrganClosureDao organClosureDao;
+
+    @Resource
+    private EventPublisherHub eventPublisherHub;
 
     /**
      * ID 生成器，用于生成主键
@@ -287,6 +294,9 @@ public class OrganClosureServiceImpl implements OrganClosureService {
 
         // 13. 批量插入新的挂载关系
         batchProcess(newRelationsToInsert);
+
+        // 14. 推送广播, 层级关系缓存失效
+        newRelationsToInsert.forEach(o -> broadcast(new OrganScope(o)));
     }
 
     /**
@@ -388,12 +398,14 @@ public class OrganClosureServiceImpl implements OrganClosureService {
 
         List<Long> toDecrement = new ArrayList<>();
         List<Long> toDelete = new ArrayList<>();
+        List<OrganScope> organScopes = new ArrayList<>();
         for (OrganClosurePo po : existRelations) {
             // 说明存在2个以上路径, 进行减法即可
             if (po.getPathCount() > 1) {
                 toDecrement.add(po.getId());
             } else {
                 toDelete.add(po.getId());
+                organScopes.add(new OrganScope(po));
             }
         }
 
@@ -404,6 +416,9 @@ public class OrganClosureServiceImpl implements OrganClosureService {
         // 批量逻辑删除
         Collections.sort(toDelete);
         batchDelete(toDelete);
+
+        // 推送广播, 层级关系缓存失效
+        organScopes.forEach(this::broadcast);
     }
 
     /**
@@ -530,8 +545,9 @@ public class OrganClosureServiceImpl implements OrganClosureService {
         // 处理原父节点：path_count 或逻辑删除
         List<Long> toSourceDecrement = new ArrayList<>();
         List<Long> toSourceDelete = new ArrayList<>();
+        List<OrganScope> organScopes = new ArrayList<>();
         Map<String, Long> targetExistedMap = new HashMap<>();
-        processSourceRelations(existRelations, sourceSuperiors, toSourceDecrement, toSourceDelete, targetExistedMap);
+        processSourceRelations(existRelations, sourceSuperiors, toSourceDecrement, toSourceDelete, organScopes, targetExistedMap);
 
         // 构建目标父节点新的关系
         List<OrganClosurePo> result = buildTargetRelations(
@@ -553,10 +569,15 @@ public class OrganClosureServiceImpl implements OrganClosureService {
 
         // 批量插入目标父节点新关系
         batchProcess(result);
+
+        // 推送广播, 层级关系缓存失效
+        result.forEach(o -> broadcast(new OrganScope(o)));
+        organScopes.forEach(this::broadcast);
     }
 
     /**
-     * 删除组织节点及其平铺层级关系。
+     * 删除组织节点及其平铺层级关系
+     * 暂时不进行层级关系缓存失效广播, 因为这个功能暂时关闭
      *
      * <p>方法整体逻辑：
      * <ol>
@@ -745,7 +766,7 @@ public class OrganClosureServiceImpl implements OrganClosureService {
      * @param targetExistedMap 输出参数：目标父节点已存在的关系Map，key格式为 parentId-childId, value 为平铺关系ID
      */
     private void processSourceRelations(List<OrganClosurePo> existRelations, Set<Long> sourceSuperiors,
-                                        List<Long> toDecrement, List<Long> toDelete,
+                                        List<Long> toDecrement, List<Long> toDelete, List<OrganScope> organScopes,
                                         Map<String, Long> targetExistedMap) {
         for (OrganClosurePo po : existRelations) {
             if (!sourceSuperiors.contains(po.getDescendantId())) {
@@ -757,6 +778,7 @@ public class OrganClosureServiceImpl implements OrganClosureService {
                 toDecrement.add(po.getId());
             } else {
                 toDelete.add(po.getId());
+                organScopes.add(new OrganScope(po));
             }
         }
     }
@@ -983,5 +1005,18 @@ public class OrganClosureServiceImpl implements OrganClosureService {
 
         // 3. 第三遍：找出所有没有爸爸的节点，它们就是“森林”里的所有树根
         return nodeMap.values().stream().filter(node -> !hasParentSet.contains(node.getOrganId())).toList();
+    }
+
+    /**
+     * 消息同步机制, 广播推送移除层级关系缓存
+     *
+     * @param organScope 层级关系对象
+     */
+    private void broadcast(OrganScope organScope) {
+        eventPublisherHub.sendDelete(
+            Constants.SYNC_OUTPUT_BINDING,
+            BasisSyncerEnum.ORGAN_HIERARCHY.name(),
+            organScope
+        );
     }
 }

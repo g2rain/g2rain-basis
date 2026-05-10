@@ -6,6 +6,7 @@ import com.g2rain.basis.service.ResourceService;
 import com.g2rain.common.model.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @RestController
 @RequestMapping("/resource")
+@Tag(name = "资源上传", description = "资源上传相关接口")
 public class ResourceController {
     @Resource(name = "resourceServiceImpl")
     private ResourceService resourceService;

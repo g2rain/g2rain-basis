@@ -5,6 +5,7 @@ import com.g2rain.basis.vo.AuthorityApiEndpointVo;
 import com.g2rain.basis.vo.AuthorityMenuVo;
 import com.g2rain.basis.vo.AuthorityResourceVo;
 import com.g2rain.basis.vo.AuthorityUserVo;
+import com.g2rain.basis.vo.BaseAuthorityApiVo;
 
 import java.util.List;
 
@@ -41,7 +42,7 @@ public interface AuthorityService {
      * @param applicationId 应用 ID
      * @return 接口权限视图对象列表 {@link AuthorityApiEndpointVo}
      */
-    List<AuthorityApiEndpointVo> getApiPermissions(Long userId, Long applicationId);
+    List<BaseAuthorityApiVo> getApiPermissions(Long userId, Long applicationId);
 
     /**
      * 获取当前用户的信息。
@@ -50,4 +51,11 @@ public interface AuthorityService {
      * @return 用户视图对象 {@link AuthorityUserVo}
      */
     AuthorityUserVo getUser();
+
+    /**
+     * 查询账号的接口权限集合
+     *
+     * @return 账号的接口权限集合
+     */
+    List<Long> getPassportApiPermissions();
 }

@@ -122,7 +122,7 @@ public enum BasisErrorCode implements ErrorCode {
     DEL_RESOURCE_EXIST_ELEMENT_UNDELETABLE("basis.40037", "已关联页面元素, 不允许删除资源"),
 
     @Schema(description = "DEL_API_EXIST_RESOURCE_API_UNDELETABLE")
-    DEL_API_EXIST_RESOURCE_API_UNDELETABLE("basis.400378", "已关联资源接口, 不允许删除后端接口"),
+    DEL_API_EXIST_RESOURCE_API_UNDELETABLE("basis.40038", "已关联资源接口, 不允许删除后端接口"),
 
     @Schema(description = "RESOURCE_UPLOAD_FAIL")
     RESOURCE_UPLOAD_FAIL("basis.40039", "资源文件解析失败"),
@@ -161,7 +161,10 @@ public enum BasisErrorCode implements ErrorCode {
     PUB_KEY_INVALID_KEY("basis.40050", "无效公钥"),
 
     @Schema(description = "USER_NOT_EXISTS_ILLEGAL")
-    USER_NOT_EXISTS_ILLEGAL("basis.40051", "用户不存在");
+    USER_NOT_EXISTS_ILLEGAL("basis.40051", "用户不存在"),
+
+    @Schema(description = "RESOURCE_API_EXISTS_ILLEGAL")
+    RESOURCE_API_EXISTS_ILLEGAL("basis.40052", "已关联资源接口, 不允许删除服务注册信息");
 
     private final String code;
 

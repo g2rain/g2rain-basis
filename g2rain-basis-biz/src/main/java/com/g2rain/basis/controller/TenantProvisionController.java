@@ -6,6 +6,7 @@ import com.g2rain.basis.service.TenantProvisionService;
 import com.g2rain.basis.vo.UserVo;
 import com.g2rain.common.model.Result;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/tenant_provision")
+@Tag(name = "租户初始化", description = "租户初始化相关接口")
 public class TenantProvisionController {
 
     @Resource(name = "tenantProvisionServiceImpl")

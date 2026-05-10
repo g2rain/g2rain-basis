@@ -4,20 +4,20 @@ import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.g2rain.basis.converter.ControlUnitResourceRelationConverter;
 import com.g2rain.basis.dao.ControlUnitDao;
 import com.g2rain.basis.dao.ControlUnitResourceRelationDao;
-import com.g2rain.basis.dao.ResourceApiEndpointDao;
+import com.g2rain.basis.dao.ResourceApiDao;
 import com.g2rain.basis.dao.ResourceMenuDao;
 import com.g2rain.basis.dao.ResourcePageDao;
 import com.g2rain.basis.dao.ResourcePageElementDao;
 import com.g2rain.basis.dao.po.ControlUnitPo;
 import com.g2rain.basis.dao.po.ControlUnitResourceRelationPo;
-import com.g2rain.basis.dao.po.ResourceApiEndpointPo;
+import com.g2rain.basis.dao.po.ResourceApiPo;
 import com.g2rain.basis.dao.po.ResourceMenuPo;
 import com.g2rain.basis.dao.po.ResourcePageElementPo;
 import com.g2rain.basis.dao.po.ResourcePagePo;
 import com.g2rain.basis.dto.ControlUnitResourceRelationItemDto;
 import com.g2rain.basis.dto.ControlUnitResourceRelationSelectDto;
 import com.g2rain.basis.dto.ControlUnitResourceRelationsDto;
-import com.g2rain.basis.dto.ResourceApiEndpointSelectDto;
+import com.g2rain.basis.dto.ResourceApiSelectDto;
 import com.g2rain.basis.dto.ResourceMenuSelectDto;
 import com.g2rain.basis.dto.ResourcePageElementSelectDto;
 import com.g2rain.basis.dto.ResourcePageSelectDto;
@@ -92,8 +92,8 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
     @Resource(name = "resourcePageElementDao")
     private ResourcePageElementDao resourcePageElementDao;
 
-    @Resource(name = "resourceApiEndpointDao")
-    private ResourceApiEndpointDao resourceApiEndpointDao;
+    @Resource(name = "resourceApiDao")
+    private ResourceApiDao resourceApiDao;
 
     private IdGenerator idGenerator;
 
@@ -156,11 +156,6 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
         // 控制单元校验
         ControlUnitPo unit = controlUnitDao.selectById(controlUnitId);
         Asserts.isTrue(Objects.nonNull(unit), SystemErrorCode.PARAM_VAL_INVALID, controlUnitId);
-        // 已发布的控制单元禁止关联控制单元
-        ControlUnitStatus status = ControlUnitStatus.fromName(unit.getStatus());
-        Asserts.isTrue(ControlUnitStatus.UNPUBLISHED.equals(status),
-            BasisErrorCode.PUB_CONTROL_UNIT_LOCKED, controlUnitId
-        );
 
         // 处理批量添加资源数据
         List<ControlUnitResourceRelationPo> insertRecords = null;
@@ -339,11 +334,11 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
             ));
         }).orElse(Map.of());
 
-        Map<Long, ResourceApiEndpointPo> apiMapping = Optional.of(apiIds).filter(ids -> !ids.isEmpty()).map(ids -> {
-            ResourceApiEndpointSelectDto selectDto = new ResourceApiEndpointSelectDto();
-            selectDto.setApiEndpointIds(ids);
-            return resourceApiEndpointDao.selectList(selectDto).stream().collect(Collectors.toMap(
-                ResourceApiEndpointPo::getApiEndpointId, Function.identity(), (e, r) -> e
+        Map<Long, ResourceApiPo> apiMapping = Optional.of(apiIds).filter(ids -> !ids.isEmpty()).map(ids -> {
+            ResourceApiSelectDto selectDto = new ResourceApiSelectDto();
+            selectDto.setIds(ids);
+            return resourceApiDao.selectList(selectDto).stream().collect(Collectors.toMap(
+                ResourceApiPo::getId, Function.identity(), (e, _) -> e
             ));
         }).orElse(Map.of());
 
@@ -379,17 +374,19 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
                     yield element.getApplicationId();
                 }
                 case API_ENDPOINT -> {
-                    ResourceApiEndpointPo api = apiMapping.get(r.getResourceId());
+                    ResourceApiPo api = apiMapping.get(r.getResourceId());
                     Asserts.isTrue(Objects.nonNull(api), SystemErrorCode.PARAM_VAL_INVALID, r.getResourceId());
                     r.setStatus(null);// 接口地址不需要状态
-                    yield api.getApplicationId();
+                    yield null;
                 }
             };
 
-            // 跨应用校验
-            Asserts.isTrue(Objects.nonNull(applicationId), SystemErrorCode.PARAM_VAL_INVALID, r.getResourceId());
-            if (!applicationId.equals(unitApplicationId)) {
-                throw new BusinessException(BasisErrorCode.CONTROL_UNIT_CROSS_APP_NOT_ALLOWED);
+            // 跨应用校验(排除资源接口, 资源接口不归属任何应用!!!!!)
+            if (!ResourceType.API_ENDPOINT.equals(resourceType)) {
+                Asserts.isTrue(Objects.nonNull(applicationId), SystemErrorCode.PARAM_VAL_INVALID, r.getResourceId());
+                if (!applicationId.equals(unitApplicationId)) {
+                    throw new BusinessException(BasisErrorCode.CONTROL_UNIT_CROSS_APP_NOT_ALLOWED);
+                }
             }
 
             // 重复关系校验

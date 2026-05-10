@@ -1,11 +1,11 @@
 package com.g2rain.basis.service;
 
-import com.g2rain.common.exception.BusinessException;
-import com.g2rain.common.model.PageData;
-import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
 import com.g2rain.basis.vo.LoginTokenVo;
+import com.g2rain.common.exception.BusinessException;
+import com.g2rain.common.model.PageData;
+import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.web.ApplicationScope;
 import com.g2rain.common.web.TokenJWTPayload;
 
@@ -38,10 +38,11 @@ public interface LoginTokenService {
     /**
      * 新增或更新数据
      *
-     * @param dto 数据传输对象
+     * @param applicationCode 应用编码
+     * @param dto             数据传输对象
      * @return 操作结果（影响行数）
      */
-    Long save(LoginTokenDto dto);
+    Long save(String applicationCode, LoginTokenDto dto);
 
     /**
      * 根据 ID 删除数据

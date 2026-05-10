@@ -3,7 +3,6 @@ package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.dto.UploadResourceDto;
 import com.g2rain.basis.enums.BasisErrorCode;
-import com.g2rain.basis.service.ResourceApiEndpointService;
 import com.g2rain.basis.service.ResourcePageElementService;
 import com.g2rain.basis.service.ResourcePageService;
 import com.g2rain.basis.service.ResourceService;
@@ -39,9 +38,6 @@ public class ResourceServiceImpl implements ResourceService {
     @Resource(name = "resourcePageElementServiceImpl")
     private ResourcePageElementService resourcePageElementService;
 
-    @Resource(name = "resourceApiEndpointServiceImpl")
-    private ResourceApiEndpointService resourceApiEndpointService;
-
     /**
      * 上传应用资源
      *
@@ -64,6 +60,5 @@ public class ResourceServiceImpl implements ResourceService {
         Asserts.isTrue(Objects.nonNull(resource), BasisErrorCode.RESOURCE_UPLOAD_FAIL);
         resourcePageService.batchSave(applicationId, resource.getPages());
         resourcePageElementService.batchSave(applicationId, resource.getPageElements());
-        resourceApiEndpointService.batchSave(applicationId, resource.getApiEndpoints());
     }
 }

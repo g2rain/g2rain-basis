@@ -1,5 +1,6 @@
 package com.g2rain.basis.api;
 
+import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
 import com.g2rain.basis.vo.LoginTokenVo;
 import com.g2rain.common.model.PageData;
@@ -10,6 +11,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -43,6 +47,10 @@ public interface LoginTokenApi {
     @GetMapping("/page")
     @Operation(summary = "分页查询登录令牌列表", description = "分页查询登录令牌列表")
     Result<PageData<LoginTokenVo>> selectPage(PageSelectListDto<LoginTokenSelectDto> selectDto);
+
+    @PostMapping("/{applicationCode}/save")
+    @Operation(summary = "新增或更新登录令牌", hidden = true, description = "新增或更新登录状态令牌信息")
+    Result<Long> save(@Parameter(description = "应用编码") @PathVariable String applicationCode, @RequestBody LoginTokenDto dto);
 
     /**
      * 获取指定用户在某应用下的登录令牌信息

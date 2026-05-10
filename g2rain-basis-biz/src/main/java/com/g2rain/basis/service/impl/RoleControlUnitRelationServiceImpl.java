@@ -14,14 +14,17 @@ import com.g2rain.basis.dto.RoleControlUnitRelationSelectDto;
 import com.g2rain.basis.dto.RoleSelectDto;
 import com.g2rain.basis.enums.AuthorizationStatus;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.enums.RoleType;
 import com.g2rain.basis.model.RoleControlUnitRelation;
 import com.g2rain.basis.service.RoleControlUnitRelationService;
+import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.RoleControlUnitRelationVo;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
+import com.g2rain.common.syncer.EventPublisherHub;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Moments;
@@ -61,6 +64,9 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
     private ControlUnitDao controlUnitDao;
 
     private IdGenerator idGenerator;
+
+    @Resource
+    private EventPublisherHub eventPublisherHub;
 
     @Qualifier("idGenerator")
     @Autowired(required = false)
@@ -317,7 +323,20 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
             return entity;
         }).toList();
 
-        return roleControlUnitRelationDao.insertMultiple(records);
+        int result = roleControlUnitRelationDao.insertMultiple(records);
+
+        // 找到对应的机构, 对当前的机构的接口权限置为失效
+        RolePo role = roleDao.selectById(dto.getRoleId());
+        if (Objects.nonNull(role)) {
+            // 广播删除`接口权限`信息
+            eventPublisherHub.sendDelete(
+                Constants.SYNC_OUTPUT_BINDING,
+                BasisSyncerEnum.USER_PERM.name(),
+                role.getOrganId()
+            );
+        }
+
+        return result;
     }
 
     /**
@@ -421,6 +440,13 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
                 organId, appAuthorizationId, cntLe1Ids, status
             );
         }
+
+        // 广播删除`接口权限`信息
+        eventPublisherHub.sendDelete(
+            Constants.SYNC_OUTPUT_BINDING,
+            BasisSyncerEnum.USER_PERM.name(),
+            organId
+        );
 
         return affected;
     }
