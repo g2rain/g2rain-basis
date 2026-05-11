@@ -1,5 +1,6 @@
 package com.g2rain.basis.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.g2rain.common.model.BaseDto;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -38,6 +39,7 @@ public class AuditEventDto extends BaseDto {
     /**
      * 前端请求时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime requestTime;
 
     /**
@@ -101,9 +103,9 @@ public class AuditEventDto extends BaseDto {
     private String name;
 
     /**
-     * 超级管理员
+     * 超级管理员（与网关 {@code GatewayEvent} JSON 布尔字段一致）
      */
-    private Byte adminUser;
+    private Boolean adminUser;
 
     /**
      * 组织标识
@@ -121,9 +123,9 @@ public class AuditEventDto extends BaseDto {
     private String organType;
 
     /**
-     * 平台运营组织
+     * 平台运营组织（与网关 {@code GatewayEvent} JSON 布尔字段一致）
      */
-    private Byte adminCompany;
+    private Boolean adminCompany;
 
     /**
      * 数据操作的目标组织标识

@@ -8,7 +8,6 @@ import com.g2rain.common.utils.Strings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +18,6 @@ import java.util.Objects;
  */
 @Slf4j
 @Component
-@EnableKafka
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "g2rain.audit.event.enabled", havingValue = "true")
 public class AuditEventListener {

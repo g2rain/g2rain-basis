@@ -6,9 +6,11 @@ import com.g2rain.basis.vo.AuditEventVo;
 import com.g2rain.common.converter.CommonConverter;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 审计事件表转换器
@@ -41,5 +43,19 @@ public interface AuditEventConverter {
     @Mapping(target = "version", ignore = true)
     @Mapping(target = "createTime", source = "createTime", qualifiedByName = "stringToLocalDateTime")
     @Mapping(target = "updateTime", source = "updateTime", qualifiedByName = "stringToLocalDateTime")
+    @Mapping(target = "adminUser", source = "adminUser", qualifiedByName = "booleanToByte")
+    @Mapping(target = "adminCompany", source = "adminCompany", qualifiedByName = "booleanToByte")
     AuditEventPo dto2po(AuditEventDto dto);
+
+    /**
+     * DTO 布尔字段 → 表 TINYINT（0/1）。定义在本接口上，避免 MapStruct 跨模块解析 {@code uses} 类时找不到 {@link Named}。
+     */
+    @Named("booleanToByte")
+    default Byte booleanToByte(Boolean value) {
+        if (Objects.isNull(value)) {
+            return null;
+        }
+
+        return value ? (byte) 1 : (byte) 0;
+    }
 }
