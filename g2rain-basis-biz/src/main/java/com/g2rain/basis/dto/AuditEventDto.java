@@ -101,9 +101,9 @@ public class AuditEventDto extends BaseDto {
     private String name;
 
     /**
-     * 超级管理员
+     * 超级管理员（与网关 {@code GatewayEvent} JSON 布尔字段一致）
      */
-    private Byte adminUser;
+    private Boolean adminUser;
 
     /**
      * 组织标识
@@ -121,9 +121,9 @@ public class AuditEventDto extends BaseDto {
     private String organType;
 
     /**
-     * 平台运营组织
+     * 平台运营组织（与网关 {@code GatewayEvent} JSON 布尔字段一致）
      */
-    private Byte adminCompany;
+    private Boolean adminCompany;
 
     /**
      * 数据操作的目标组织标识
