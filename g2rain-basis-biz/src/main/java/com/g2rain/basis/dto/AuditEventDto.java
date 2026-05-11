@@ -1,5 +1,6 @@
 package com.g2rain.basis.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.g2rain.common.model.BaseDto;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -38,6 +39,7 @@ public class AuditEventDto extends BaseDto {
     /**
      * 前端请求时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime requestTime;
 
     /**
