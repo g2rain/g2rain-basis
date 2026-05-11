@@ -79,16 +79,10 @@ management:
           - info
 
 g2rain:
+  springdoc:
+    description: 业务支撑接口文档
   audit:
     event:
       enabled: ${G2RAIN_AUDIT_EVENT_ENABLED:false}
       topic: gateway.exchange.event
       group-id: g2rain-basis-audit
-  web:
-    login-guard-interceptor-enabled: false
-    identity-param-injector-enabled: false
-    global-exception-filter-use-custom-json: true
-    enable-result-mixin-filter: true
-  data:
-    isolation:
-      enabled: true
