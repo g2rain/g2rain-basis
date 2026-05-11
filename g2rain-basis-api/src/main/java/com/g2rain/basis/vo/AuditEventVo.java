@@ -1,5 +1,6 @@
 package com.g2rain.basis.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.g2rain.common.model.BaseVo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -45,6 +46,7 @@ public class AuditEventVo extends BaseVo {
      * 前端请求时间
      */
     @Schema(description = "前端上报的请求发生时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime requestTime;
 
     /**
