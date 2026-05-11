@@ -47,6 +47,13 @@ spring:
         output:
           destination: g2rain-syncer
 
+  # Kafka：与 g2rain-deploy/docker-compose.yml 中 kafka 服务对齐（消费网关 topic gateway.exchange.event）
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
   # 外链 nacos 的配置中心的配置文件
   config:
     import:
@@ -71,7 +78,7 @@ management:
 g2rain:
   audit:
     event:
-      enabled: false
+      enabled: ${G2RAIN_AUDIT_EVENT_ENABLED:false}
       topic: gateway.exchange.event
       group-id: g2rain-basis-audit
   web:
