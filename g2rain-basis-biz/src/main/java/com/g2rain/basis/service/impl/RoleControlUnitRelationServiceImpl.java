@@ -326,13 +326,15 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
         int result = roleControlUnitRelationDao.insertMultiple(records);
 
         // 找到对应的机构, 对当前的机构的接口权限置为失效
-        RolePo role = roleDao.selectById(dto.getRoleId());
-        if (Objects.nonNull(role)) {
+        RoleSelectDto roleSelectDto = new RoleSelectDto();
+        roleSelectDto.setId(dto.getRoleId());
+        List<RolePo> roles = roleDao.selectListWithoutIsolation(roleSelectDto);
+        if (Collections.isNotEmpty(roles)) {
             // 广播删除`接口权限`信息
             eventPublisherHub.sendDelete(
                 Constants.SYNC_OUTPUT_BINDING,
                 BasisSyncerEnum.USER_PERM.name(),
-                role.getOrganId()
+                roles.getFirst().getOrganId()
             );
         }
 
@@ -382,7 +384,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
         RoleSelectDto roleSelect = new RoleSelectDto();
         roleSelect.setOrganId(organId);
         roleSelect.setRoleType(RoleType.ADMIN.name());
-        List<RolePo> roles = roleDao.selectList(roleSelect);
+        List<RolePo> roles = roleDao.selectListWithoutIsolation(roleSelect);
         if (Collections.isEmpty(roles)) {
             return 0;
         }

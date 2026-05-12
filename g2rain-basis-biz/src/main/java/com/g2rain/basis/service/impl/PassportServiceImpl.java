@@ -212,9 +212,8 @@ public class PassportServiceImpl implements PassportService {
     public int updatePassword(Long id, PassportUpdatePasswordDto dto) {
         PassportPo passport = passportDao.selectById(id);
         Asserts.isTrue(Objects.nonNull(passport), SystemErrorCode.PARAM_VAL_INVALID, id);
-        String password = passport.getPassword();
-        String oldPassword = BasisUtils.hashPassword(dto.getOldPassword());
-        Asserts.isTrue(Strings.equals(password, oldPassword), BasisErrorCode.OLD_PASSWORD_ILLEGAL);
+        boolean isSame = BasisUtils.verifyPassword(dto.getOldPassword(), passport.getPassword());
+        Asserts.isTrue(isSame, BasisErrorCode.OLD_PASSWORD_ILLEGAL);
 
         passport = new PassportPo();
         passport.setId(id);
