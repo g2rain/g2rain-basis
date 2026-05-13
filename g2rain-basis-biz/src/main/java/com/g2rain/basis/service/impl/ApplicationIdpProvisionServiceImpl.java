@@ -6,13 +6,13 @@ import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Moments;
-import com.g2rain.basis.converter.PassportIdpBindingConverter;
-import com.g2rain.basis.dao.PassportIdpBindingDao;
-import com.g2rain.basis.dao.po.PassportIdpBindingPo;
-import com.g2rain.basis.dto.PassportIdpBindingDto;
-import com.g2rain.basis.dto.PassportIdpBindingSelectDto;
-import com.g2rain.basis.service.PassportIdpBindingService;
-import com.g2rain.basis.vo.PassportIdpBindingVo;
+import com.g2rain.basis.converter.ApplicationIdpProvisionConverter;
+import com.g2rain.basis.dao.ApplicationIdpProvisionDao;
+import com.g2rain.basis.dao.po.ApplicationIdpProvisionPo;
+import com.g2rain.basis.dto.ApplicationIdpProvisionDto;
+import com.g2rain.basis.dto.ApplicationIdpProvisionSelectDto;
+import com.g2rain.basis.service.ApplicationIdpProvisionService;
+import com.g2rain.basis.vo.ApplicationIdpProvisionVo;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
@@ -25,16 +25,16 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 账号与外部身份源绑定表服务实现类
- * 表名: passport_idp_binding
+ * 外部身份源应用与平台应用的绑定服务实现类
+ * 表名: application_idp_provision
  *
  * @author G2rain Generator
  */
-@Service(value = "passportIdpBindingServiceImpl")
-public class PassportIdpBindingServiceImpl implements PassportIdpBindingService {
+@Service(value = "applicationIdpProvisionServiceImpl")
+public class ApplicationIdpProvisionServiceImpl implements ApplicationIdpProvisionService {
 
-    @Resource(name = "passportIdpBindingDao")
-    private PassportIdpBindingDao passportIdpBindingDao;
+    @Resource(name = "applicationIdpProvisionDao")
+    private ApplicationIdpProvisionDao applicationIdpProvisionDao;
 
     private IdGenerator idGenerator;
 
@@ -45,32 +45,29 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
     }
 
     @Override
-    public List<PassportIdpBindingVo> selectList(PassportIdpBindingSelectDto selectDto) {
-        return passportIdpBindingDao.selectList(selectDto)
+    public List<ApplicationIdpProvisionVo> selectList(ApplicationIdpProvisionSelectDto selectDto) {
+        return applicationIdpProvisionDao.selectList(selectDto)
                 .stream()
-                .map(PassportIdpBindingConverter.INSTANCE::po2vo)
+                .map(ApplicationIdpProvisionConverter.INSTANCE::po2vo)
                 .toList();
     }
 
     @Override
-    public PageData<PassportIdpBindingVo> selectPage(PageSelectListDto<PassportIdpBindingSelectDto> selectDto) {
-        Page<PassportIdpBindingPo> page = PageContext.of(selectDto.getPageNum(), selectDto.getPageSize(), () -> {
-            passportIdpBindingDao.selectList(selectDto.getQuery());
+    public PageData<ApplicationIdpProvisionVo> selectPage(PageSelectListDto<ApplicationIdpProvisionSelectDto> selectDto) {
+        Page<ApplicationIdpProvisionPo> page = PageContext.of(selectDto.getPageNum(), selectDto.getPageSize(), () -> {
+            applicationIdpProvisionDao.selectList(selectDto.getQuery());
         });
-        List<PassportIdpBindingVo> result = page.getResult()
+        List<ApplicationIdpProvisionVo> result = page.getResult()
                 .stream()
-                .map(PassportIdpBindingConverter.INSTANCE::po2vo)
+                .map(ApplicationIdpProvisionConverter.INSTANCE::po2vo)
                 .toList();
         return PageData.of(page.getPageNum(), page.getPageSize(), page.getTotal(), result);
     }
 
     @Override
-    public Long save(PassportIdpBindingDto dto) {
+    public Long save(ApplicationIdpProvisionDto dto) {
         // 转换DTO为PO
-        PassportIdpBindingPo entity = PassportIdpBindingConverter.INSTANCE.dto2po(dto);
-        if (entity.getIdpApplicationCode() == null) {
-            entity.setIdpApplicationCode("");
-        }
+        ApplicationIdpProvisionPo entity = ApplicationIdpProvisionConverter.INSTANCE.dto2po(dto);
 
         // 判断是新增还是更新
         Long id = entity.getId();
@@ -80,12 +77,12 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
             LocalDateTime now = Moments.now();
             entity.setUpdateTime(now);
             entity.setCreateTime(now);
-            int success = passportIdpBindingDao.insert(entity);
+            int success = applicationIdpProvisionDao.insert(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.CREATE_DATA_ERROR);
         } else {
             // 更新：直接更新
             entity.setUpdateTime(Moments.now());
-            int success = passportIdpBindingDao.update(entity);
+            int success = applicationIdpProvisionDao.update(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
         }
 
@@ -94,6 +91,6 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
 
     @Override
     public int delete(Long id) {
-        return passportIdpBindingDao.delete(id);
+        return applicationIdpProvisionDao.delete(id);
     }
 }

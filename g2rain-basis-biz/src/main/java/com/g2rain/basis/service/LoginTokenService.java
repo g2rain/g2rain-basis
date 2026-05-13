@@ -66,10 +66,17 @@ public interface LoginTokenService {
      *     <li>查询应用信息及应用作用域，并封装到 {@link ApplicationScope} 列表中。</li>
      * </ol>
      *
-     * @param userId          用户 ID，可为 null（表示 Passport 会话）
-     * @param applicationCode 应用编码
+     * @param passportId           发码侧会话中的通行证 ID；三方发码换票且 {@code userId} 非空时必传，且须与用户 {@code passport_id} 一致
+     * @param userId               用户 ID，可为 null（表示 Passport 会话）
+     * @param applicationCode      应用编码
+     * @param thirdPartyIdpLogin   是否外部身份源授权链路发码；为 {@link Boolean#TRUE} 且 {@code userId} 非空时校验
+     *                               {@code application_idp_provision} 与 {@code passport_idp_binding}
+     * @param idpType              身份源类型（与授权码中快照一致）
+     * @param idpSubject           IdP 稳定主体
+     * @param idpApplicationCode   三方应用在 IdP 侧的标识（如钉钉 OAuth clientId）
      * @return 构建完成的 {@link TokenJWTPayload}，包含用户、机构、应用及应用作用域信息
      * @throws BusinessException 当用户、机构或应用不存在，或机构不可用时抛出
      */
-    TokenJWTPayload fetchTokenContext(Long userId, String applicationCode);
+    TokenJWTPayload fetchTokenContext(Long passportId, Long userId, String applicationCode, Boolean thirdPartyIdpLogin,
+                                      String idpType, String idpSubject, String idpApplicationCode);
 }

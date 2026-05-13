@@ -24,9 +24,10 @@ import lombok.Setter;
 public class IdpEnterpriseOrganVo extends BaseVo {
 
     /**
-     * 身份源类型[DINGTALK, WECHAT_WORK, FEISHU, ...]
+     * 身份源类型，与 {@link com.g2rain.basis.enums.IdpType} 一致。
      */
-    @Schema(description = "身份源类型[DINGTALK, WECHAT_WORK, FEISHU, ...]")
+    @Schema(description = "身份源类型（与 IdpType 枚举名一致）",
+        allowableValues = {"DINGTALK", "FEISHU", "WECHAT_WORK"})
     private String idpType;
 
     /**

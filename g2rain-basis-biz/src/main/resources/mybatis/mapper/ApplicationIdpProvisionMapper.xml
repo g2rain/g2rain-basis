@@ -2,23 +2,19 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.g2rain.basis.dao.PassportIdpBindingDao">
+<mapper namespace="com.g2rain.basis.dao.ApplicationIdpProvisionDao">
     <!-- 通用结果集映射（包含所有字段：主键+基础字段+业务字段） -->
-    <resultMap id="BaseResultMap" type="com.g2rain.basis.dao.po.PassportIdpBindingPo">
+    <resultMap id="BaseResultMap" type="com.g2rain.basis.dao.po.ApplicationIdpProvisionPo">
         <!-- 主键字段 -->
         <id column="id" property="id" jdbcType="BIGINT"/>
         <!-- 基础字段（createTime、updateTime） -->
         <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
         <!-- 业务字段（其他自定义字段） -->
-        <result column="passport_id" property="passportId" jdbcType="BIGINT"/>
+        <result column="application_id" property="applicationId" jdbcType="BIGINT"/>
         <result column="idp_type" property="idpType" jdbcType="VARCHAR"/>
-        <result column="idp_subject" property="idpSubject" jdbcType="VARCHAR"/>
-        <result column="corp_id" property="corpId" jdbcType="VARCHAR"/>
-        <result column="idp_user_id" property="idpUserId" jdbcType="VARCHAR"/>
         <result column="idp_application_code" property="idpApplicationCode" jdbcType="VARCHAR"/>
-        <result column="bind_mode" property="bindMode" jdbcType="VARCHAR"/>
-        <result column="raw_profile" property="rawProfile" jdbcType="LONGVARCHAR"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
         <!-- deleteFlag字段（如果存在） -->
         <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
         <!-- version字段（如果存在） -->
@@ -50,36 +46,20 @@
                         update_time
                         <include refid="directionClause"/>
                     </when>
-                    <when test="item.column == 'passportId'">
-                        passport_id
+                    <when test="item.column == 'applicationId'">
+                        application_id
                         <include refid="directionClause"/>
                     </when>
                     <when test="item.column == 'idpType'">
                         idp_type
                         <include refid="directionClause"/>
                     </when>
-                    <when test="item.column == 'idpSubject'">
-                        idp_subject
-                        <include refid="directionClause"/>
-                    </when>
-                    <when test="item.column == 'corpId'">
-                        corp_id
-                        <include refid="directionClause"/>
-                    </when>
-                    <when test="item.column == 'idpUserId'">
-                        idp_user_id
-                        <include refid="directionClause"/>
-                    </when>
                     <when test="item.column == 'idpApplicationCode'">
                         idp_application_code
                         <include refid="directionClause"/>
                     </when>
-                    <when test="item.column == 'bindMode'">
-                        bind_mode
-                        <include refid="directionClause"/>
-                    </when>
-                    <when test="item.column == 'rawProfile'">
-                        raw_profile
+                    <when test="item.column == 'remark'">
+                        remark
                         <include refid="directionClause"/>
                     </when>
                 </choose>
@@ -88,14 +68,14 @@
     </sql>
 
     <!-- 插入单条记录 -->
-    <insert id="insert" parameterType="com.g2rain.basis.dao.po.PassportIdpBindingPo">
-        INSERT INTO passport_idp_binding (
+    <insert id="insert" parameterType="com.g2rain.basis.dao.po.ApplicationIdpProvisionPo">
+        INSERT INTO application_idp_provision (
         <!-- 主键字段（自增主键不包含在插入语句中） -->
         id,
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_application_code, bind_mode, raw_profile,
+        application_id, idp_type, idp_application_code, remark,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -106,7 +86,7 @@
         <!-- 基础字段值 -->
         #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
         <!-- 业务字段值 -->
-        #{passportId, jdbcType=BIGINT}, #{idpType, jdbcType=VARCHAR}, #{idpSubject, jdbcType=VARCHAR}, #{corpId, jdbcType=VARCHAR}, #{idpUserId, jdbcType=VARCHAR}, #{idpApplicationCode, jdbcType=VARCHAR}, #{bindMode, jdbcType=VARCHAR}, #{rawProfile, jdbcType=LONGVARCHAR},
+        #{applicationId, jdbcType=BIGINT}, #{idpType, jdbcType=VARCHAR}, #{idpApplicationCode, jdbcType=VARCHAR}, #{remark, jdbcType=VARCHAR},
         <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
         0,
         <!-- version字段值（如果存在，设置默认值为0） -->
@@ -116,13 +96,13 @@
 
     <!-- 批量插入记录 -->
     <insert id="insertMultiple" parameterType="java.util.List">
-        INSERT INTO passport_idp_binding (
+        INSERT INTO application_idp_provision (
         <!-- 主键字段（自增主键不包含） -->
         id,
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_application_code, bind_mode, raw_profile,
+        application_id, idp_type, idp_application_code, remark,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -135,7 +115,7 @@
             <!-- 基础字段值 -->
             #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
             <!-- 业务字段值 -->
-            #{item.passportId, jdbcType=BIGINT}, #{item.idpType, jdbcType=VARCHAR}, #{item.idpSubject, jdbcType=VARCHAR}, #{item.corpId, jdbcType=VARCHAR}, #{item.idpUserId, jdbcType=VARCHAR}, #{item.idpApplicationCode, jdbcType=VARCHAR}, #{item.bindMode, jdbcType=VARCHAR}, #{item.rawProfile, jdbcType=LONGVARCHAR},
+            #{item.applicationId, jdbcType=BIGINT}, #{item.idpType, jdbcType=VARCHAR}, #{item.idpApplicationCode, jdbcType=VARCHAR}, #{item.remark, jdbcType=VARCHAR},
             <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
             0,
             <!-- version字段值（如果存在，设置默认值为0） -->
@@ -145,37 +125,25 @@
     </insert>
 
     <!-- 根据ID更新记录（包含基础字段和业务字段） -->
-    <update id="update" parameterType="com.g2rain.basis.dao.po.PassportIdpBindingPo">
-        UPDATE passport_idp_binding
+    <update id="update" parameterType="com.g2rain.basis.dao.po.ApplicationIdpProvisionPo">
+        UPDATE application_idp_provision
         <set>
             <!-- 基础字段更新（排除version，version单独处理） -->
             <if test="updateTime != null">
                 update_time = #{updateTime, jdbcType=TIMESTAMP},
             </if>
             <!-- 业务字段更新 -->
-            <if test="passportId != null">
-                passport_id = #{passportId, jdbcType=BIGINT},
+            <if test="applicationId != null">
+                application_id = #{applicationId, jdbcType=BIGINT},
             </if>
             <if test="idpType != null">
                 idp_type = #{idpType, jdbcType=VARCHAR},
             </if>
-            <if test="idpSubject != null">
-                idp_subject = #{idpSubject, jdbcType=VARCHAR},
-            </if>
-            <if test="corpId != null">
-                corp_id = #{corpId, jdbcType=VARCHAR},
-            </if>
-            <if test="idpUserId != null">
-                idp_user_id = #{idpUserId, jdbcType=VARCHAR},
-            </if>
             <if test="idpApplicationCode != null">
                 idp_application_code = #{idpApplicationCode, jdbcType=VARCHAR},
             </if>
-            <if test="bindMode != null">
-                bind_mode = #{bindMode, jdbcType=VARCHAR},
-            </if>
-            <if test="rawProfile != null">
-                raw_profile = #{rawProfile, jdbcType=LONGVARCHAR},
+            <if test="remark != null">
+                remark = #{remark, jdbcType=VARCHAR},
             </if>
             <!-- version字段更新（如果存在，版本号自增） -->
             version = version + 1
@@ -184,37 +152,25 @@
     </update>
 
     <!-- 根据ID和Version更新记录（乐观锁更新，包含基础字段和业务字段） -->
-    <update id="updateByVersion" parameterType="com.g2rain.basis.dao.po.PassportIdpBindingPo">
-        UPDATE passport_idp_binding
+    <update id="updateByVersion" parameterType="com.g2rain.basis.dao.po.ApplicationIdpProvisionPo">
+        UPDATE application_idp_provision
         <set>
             <!-- 基础字段更新（排除version，version单独处理） -->
             <if test="updateTime != null">
                 update_time = #{updateTime, jdbcType=TIMESTAMP},
             </if>
             <!-- 业务字段更新 -->
-            <if test="passportId != null">
-                passport_id = #{passportId, jdbcType=BIGINT},
+            <if test="applicationId != null">
+                application_id = #{applicationId, jdbcType=BIGINT},
             </if>
             <if test="idpType != null">
                 idp_type = #{idpType, jdbcType=VARCHAR},
             </if>
-            <if test="idpSubject != null">
-                idp_subject = #{idpSubject, jdbcType=VARCHAR},
-            </if>
-            <if test="corpId != null">
-                corp_id = #{corpId, jdbcType=VARCHAR},
-            </if>
-            <if test="idpUserId != null">
-                idp_user_id = #{idpUserId, jdbcType=VARCHAR},
-            </if>
             <if test="idpApplicationCode != null">
                 idp_application_code = #{idpApplicationCode, jdbcType=VARCHAR},
             </if>
-            <if test="bindMode != null">
-                bind_mode = #{bindMode, jdbcType=VARCHAR},
-            </if>
-            <if test="rawProfile != null">
-                raw_profile = #{rawProfile, jdbcType=LONGVARCHAR},
+            <if test="remark != null">
+                remark = #{remark, jdbcType=VARCHAR},
             </if>
             <!-- version字段更新（乐观锁版本号自增） -->
             version = version + 1
@@ -225,7 +181,7 @@
 
     <!-- 根据ID删除记录（逻辑删除：将delete_flag设置为true） -->
     <update id="delete" parameterType="Long">
-        UPDATE passport_idp_binding
+        UPDATE application_idp_provision
         <set>
             delete_flag = 1, version = version + 1
         </set>
@@ -242,31 +198,31 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_application_code, bind_mode, raw_profile,
+        application_id, idp_type, idp_application_code, remark,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
         version
-        FROM passport_idp_binding
+        FROM application_idp_provision
         WHERE id = #{id, jdbcType=BIGINT}
         <!-- 过滤已删除的记录 -->
         AND (delete_flag = 0 OR delete_flag IS NULL)
     </select>
 
     <!-- 根据SelectDto条件查询列表 -->
-    <select id="selectList" parameterType="com.g2rain.basis.dto.PassportIdpBindingSelectDto" resultMap="BaseResultMap">
+    <select id="selectList" parameterType="com.g2rain.basis.dto.ApplicationIdpProvisionSelectDto" resultMap="BaseResultMap">
         SELECT
         <!-- 主键字段 -->
         id,
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_application_code, bind_mode, raw_profile,
+        application_id, idp_type, idp_application_code, remark,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
         version
-        FROM passport_idp_binding
+        FROM application_idp_provision
         <where>
             <!-- 主键筛选 -->
             <if test="id != null">
@@ -304,29 +260,17 @@
                 </if>
             </if>
             <!-- 业务字段筛选 -->
-            <if test="passportId != null">
-                AND passport_id = #{passportId, jdbcType=BIGINT}
+            <if test="applicationId != null">
+                AND application_id = #{applicationId, jdbcType=BIGINT}
             </if>
             <if test="idpType != null">
                 AND idp_type = #{idpType, jdbcType=VARCHAR}
             </if>
-            <if test="idpSubject != null">
-                AND idp_subject = #{idpSubject, jdbcType=VARCHAR}
-            </if>
-            <if test="corpId != null">
-                AND corp_id = #{corpId, jdbcType=VARCHAR}
-            </if>
-            <if test="idpUserId != null">
-                AND idp_user_id = #{idpUserId, jdbcType=VARCHAR}
-            </if>
             <if test="idpApplicationCode != null">
                 AND idp_application_code = #{idpApplicationCode, jdbcType=VARCHAR}
             </if>
-            <if test="bindMode != null">
-                AND bind_mode = #{bindMode, jdbcType=VARCHAR}
-            </if>
-            <if test="rawProfile != null">
-                AND raw_profile = #{rawProfile, jdbcType=LONGVARCHAR}
+            <if test="remark != null">
+                AND remark = #{remark, jdbcType=VARCHAR}
             </if>
             <!-- 过滤已删除的记录 -->
             AND (delete_flag = 0 OR delete_flag IS NULL)
@@ -334,12 +278,11 @@
         <include refid="dynamicOrderBy"/>
     </select>
 
-    <select id="countByPassportIdAndIdpKeys" resultType="int">
+    <select id="countByApplicationIdAndIdp" resultType="int">
         SELECT COUNT(1)
-        FROM passport_idp_binding
-        WHERE passport_id = #{passportId, jdbcType=BIGINT}
+        FROM application_idp_provision
+        WHERE application_id = #{applicationId, jdbcType=BIGINT}
           AND idp_type = #{idpType, jdbcType=VARCHAR}
-          AND idp_subject = #{idpSubject, jdbcType=VARCHAR}
           AND idp_application_code = #{idpApplicationCode, jdbcType=VARCHAR}
           AND (delete_flag = 0 OR delete_flag IS NULL)
     </select>

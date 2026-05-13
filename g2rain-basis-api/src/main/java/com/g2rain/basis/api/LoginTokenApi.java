@@ -55,11 +55,20 @@ public interface LoginTokenApi {
     /**
      * 获取指定用户在某应用下的登录令牌信息
      *
+     * @param passportId      发码会话通行证 ID（可选；三方换票且带 userId 时由 IAM 传入）
      * @param userId          用户ID，可选；如果为空则默认获取当前登录用户的令牌信息
      * @param applicationCode 应用编码，用于区分不同应用的令牌上下文
      * @return 返回对应用户在指定应用下的 JWT 载荷信息
      */
     @GetMapping("/token_context")
     @Operation(summary = "获取登录令牌上下文", hidden = true, description = "获取指定用户在某应用下的登录令牌 JWT 载荷信息")
-    Result<TokenJWTPayload> fetchTokenContext(@Parameter(description = "用户标识") @RequestParam(required = false) Long userId, @Parameter(description = "应用编码") @RequestParam String applicationCode);
+    Result<TokenJWTPayload> fetchTokenContext(
+        @Parameter(description = "发码会话中的通行证 ID；为 true 且 userId 非空时必传，且须与用户所属 passport_id 一致，用于 passport_idp_binding 校验") @RequestParam(required = false) Long passportId,
+        @Parameter(description = "用户标识") @RequestParam(required = false) Long userId,
+        @Parameter(description = "应用编码") @RequestParam String applicationCode,
+        @Parameter(description = "是否由外部身份源授权链路发码换票；为 true 且 userId 非空时校验 application_idp_provision 与 passport_idp_binding") @RequestParam(required = false) Boolean thirdPartyIdpLogin,
+        @Parameter(description = "身份源类型，与 IdpType 枚举名一致") @RequestParam(required = false) String idpType,
+        @Parameter(description = "IdP 稳定主体，如钉钉 unionId") @RequestParam(required = false) String idpSubject,
+        @Parameter(description = "三方应用在 IdP 侧的应用标识，如钉钉 OAuth clientId") @RequestParam(required = false) String idpApplicationCode
+    );
 }

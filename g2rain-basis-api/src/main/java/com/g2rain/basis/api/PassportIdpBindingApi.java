@@ -17,7 +17,18 @@ import java.util.List;
 
 
 /**
- * 账号与外部身份源绑定表API接口
+ * 账号与外部身份源绑定表 API 接口。
+ * <p>
+ * <b>IAM 集成：</b>IAM 为独立进程，通过 REST 或 OpenFeign（由 IAM 工程声明 {@code @FeignClient} 指向本服务路径
+ * {@code /passport_idp_binding}）调用本接口完成落库。字段 {@code idp_type}、{@code idp_application_code}、{@code bind_mode} 与枚举
+ * {@link com.g2rain.basis.enums.IdpType}、{@link com.g2rain.basis.enums.IdpBindMode} 存库值一致（均为枚举名）。
+ * 唯一约束为 {@code (idp_type, idp_subject, idp_application_code)}。
+ * </p>
+ * <p>
+ * <b>多渠道与换票语义：</b>支持多种身份源渠道；当前阶段 IAM 仅实现钉钉（{@link com.g2rain.basis.enums.IdpType#DINGTALK}）。
+ * {@code bind_mode} 表示钉钉「企业内部应用」与「第三方企业应用」两条换票/用户解析链路，与 OAuth 授权码、
+ * 访问令牌两跳无对应关系。
+ * </p>
  * 表名: passport_idp_binding
  *
  * @author G2rain Generator

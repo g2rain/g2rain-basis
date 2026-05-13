@@ -28,9 +28,10 @@ public class PassportIdpBindingDto extends BaseDto {
     private Long passportId;
 
     /**
-     * 身份源类型[DINGTALK:钉钉，可扩展 WECHAT 等]
+     * 身份源类型，与 {@link com.g2rain.basis.enums.IdpType} 一致；当前 IAM 仅实现钉钉。
      */
-    @Schema(description = "身份源类型[DINGTALK:钉钉，可扩展 WECHAT 等]")
+    @Schema(description = "身份源类型（与 IdpType 枚举名一致）",
+        allowableValues = {"DINGTALK", "FEISHU", "WECHAT_WORK"})
     private String idpType;
 
     /**
@@ -52,9 +53,15 @@ public class PassportIdpBindingDto extends BaseDto {
     private String idpUserId;
 
     /**
-     * 接入形态[INTERNAL:企业内部应用, THIRD_PARTY:第三方企业应用]
+     * 三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId），须与 {@code application_idp_provision} 中配置一致
      */
-    @Schema(description = "接入形态[INTERNAL:企业内部应用, THIRD_PARTY:第三方企业应用]",
+    @Schema(description = "三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId）")
+    private String idpApplicationCode;
+
+    /**
+     * 接入形态，与 {@link com.g2rain.basis.enums.IdpBindMode} 一致（钉钉企业内部 / 第三方应用换票链路）。
+     */
+    @Schema(description = "接入形态（与 IdpBindMode 枚举名一致）",
         allowableValues = {"INTERNAL", "THIRD_PARTY"})
     private String bindMode;
 

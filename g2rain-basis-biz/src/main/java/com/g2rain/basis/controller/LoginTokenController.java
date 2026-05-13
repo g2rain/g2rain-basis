@@ -44,7 +44,10 @@ public class LoginTokenController implements LoginTokenApi {
     }
 
     @Override
-    public Result<TokenJWTPayload> fetchTokenContext(Long userId, String applicationCode) {
-        return Result.success(loginTokenService.fetchTokenContext(userId, applicationCode));
+    public Result<TokenJWTPayload> fetchTokenContext(Long passportId, Long userId, String applicationCode,
+                                                     Boolean thirdPartyIdpLogin, String idpType, String idpSubject,
+                                                     String idpApplicationCode) {
+        return Result.success(loginTokenService.fetchTokenContext(passportId, userId, applicationCode,
+            thirdPartyIdpLogin, idpType, idpSubject, idpApplicationCode));
     }
 }

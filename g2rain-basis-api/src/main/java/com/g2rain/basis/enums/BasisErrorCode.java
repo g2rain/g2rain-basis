@@ -164,7 +164,13 @@ public enum BasisErrorCode implements ErrorCode {
     USER_NOT_EXISTS_ILLEGAL("basis.40051", "用户不存在"),
 
     @Schema(description = "RESOURCE_API_EXISTS_ILLEGAL")
-    RESOURCE_API_EXISTS_ILLEGAL("basis.40052", "已关联资源接口, 不允许删除服务注册信息");
+    RESOURCE_API_EXISTS_ILLEGAL("basis.40052", "已关联资源接口, 不允许删除服务注册信息"),
+
+    @Schema(description = "APPLICATION_IDP_PROVISION_MISSING")
+    APPLICATION_IDP_PROVISION_MISSING("basis.40053", "当前外部身份源应用未与该平台应用建立绑定"),
+
+    @Schema(description = "PASSPORT_IDP_BINDING_MISMATCH")
+    PASSPORT_IDP_BINDING_MISMATCH("basis.40054", "当前通行证与此外部身份源主体或应用绑定不一致");
 
     private final String code;
 

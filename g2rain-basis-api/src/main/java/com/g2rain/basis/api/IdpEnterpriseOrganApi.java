@@ -17,7 +17,11 @@ import java.util.List;
 
 
 /**
- * 外部企业/租户与平台机构关联表API接口
+ * 外部企业/租户与平台机构关联表 API 接口。
+ * <p>
+ * <b>IAM 集成：</b>IAM 为独立进程，通过 REST 或 OpenFeign 调用本服务路径 {@code /idp_enterprise_organ}。
+ * 字段 {@code idp_type} 与 {@link com.g2rain.basis.enums.IdpType} 存库值一致；当前阶段 IAM 仅对接钉钉渠道。
+ * </p>
  * 表名: idp_enterprise_organ
  *
  * @author G2rain Generator
