@@ -66,9 +66,9 @@ public class PassportPo extends BasePo {
     private String status;
 
     /**
-     * 密码是否可信[0:不可信/临时密码, 1:可信/用户已设置]
+     * 密码是否可信：{@code false} 为临时/不可信密码，{@code true} 为用户已设置的可信密码。
      */
-    private Integer passwordTrusted;
+    private Boolean passwordTrusted;
 
     /**
      * 删除标识[0:未删除, 1:已删除]
