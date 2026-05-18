@@ -157,6 +157,8 @@ public class PassportServiceImpl implements PassportService {
             entity.setUsername(null);
             // 不允许修改密码
             entity.setPassword(null);
+            // 不允许通过资料更新接口修改可信标记（仅改密接口置 1）
+            entity.setPasswordTrusted(null);
             int success = passportDao.update(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
             return entity.getId();
@@ -171,6 +173,7 @@ public class PassportServiceImpl implements PassportService {
         entity.setUpdateTime(now);
         entity.setCreateTime(now);
         entity.setStatus(PassportStatus.NORMAL.name());
+        entity.setPasswordTrusted(resolvePasswordTrustedForInsert(dto));
         // 设置密码 hash 值
         entity.setPassword(BasisUtils.hashPassword(entity.getPassword()));
         int success = passportDao.insert(entity);
@@ -219,7 +222,18 @@ public class PassportServiceImpl implements PassportService {
         passport.setId(id);
         passport.setUpdateTime(Moments.now());
         passport.setPassword(BasisUtils.hashPassword(dto.getNewPassword()));
+        passport.setPasswordTrusted(true);
         return passportDao.updateSelective(passport);
+    }
+
+    /**
+     * 新增账号时解析 {@code password_trusted}：显式传入优先；否则默认 {@code true}（IAM 自助注册）。
+     */
+    private static Boolean resolvePasswordTrustedForInsert(PassportDto dto) {
+        if (dto.getPasswordTrusted() != null) {
+            return dto.getPasswordTrusted();
+        }
+        return true;
     }
 
     /**

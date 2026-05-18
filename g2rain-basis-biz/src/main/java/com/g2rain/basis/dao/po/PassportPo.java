@@ -66,6 +66,11 @@ public class PassportPo extends BasePo {
     private String status;
 
     /**
+     * 密码是否可信[0:不可信/临时密码, 1:可信/用户已设置]
+     */
+    private Integer passwordTrusted;
+
+    /**
      * 删除标识[0:未删除, 1:已删除]
      */
     private Boolean deleteFlag;

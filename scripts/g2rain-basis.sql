@@ -23,6 +23,7 @@ CREATE TABLE `passport` (
     `mobile` VARCHAR(32) DEFAULT '' COMMENT 															'手机号码',
     `email` VARCHAR(128) DEFAULT NULL COMMENT 														    '邮箱地址',
     `status` VARCHAR(32) NOT NULL DEFAULT 'NORMAL' COMMENT 												'状态[NORMAL:正常, FROZEN:冻结]',
+    `password_trusted` TINYINT NOT NULL DEFAULT 1 COMMENT                                               '密码是否可信[0:不可信/临时密码, 1:可信/用户已设置]',
     `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',

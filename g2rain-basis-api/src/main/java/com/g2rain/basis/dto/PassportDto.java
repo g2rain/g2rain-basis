@@ -71,4 +71,11 @@ public class PassportDto extends BaseDto {
      */
     @Schema(description = "邮箱地址")
     private String email;
+
+    /**
+     * 密码是否可信：{@code false} 为临时/不可信密码，{@code true} 为用户已设置的可信密码。
+     * 新增时未传则默认为 {@code true}（IAM 自助注册）；第三方身份源自动建号时应显式传 {@code false}。
+     */
+    @Schema(description = "密码是否可信")
+    private Boolean passwordTrusted;
 }
