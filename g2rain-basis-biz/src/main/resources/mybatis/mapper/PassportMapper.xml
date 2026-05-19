@@ -20,6 +20,7 @@
         <result column="mobile" property="mobile" jdbcType="VARCHAR"/>
         <result column="email" property="email" jdbcType="VARCHAR"/>
         <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="password_trusted" property="passwordTrusted" jdbcType="TINYINT"/>
         <!-- deleteFlag字段（如果存在） -->
         <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
         <!-- version字段（如果存在） -->
@@ -171,7 +172,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        username, password, real_name, sex, birthday, id_no, mobile, email, status,
+        username, password, real_name, sex, birthday, id_no, mobile, email, status, password_trusted,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -184,7 +185,7 @@
         <!-- 业务字段值 -->
         #{username, jdbcType=VARCHAR}, #{password, jdbcType=VARCHAR}, #{realName, jdbcType=VARCHAR},
         #{sex, jdbcType=VARCHAR}, #{birthday, jdbcType=VARCHAR}, #{idNo, jdbcType=VARCHAR}, #{mobile, jdbcType=VARCHAR},
-        #{email, jdbcType=VARCHAR}, #{status, jdbcType=VARCHAR},
+        #{email, jdbcType=VARCHAR}, #{status, jdbcType=VARCHAR}, #{passwordTrusted, jdbcType=TINYINT},
         <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
         0,
         <!-- version字段值（如果存在，设置默认值为0） -->
@@ -200,7 +201,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        username, password, real_name, sex, birthday, id_no, mobile, email, status,
+        username, password, real_name, sex, birthday, id_no, mobile, email, status, password_trusted,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -215,7 +216,7 @@
             <!-- 业务字段值 -->
             #{item.username, jdbcType=VARCHAR}, #{item.password, jdbcType=VARCHAR}, #{item.realName, jdbcType=VARCHAR},
             #{item.sex, jdbcType=VARCHAR}, #{item.birthday, jdbcType=VARCHAR}, #{item.idNo, jdbcType=VARCHAR},
-            #{item.mobile, jdbcType=VARCHAR}, #{item.email, jdbcType=VARCHAR}, #{item.status, jdbcType=VARCHAR},
+            #{item.mobile, jdbcType=VARCHAR},             #{item.email, jdbcType=VARCHAR}, #{item.status, jdbcType=VARCHAR}, #{item.passwordTrusted, jdbcType=TINYINT},
             <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
             0,
             <!-- version字段值（如果存在，设置默认值为0） -->
@@ -247,6 +248,9 @@
             </if>
             <if test="status != null">
                 status = #{status, jdbcType=VARCHAR},
+            </if>
+            <if test="passwordTrusted != null">
+                password_trusted = #{passwordTrusted, jdbcType=TINYINT},
             </if>
             <!-- version字段更新（如果存在，版本号自增） -->
             version = version + 1
@@ -290,6 +294,9 @@
             <if test="status != null">
                 status = #{status, jdbcType=VARCHAR},
             </if>
+            <if test="passwordTrusted != null">
+                password_trusted = #{passwordTrusted, jdbcType=TINYINT},
+            </if>
             <!-- version字段更新（如果存在，版本号自增） -->
             version = version + 1
         </set>
@@ -320,6 +327,9 @@
             <if test="status != null">
                 status = #{status, jdbcType=VARCHAR},
             </if>
+            <if test="passwordTrusted != null">
+                password_trusted = #{passwordTrusted, jdbcType=TINYINT},
+            </if>
             <!-- version字段更新（乐观锁版本号自增） -->
             version = version + 1
         </set>
@@ -346,7 +356,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        username, password, real_name, sex, birthday, id_no, mobile, email, status,
+        username, password, real_name, sex, birthday, id_no, mobile, email, status, password_trusted,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -365,7 +375,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        username, password, real_name, sex, birthday, id_no, mobile, email, status,
+        username, password, real_name, sex, birthday, id_no, mobile, email, status, password_trusted,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->

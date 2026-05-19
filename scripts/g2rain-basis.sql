@@ -23,6 +23,7 @@ CREATE TABLE `passport` (
     `mobile` VARCHAR(32) DEFAULT '' COMMENT 															'手机号码',
     `email` VARCHAR(128) DEFAULT NULL COMMENT 														    '邮箱地址',
     `status` VARCHAR(32) NOT NULL DEFAULT 'NORMAL' COMMENT 												'状态[NORMAL:正常, FROZEN:冻结]',
+    `password_trusted` TINYINT NOT NULL DEFAULT 1 COMMENT                                               '密码是否可信[0:不可信/临时密码, 1:可信/用户已设置]',
     `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
@@ -31,6 +32,52 @@ CREATE TABLE `passport` (
     INDEX `idx_username` (`username`),
     INDEX `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '账号表';
+
+-- =============================================
+-- 身份源绑定：passport <-> 钉钉等 IdP（不自动建 passport）
+-- =============================================
+DROP TABLE IF EXISTS `passport_idp_binding`;
+CREATE TABLE `passport_idp_binding` (
+    `id` BIGINT NOT NULL COMMENT '主键标识',
+    `passport_id` BIGINT NOT NULL COMMENT '账号标识，关联 passport.id',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT '身份源类型[IdpType: DINGTALK|FEISHU|WECHAT_WORK；当前 IAM 仅钉钉]',
+    `idp_subject` VARCHAR(128) NOT NULL COMMENT 'IdP 侧稳定主体标识，建议存钉钉 unionId',
+    `corp_id` VARCHAR(64) DEFAULT NULL COMMENT '钉钉企业 corpId；企业内部模式可由 IAM 写入默认 corp',
+    `idp_user_id` VARCHAR(128) DEFAULT NULL COMMENT '钉钉 userid（corp 内），可选，便于审计与运营排查',
+    `idp_application_code` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId），与 application_idp_provision.idp_application_code 对齐',
+    `bind_mode` VARCHAR(32) DEFAULT NULL COMMENT '接入形态[IdpBindMode: INTERNAL企业内部应用|THIRD_PARTY第三方应用；与钉钉换票链路对应，非OAuth两跳]',
+    `raw_profile` JSON DEFAULT NULL COMMENT 'IdP 返回的原始用户信息快照（可选）',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_idp_type_subject_app` (`idp_type`, `idp_subject`, `idp_application_code`),
+    KEY `idx_passport_id` (`passport_id`),
+    KEY `idx_corp_idp` (`corp_id`, `idp_type`),
+    KEY `idx_delete_flag` (`delete_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='账号与外部身份源绑定表';
+
+-- =============================================
+-- 外部身份源应用 ↔ 平台应用（换票后 access 的 g2rain application）
+-- 通行证与 IdP 的关系见 passport_idp_binding（含 idp_application_code）
+-- =============================================
+DROP TABLE IF EXISTS `application_idp_provision`;
+CREATE TABLE `application_idp_provision` (
+    `id` BIGINT NOT NULL COMMENT '主键标识',
+    `application_id` BIGINT NOT NULL COMMENT '平台应用标识，关联 application.id',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT '身份源类型，与 IdpType 枚举名一致',
+    `idp_application_code` VARCHAR(128) NOT NULL COMMENT '三方应用在 IdP 侧的标识（如钉钉 OAuth clientId）',
+    `remark` VARCHAR(512) DEFAULT NULL COMMENT '备注',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_idp_application` (`idp_type`, `idp_application_code`),
+    KEY `idx_application_id` (`application_id`),
+    KEY `idx_delete_flag` (`delete_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='外部身份源应用与平台应用的绑定';
 
 -- =============================================
 -- 2. 用户表 (user)
@@ -74,6 +121,29 @@ CREATE TABLE `organ` (
     INDEX `idx_organ_type` (`organ_type`),
     INDEX `idx_organ_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '机构表';
+
+-- =============================================
+-- 外部企业/租户 ↔ 平台机构（organ）多对多
+-- 同一 (idp_type, enterprise_id) 可对应多个 organ_id（多租户）
+-- =============================================
+DROP TABLE IF EXISTS `idp_enterprise_organ`;
+CREATE TABLE `idp_enterprise_organ` (
+    `id` BIGINT NOT NULL COMMENT '主键标识',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT '身份源类型[DINGTALK, WECHAT_WORK, FEISHU, ...]',
+    `enterprise_id` VARCHAR(64) NOT NULL COMMENT '外部企业/租户标识（与 passport_idp_binding.enterprise_id 一致）',
+    `organ_id` BIGINT NOT NULL COMMENT '机构标识，关联 organ.id（业务上应为租户类型机构）',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT '状态[ACTIVE:有效, INACTIVE:停用]',
+    `remark` VARCHAR(512) DEFAULT NULL COMMENT '备注',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_idp_enterprise_organ` (`idp_type`, `enterprise_id`, `organ_id`),
+    KEY `idx_organ_id` (`organ_id`),
+    KEY `idx_idp_enterprise` (`idp_type`, `enterprise_id`),
+    KEY `idx_delete_flag` (`delete_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='外部企业/租户与平台机构关联表';
 
 -- =============================================
 -- 4. 机构路径关系表 (organ_closure)

@@ -1,7 +1,9 @@
 package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.converter.LoginTokenConverter;
+import com.g2rain.basis.dao.ApplicationIdpProvisionDao;
 import com.g2rain.basis.dao.LoginTokenDao;
+import com.g2rain.basis.dao.PassportIdpBindingDao;
 import com.g2rain.basis.dao.RoleControlUnitRelationDao;
 import com.g2rain.basis.dao.po.CountRoleControlUnitPo;
 import com.g2rain.basis.dao.po.LoginTokenPo;
@@ -31,6 +33,7 @@ import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Moments;
+import com.g2rain.common.utils.Strings;
 import com.g2rain.common.web.ApplicationScope;
 import com.g2rain.common.web.TokenJWTPayload;
 import com.g2rain.mybatis.pagination.PageContext;
@@ -78,6 +81,12 @@ public class LoginTokenServiceImpl implements LoginTokenService {
 
     @Resource
     private OrganService organService;
+
+    @Resource
+    private ApplicationIdpProvisionDao applicationIdpProvisionDao;
+
+    @Resource
+    private PassportIdpBindingDao passportIdpBindingDao;
 
     private IdGenerator idGenerator;
 
@@ -175,12 +184,20 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      *     <li>查询应用信息及应用作用域，并封装到 {@link ApplicationScope} 列表中。</li>
      * </ol>
      *
-     * @param userId          用户 ID，可为 null（表示 Passport 会话）
-     * @param applicationCode 应用编码
+     * @param passportId           发码侧通行证 ID；三方换票且 {@code userId} 非空时必传，且须与用户的 {@code passport_id} 一致
+     * @param userId               用户 ID，可为 null（表示 Passport 会话）
+     * @param applicationCode      应用编码
+     * @param thirdPartyIdpLogin   是否外部身份源授权链路发码；为 {@link Boolean#TRUE} 且 {@code userId} 非空时校验
+     *                             {@code application_idp_provision} 与 {@code passport_idp_binding}
+     * @param idpType              身份源类型
+     * @param idpSubject           IdP 稳定主体
+     * @param idpApplicationCode   三方应用在 IdP 侧的标识
      * @return 构建完成的 {@link TokenJWTPayload}，包含用户、机构、应用及应用作用域信息
      * @throws BusinessException 当用户、机构或应用不存在，或机构不可用时抛出
      */
-    public TokenJWTPayload fetchTokenContext(Long userId, String applicationCode) {
+    public TokenJWTPayload fetchTokenContext(Long passportId, Long userId, String applicationCode,
+                                             Boolean thirdPartyIdpLogin, String idpType, String idpSubject,
+                                             String idpApplicationCode) {
         ApplicationSelectDto appSelect = new ApplicationSelectDto();
         appSelect.setApplicationCode(applicationCode);
         List<ApplicationVo> applications = applicationService.selectList(appSelect);
@@ -227,6 +244,28 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         );
 
         UserVo user = users.getFirst();
+
+        if (Boolean.TRUE.equals(thirdPartyIdpLogin)) {
+            Asserts.isTrue(Strings.isNotBlank(idpType) && Strings.isNotBlank(idpSubject)
+                    && Strings.isNotBlank(idpApplicationCode),
+                SystemErrorCode.PARAM_VAL_INVALID, "idpType,idpSubject,idpApplicationCode");
+            Asserts.isTrue(passportId != null && passportId > 0L,
+                SystemErrorCode.PARAM_VAL_INVALID, "passportId");
+            Asserts.isTrue(Objects.equals(passportId, user.getPassportId()),
+                SystemErrorCode.PARAM_VAL_INVALID, userId);
+            String idpTypeTrim = idpType.trim();
+            String idpSubjectTrim = idpSubject.trim();
+            String idpAppTrim = idpApplicationCode.trim();
+            int provisionCount = applicationIdpProvisionDao.countByApplicationIdAndIdp(
+                application.getId(), idpTypeTrim, idpAppTrim);
+            Asserts.isTrue(provisionCount > 0,
+                BasisErrorCode.APPLICATION_IDP_PROVISION_MISSING, applicationCode);
+            int bindingCount = passportIdpBindingDao.countByPassportIdAndIdpKeys(
+                passportId, idpTypeTrim, idpSubjectTrim, idpAppTrim);
+            Asserts.isTrue(bindingCount > 0,
+                BasisErrorCode.PASSPORT_IDP_BINDING_MISMATCH, applicationCode);
+        }
+
         payload.setSessionType(SessionType.USER);
         payload.setUserId(user.getId());
         payload.setName(user.getRealName());
