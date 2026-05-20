@@ -36,6 +36,12 @@ public class ApplicationAuthorizationVo extends BaseVo {
     private Long applicationId;
 
     /**
+     * 支持API密钥[0:否, 1:是]
+     */
+    @Schema(description = "支持API密钥[0:否, 1:是]")
+    private Boolean apiKeySupported;
+
+    /**
      * 控制域标识
      */
     @Schema(description = "控制域标识")

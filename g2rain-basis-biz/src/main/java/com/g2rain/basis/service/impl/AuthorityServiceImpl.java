@@ -146,7 +146,7 @@ public class AuthorityServiceImpl implements AuthorityService {
 
         Boolean canIntegrate = application.getCanIntegrate();
         Boolean landing = application.getLanding();
-        boolean isDefaultMain = Boolean.TRUE.equals(landing) && Boolean.TRUE.equals(canIntegrate);
+        boolean isDefaultMain = Boolean.TRUE.equals(landing) && Boolean.FALSE.equals(canIntegrate);
         Long userId = PrincipalContextHolder.getUserId();
 
         // 如果不存在用户, 说明账号登录, 只返回当前应用的默认控制单元的菜单
@@ -285,7 +285,7 @@ public class AuthorityServiceImpl implements AuthorityService {
     public List<Long> getPassportApiPermissions() {
         ApplicationSelectDto selectDto = new ApplicationSelectDto();
         selectDto.setLanding(Boolean.TRUE);
-        selectDto.setCanIntegrate(Boolean.TRUE);
+        selectDto.setCanIntegrate(Boolean.FALSE);
         List<ApplicationVo> applications = applicationService.selectList(selectDto);
         if (Collections.isEmpty(applications)) {
             return List.of();

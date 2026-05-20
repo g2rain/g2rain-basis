@@ -15,6 +15,7 @@ import com.g2rain.basis.dao.po.OrganPo;
 import com.g2rain.basis.dao.po.RolePo;
 import com.g2rain.basis.dto.ApplicationAuthorizationDto;
 import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
+import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.dto.ControlDomainControlUnitRelationSelectDto;
 import com.g2rain.basis.dto.ControlDomainSelectDto;
 import com.g2rain.basis.dto.RoleSelectDto;
@@ -308,7 +309,14 @@ public class ApplicationAuthorizationServiceImpl implements ApplicationAuthoriza
         ControlDomainSelectDto selectDto = new ControlDomainSelectDto();
         selectDto.setIds(ids);
         Map<Long, ControlDomainPo> cdMap = controlDomainDao.selectList(selectDto).stream().collect(
-            Collectors.toMap(ControlDomainPo::getId, Function.identity(), (e1, e2) -> e1)
+            Collectors.toMap(ControlDomainPo::getId, Function.identity(), (e1, _) -> e1)
+        );
+
+        Set<Long> appIds = authorizations.stream().map(ApplicationAuthorizationPo::getApplicationId).collect(Collectors.toSet());
+        ApplicationSelectDto  applicationSelectDto = new ApplicationSelectDto();
+        applicationSelectDto.setIds(appIds);
+        Map<Long, Boolean> apiKeySupportedMap = applicationDao.selectList(applicationSelectDto).stream().collect(
+            Collectors.toMap(ApplicationPo::getId, ApplicationPo::getApiKeySupported, (e1, _) -> e1)
         );
 
         List<ApplicationAuthorizationVo> result = new ArrayList<>(authorizations.size());
@@ -320,6 +328,8 @@ public class ApplicationAuthorizationServiceImpl implements ApplicationAuthoriza
                 vo.setControlDomainDesc(controlDomain.getDescription());
             }
 
+            Boolean apiKeySupported = apiKeySupportedMap.get(authorization.getApplicationId());
+            vo.setApiKeySupported(Boolean.TRUE.equals(apiKeySupported));
             result.add(vo);
         }
 

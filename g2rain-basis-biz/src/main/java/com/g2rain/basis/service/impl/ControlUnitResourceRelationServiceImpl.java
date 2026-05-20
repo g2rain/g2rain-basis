@@ -243,7 +243,7 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
         Map<String, Long> existingMap = existingRelations.stream().collect(Collectors.toMap(
             r -> r.getControlUnitId() + "-" + r.getResourceId() + "-" + r.getResourceType(),
             BasePo::getId,
-            (existing, replacement) -> existing
+            (existing, _) -> existing
         ));
 
         // 循环生成每条记录

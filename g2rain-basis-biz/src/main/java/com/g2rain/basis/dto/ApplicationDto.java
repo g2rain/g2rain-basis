@@ -52,6 +52,13 @@ public class ApplicationDto extends BaseDto {
     private Boolean canIntegrate;
 
     /**
+     * 支持API密钥[0:否, 1:是]
+     */
+    @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "支持API密钥[0:否, 1:是]")
+    private Boolean apiKeySupported;
+
+    /**
      * 应用类型[SUPPORT:支撑, SYSTEM:系统提供, PUBLIC:第三方提供, PRIVATE:私有]
      */
     @NotBlank

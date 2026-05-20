@@ -207,7 +207,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         ApplicationVo application = applications.getFirst();
         Boolean canIntegrate = application.getCanIntegrate();
         Boolean landing = application.getLanding();
-        boolean isDefaultMain = Boolean.TRUE.equals(landing) && Boolean.TRUE.equals(canIntegrate);
+        boolean isDefaultMain = Boolean.TRUE.equals(landing) && Boolean.FALSE.equals(canIntegrate);
 
         TokenJWTPayload payload = new TokenJWTPayload();
         if (Objects.isNull(userId)) {
