@@ -1,13 +1,15 @@
 package com.g2rain.basis.controller;
 
-import com.g2rain.common.model.PageData;
-import com.g2rain.common.model.PageSelectListDto;
-import com.g2rain.common.model.Result;
 import com.g2rain.basis.api.ApplicationIdpProvisionApi;
 import com.g2rain.basis.dto.ApplicationIdpProvisionDto;
 import com.g2rain.basis.dto.ApplicationIdpProvisionSelectDto;
 import com.g2rain.basis.service.ApplicationIdpProvisionService;
 import com.g2rain.basis.vo.ApplicationIdpProvisionVo;
+import com.g2rain.common.model.PageData;
+import com.g2rain.common.model.PageSelectListDto;
+import com.g2rain.common.model.Result;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,12 +44,14 @@ public class ApplicationIdpProvisionController implements ApplicationIdpProvisio
     }
 
     @PostMapping("/save")
+    @Operation(summary = "新增或更绑定", description = "新增或更新账号与外部身份源绑定信息")
     public Result<Long> save(@RequestBody ApplicationIdpProvisionDto dto) {
         return Result.success(applicationIdpProvisionService.save(dto));
     }
 
     @DeleteMapping("/{id}")
-    public Result<Integer> delete(@PathVariable Long id) {
+    @Operation(summary = "删除绑定记录", description = "根据主键删除账号与外部身份源绑定记录")
+    public Result<Integer> delete(@Parameter(description = "绑定记录标识") @PathVariable Long id) {
         return Result.success(applicationIdpProvisionService.delete(id));
     }
 }

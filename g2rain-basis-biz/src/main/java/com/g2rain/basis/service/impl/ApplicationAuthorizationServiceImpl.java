@@ -205,7 +205,7 @@ public class ApplicationAuthorizationServiceImpl implements ApplicationAuthoriza
         // 交易类型的控制域, 需要校验订阅标识必填
         if (ControlDomainType.TRADE.name().equals(controlDomain.getControlDomainType())) {
             Asserts.isTrue(Objects.nonNull(subscriptionId), SystemErrorCode.PARAM_VAL_INVALID,
-                subscriptionId
+                "subscriptionId"
             );
         }
 
