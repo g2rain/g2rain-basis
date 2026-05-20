@@ -33,6 +33,73 @@
         </choose>
     </sql>
 
+    <sql id="commonWhereClause">
+        <where>
+            <!-- 主键筛选 -->
+            <if test="id != null">
+                AND id = #{id, jdbcType=BIGINT}
+            </if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
+            <!-- 基础字段筛选（createTime和updateTime时间筛选） -->
+            <if test="createTime != null">
+                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
+                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
+                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
+                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
+                    AND #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="updateTime != null">
+                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
+                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
+                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
+                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
+                    AND #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <!-- 业务字段筛选 -->
+            <if test="applicationAuthorizationId != null">
+                AND application_authorization_id = #{applicationAuthorizationId, jdbcType=BIGINT}
+            </if>
+            <if test="applicationId != null">
+                AND application_id = #{applicationId, jdbcType=BIGINT}
+            </if>
+            <if test="organId != null">
+                AND organ_id = #{organId, jdbcType=BIGINT}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId, jdbcType=BIGINT}
+            </if>
+            <if test="name != null">
+                AND name = #{name, jdbcType=VARCHAR}
+            </if>
+            <if test="tokenHash != null">
+                AND token_hash = #{tokenHash, jdbcType=VARCHAR}
+            </if>
+            <if test="maskedToken != null">
+                AND masked_token = #{maskedToken, jdbcType=VARCHAR}
+            </if>
+            <if test="status != null">
+                AND status = #{status, jdbcType=VARCHAR}
+            </if>
+            <!-- 过滤已删除的记录 -->
+            AND (delete_flag = 0 OR delete_flag IS NULL)
+        </where>
+    </sql>
+
     <!-- 可复用的动态排序 SQL 片段 -->
     <sql id="dynamicOrderBy">
         <trim prefix="ORDER BY" suffixOverrides=",">
@@ -253,7 +320,7 @@
         AND (delete_flag = 0 OR delete_flag IS NULL)
     </select>
 
-    <!-- 根据SelectDto条件查询列表 -->
+    <!-- 根据 SelectDto 条件查询列表 -->
     <select id="selectList" parameterType="com.g2rain.basis.dto.PersonalStaticAccessTokenSelectDto" resultMap="BaseResultMap">
         SELECT
         <!-- 主键字段 -->
@@ -267,70 +334,12 @@
         <!-- version字段（如果存在） -->
         version
         FROM personal_static_access_token
-        <where>
-            <!-- 主键筛选 -->
-            <if test="id != null">
-                AND id = #{id, jdbcType=BIGINT}
-            </if>
-            <if test="ids != null and ids.size() > 0">
-                AND id IN
-                <foreach collection="ids" item="item" open="(" separator="," close=")">
-                    #{item, jdbcType=BIGINT}
-                </foreach>
-            </if>
-            <!-- 基础字段筛选（createTime和updateTime时间筛选） -->
-            <if test="createTime != null">
-                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
-                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
-                </if>
-                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
-                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
-                </if>
-                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
-                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
-                    AND #{createTime[1], jdbcType=TIMESTAMP}
-                </if>
-            </if>
-            <if test="updateTime != null">
-                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
-                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
-                </if>
-                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
-                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
-                </if>
-                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
-                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
-                    AND #{updateTime[1], jdbcType=TIMESTAMP}
-                </if>
-            </if>
-            <!-- 业务字段筛选 -->
-            <if test="applicationAuthorizationId != null">
-                AND application_authorization_id = #{applicationAuthorizationId, jdbcType=BIGINT}
-            </if>
-            <if test="applicationId != null">
-                AND application_id = #{applicationId, jdbcType=BIGINT}
-            </if>
-            <if test="organId != null">
-                AND organ_id = #{organId, jdbcType=BIGINT}
-            </if>
-            <if test="userId != null">
-                AND user_id = #{userId, jdbcType=BIGINT}
-            </if>
-            <if test="name != null">
-                AND name = #{name, jdbcType=VARCHAR}
-            </if>
-            <if test="tokenHash != null">
-                AND token_hash = #{tokenHash, jdbcType=VARCHAR}
-            </if>
-            <if test="maskedToken != null">
-                AND masked_token = #{maskedToken, jdbcType=VARCHAR}
-            </if>
-            <if test="status != null">
-                AND status = #{status, jdbcType=VARCHAR}
-            </if>
-            <!-- 过滤已删除的记录 -->
-            AND (delete_flag = 0 OR delete_flag IS NULL)
-        </where>
+        <include refid="commonWhereClause"/>
         <include refid="dynamicOrderBy"/>
+    </select>
+
+    <select id="checkStaticAccessTokenExists" parameterType="com.g2rain.basis.dto.PersonalStaticAccessTokenSelectDto" resultType="Long">
+        SELECT count(1) TOTAL FROM personal_static_access_token
+        <include refid="commonWhereClause"/>
     </select>
 </mapper>

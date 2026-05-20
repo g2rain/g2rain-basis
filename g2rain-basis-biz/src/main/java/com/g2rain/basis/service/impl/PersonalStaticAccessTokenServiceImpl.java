@@ -7,12 +7,16 @@ import com.g2rain.basis.dao.PersonalStaticAccessTokenDao;
 import com.g2rain.basis.dao.UserDao;
 import com.g2rain.basis.dao.po.ApplicationAuthorizationPo;
 import com.g2rain.basis.dao.po.ApplicationPo;
+import com.g2rain.basis.dao.po.OrganPo;
 import com.g2rain.basis.dao.po.PersonalStaticAccessTokenPo;
 import com.g2rain.basis.dao.po.UserPo;
+import com.g2rain.basis.dto.OrganSelectDto;
 import com.g2rain.basis.dto.PersonalStaticAccessTokenDto;
 import com.g2rain.basis.dto.PersonalStaticAccessTokenSelectDto;
 import com.g2rain.basis.dto.UpdateStatusDto;
 import com.g2rain.basis.dto.UserSelectDto;
+import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.enums.StaticTokenStatus;
 import com.g2rain.basis.service.PersonalStaticAccessTokenService;
 import com.g2rain.basis.vo.PersonalStaticAccessTokenVo;
@@ -106,6 +110,12 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         Long applicationAuthorizationId = dto.getApplicationAuthorizationId();
         ApplicationAuthorizationPo applicationAuthorization = applicationAuthorizationDao.selectById(applicationAuthorizationId);
         Asserts.isTrue(Objects.nonNull(applicationAuthorization), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorizationId);
+
+        // 当前用户不属于当前的应用授权记录, 禁止生成, 防止运营乱创建
+        Long userOrganId = PrincipalContextHolder.getOrganId();
+        Long appAuthorizationOrganId = applicationAuthorization.getOrganId();
+        Asserts.isTrue(Objects.equals(userOrganId, appAuthorizationOrganId), SystemErrorCode.CREATE_DATA_ERROR);
+
         ApplicationPo application = applicationDao.selectById(applicationAuthorization.getApplicationId());
         Asserts.isTrue(Objects.nonNull(application), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorizationId);
         Asserts.isTrue(Boolean.TRUE.equals(application.getApiKeySupported()), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorizationId);
@@ -126,6 +136,12 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
 
         Asserts.isTrue(Objects.nonNull(dto.getTokenHash()), SystemErrorCode.PARAM_REQUIRED, "tokenHash");
         Asserts.isTrue(Objects.nonNull(dto.getMaskedToken()), SystemErrorCode.PARAM_REQUIRED, "maskedToken");
+
+        // 校验 同一机构类型 机构名 是否重复
+        PersonalStaticAccessTokenSelectDto selectDto = new PersonalStaticAccessTokenSelectDto();
+        selectDto.setTokenHash(dto.getTokenHash());
+        Long total = personalStaticAccessTokenDao.checkStaticAccessTokenExists(selectDto);
+        Asserts.lessThan(total, 1, SystemErrorCode.UPDATE_DATA_ERROR);
 
         // 转换 DTO 为PO
         PersonalStaticAccessTokenPo entity = PersonalStaticAccessTokenConverter.INSTANCE.dto2po(dto);

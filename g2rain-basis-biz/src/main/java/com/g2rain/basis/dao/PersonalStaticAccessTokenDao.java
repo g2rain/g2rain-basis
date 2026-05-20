@@ -74,4 +74,13 @@ public interface PersonalStaticAccessTokenDao {
      * @return 实体对象列表
      */
     List<PersonalStaticAccessTokenPo> selectList(PersonalStaticAccessTokenSelectDto selectDto);
+
+    /**
+     * 根据 tokenHash 查询个人静态访问令牌数量
+     *
+     * @param selectDto 个人静态访问令牌信息
+     * @return 个人静态访问令牌数量
+     */
+    @IgnoreIsolation
+    Long checkStaticAccessTokenExists(PersonalStaticAccessTokenSelectDto selectDto);
 }
