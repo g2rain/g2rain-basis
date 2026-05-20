@@ -2,7 +2,6 @@ package com.g2rain.basis.service;
 
 import com.g2rain.basis.dto.ApplicationAuthorizationDto;
 import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
-import com.g2rain.basis.dto.ChangeAppAuthorizationStatusDto;
 import com.g2rain.basis.dto.UpdateStatusDto;
 import com.g2rain.basis.vo.ApplicationAuthorizationVo;
 import com.g2rain.common.model.PageData;
@@ -45,7 +44,7 @@ public interface ApplicationAuthorizationService {
     /**
      * 修改应用授权记录状态
      *
-     * @param id 授权记录 ID
+     * @param id  授权记录 ID
      * @param dto 修改状态参数
      * @return 修改的记录数量
      */

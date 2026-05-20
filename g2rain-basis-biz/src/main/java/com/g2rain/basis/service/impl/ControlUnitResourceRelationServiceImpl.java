@@ -22,7 +22,6 @@ import com.g2rain.basis.dto.ResourceMenuSelectDto;
 import com.g2rain.basis.dto.ResourcePageElementSelectDto;
 import com.g2rain.basis.dto.ResourcePageSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
-import com.g2rain.basis.enums.ControlUnitStatus;
 import com.g2rain.basis.enums.ResourceStatus;
 import com.g2rain.basis.enums.ResourceType;
 import com.g2rain.basis.model.ControlUnitPair;
