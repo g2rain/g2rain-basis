@@ -7,8 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 /**
  * 登录信息表, 记录了当前登录状态的相关信息查询DTO
  * 表名: login_token

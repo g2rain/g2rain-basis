@@ -22,7 +22,7 @@ import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Moments;
-import com.g2rain.common.utils.Strings;
+import com.g2rain.common.web.PrincipalContextHolder;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
@@ -142,6 +142,12 @@ public class PassportServiceImpl implements PassportService {
             Asserts.lessThanOrEqual(total, 0, BasisErrorCode.PARAM_ALREADY_EXISTS,
                 "username", dto.getUsername()
             );
+        } else {
+            // 需要验证当前登录的账号是否修改本人的账号信息(运营公司除外)
+            boolean adminCompany = PrincipalContextHolder.isAdminCompany();
+            Long passportId = PrincipalContextHolder.getPassportId();
+            boolean hasPermission = adminCompany || dto.getId().equals(passportId);
+            Asserts.isTrue(hasPermission, SystemErrorCode.PARAM_REQUIRED, "passport");
         }
 
         // 校验性别

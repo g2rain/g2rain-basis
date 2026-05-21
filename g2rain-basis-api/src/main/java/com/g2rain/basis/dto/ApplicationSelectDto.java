@@ -55,6 +55,12 @@ public class ApplicationSelectDto extends BaseSelectListDto {
     private Boolean landing;
 
     /**
+     * 支持API密钥[0:否, 1:是]
+     */
+    @Schema(description = "支持API密钥[0:否, 1:是]")
+    private Boolean apiKeySupported;
+
+    /**
      * 应用类型[SUPPORT:支撑, SYSTEM:系统提供, PUBLIC:第三方提供, PRIVATE:私有]
      */
     @Schema(description = "应用类型[SUPPORT:支撑, SYSTEM:系统提供, PUBLIC:第三方提供, PRIVATE:私有]", allowableValues = {"SUPPORT", "SYSTEM", "PUBLIC", "PRIVATE"})

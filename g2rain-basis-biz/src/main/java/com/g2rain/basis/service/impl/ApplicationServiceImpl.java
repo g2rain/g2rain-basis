@@ -172,7 +172,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         // 校验参数
         ApplicationType type = ApplicationType.fromName(dto.getApplicationType());
         if (ApplicationType.nonMicroApp(type)) {
-            Asserts.isTrue(!Boolean.TRUE.equals(dto.getCanIntegrate()),
+            Asserts.isTrue(Boolean.TRUE.equals(dto.getCanIntegrate()),
                 SystemErrorCode.PARAM_VAL_INVALID, "canIntegrate"
             );
         }
@@ -411,8 +411,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         // 如果入口应用 ID 为空，返回默认主应用（landing=true）
         if (Objects.isNull(applicationId)) {
             ApplicationSelectDto selectDto = new ApplicationSelectDto();
-            selectDto.setLanding(true);
-            selectDto.setCanIntegrate(true);
+            selectDto.setLanding(Boolean.TRUE);
+            selectDto.setCanIntegrate(Boolean.FALSE);
             List<ApplicationPo> applications = applicationDao.selectList(selectDto);
             // 没有默认登录应用，返回空列表
             if (Collections.isEmpty(applications)) {
@@ -456,7 +456,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Boolean canIntegrate = app.getCanIntegrate();
         Boolean landing = app.getLanding();
-        return Boolean.TRUE.equals(landing) && Boolean.TRUE.equals(canIntegrate);
+        return Boolean.TRUE.equals(landing) && Boolean.FALSE.equals(canIntegrate);
     }
 
     /**

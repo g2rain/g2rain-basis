@@ -22,7 +22,6 @@ import com.g2rain.basis.dto.ResourceMenuSelectDto;
 import com.g2rain.basis.dto.ResourcePageElementSelectDto;
 import com.g2rain.basis.dto.ResourcePageSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
-import com.g2rain.basis.enums.ControlUnitStatus;
 import com.g2rain.basis.enums.ResourceStatus;
 import com.g2rain.basis.enums.ResourceType;
 import com.g2rain.basis.model.ControlUnitPair;
@@ -243,7 +242,7 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
         Map<String, Long> existingMap = existingRelations.stream().collect(Collectors.toMap(
             r -> r.getControlUnitId() + "-" + r.getResourceId() + "-" + r.getResourceType(),
             BasePo::getId,
-            (existing, replacement) -> existing
+            (existing, _) -> existing
         ));
 
         // 循环生成每条记录

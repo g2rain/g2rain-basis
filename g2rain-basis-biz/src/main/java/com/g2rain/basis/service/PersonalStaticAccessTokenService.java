@@ -1,21 +1,21 @@
 package com.g2rain.basis.service;
 
-import com.g2rain.basis.dto.ApplicationAuthorizationDto;
-import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
 import com.g2rain.basis.dto.UpdateStatusDto;
-import com.g2rain.basis.vo.ApplicationAuthorizationVo;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
+import com.g2rain.basis.dto.PersonalStaticAccessTokenDto;
+import com.g2rain.basis.dto.PersonalStaticAccessTokenSelectDto;
+import com.g2rain.basis.vo.PersonalStaticAccessTokenVo;
 
 import java.util.List;
 
 /**
- * 应用授权记录表服务接口
- * 表名: application_authorization
+ * 个人静态访问令牌表服务接口
+ * 表名: personal_static_access_token
  *
- * @author Alpha
+ * @author G2rain Generator
  */
-public interface ApplicationAuthorizationService {
+public interface PersonalStaticAccessTokenService {
 
     /**
      * 根据条件查询列表
@@ -23,7 +23,7 @@ public interface ApplicationAuthorizationService {
      * @param selectDto 查询条件 DTO
      * @return VO 对象列表
      */
-    List<ApplicationAuthorizationVo> selectList(ApplicationAuthorizationSelectDto selectDto);
+    List<PersonalStaticAccessTokenVo> selectList(PersonalStaticAccessTokenSelectDto selectDto);
 
     /**
      * 根据条件分页查询
@@ -31,7 +31,7 @@ public interface ApplicationAuthorizationService {
      * @param selectDto 查询条件DTO（包含分页参数）
      * @return 分页 VO 数据
      */
-    PageData<ApplicationAuthorizationVo> selectPage(PageSelectListDto<ApplicationAuthorizationSelectDto> selectDto);
+    PageData<PersonalStaticAccessTokenVo> selectPage(PageSelectListDto<PersonalStaticAccessTokenSelectDto> selectDto);
 
     /**
      * 新增或更新数据
@@ -39,12 +39,12 @@ public interface ApplicationAuthorizationService {
      * @param dto 数据传输对象
      * @return 操作结果（影响行数）
      */
-    Long save(ApplicationAuthorizationDto dto);
+    Long save(PersonalStaticAccessTokenDto dto);
 
     /**
-     * 修改应用授权记录状态
+     * 修改个人静态访问令牌状态
      *
-     * @param id  授权记录 ID
+     * @param id 个人静态访问令牌 ID
      * @param dto 修改状态参数
      * @return 修改的记录数量
      */

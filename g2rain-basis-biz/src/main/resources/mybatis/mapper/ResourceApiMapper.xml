@@ -357,11 +357,9 @@
         SELECT rae.`id`, rae.`name` AS api_name, ae.`name` AS service_name, ae.`endpoint`, ae.`route_prefix`, rae.`method`, rae.`path`, rcur.status,
         ROW_NUMBER() OVER (PARTITION BY rae.id ORDER BY CASE rcur.status WHEN 'ACTIVATED' THEN 1 ELSE 2 END) AS rn
         FROM user_role_relation urr
-        JOIN role_control_unit_relation rcur
-        ON urr.`role_id` = rcur.`role_id` AND rcur.`delete_flag` = 0
-        JOIN control_unit_resource_relation curr
-        ON rcur.`control_unit_id` = curr.`control_unit_id` AND curr.`delete_flag` = 0
-        AND curr.`resource_type` = 'API_ENDPOINT'
+        JOIN role_control_unit_relation rcur ON urr.`role_id` = rcur.`role_id` AND rcur.`delete_flag` = 0
+        JOIN control_unit cu ON cu.id = rcur.control_unit_id AND cu.`application_id` = #{applicationId}
+        JOIN control_unit_resource_relation curr ON rcur.`control_unit_id` = curr.`control_unit_id` AND curr.`delete_flag` = 0 AND curr.`resource_type` = 'API_ENDPOINT'
         JOIN resource_api rae ON curr.resource_id = rae.id AND rae.delete_flag = 0
         JOIN service_registry ae ON rae.service_code = ae.service_code AND ae.delete_flag = 0
         WHERE urr.`delete_flag` = 0 AND urr.`user_id` = #{userId}

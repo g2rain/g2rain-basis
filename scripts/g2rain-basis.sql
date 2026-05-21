@@ -34,53 +34,53 @@ CREATE TABLE `passport` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '账号表';
 
 -- =============================================
--- 身份源绑定：passport <-> 钉钉等 IdP（不自动建 passport）
+-- 2. 身份源绑定：passport <-> 钉钉等 IdP（不自动建 passport）
 -- =============================================
 DROP TABLE IF EXISTS `passport_idp_binding`;
 CREATE TABLE `passport_idp_binding` (
-    `id` BIGINT NOT NULL COMMENT '主键标识',
-    `passport_id` BIGINT NOT NULL COMMENT '账号标识，关联 passport.id',
-    `idp_type` VARCHAR(32) NOT NULL COMMENT '身份源类型[IdpType: DINGTALK|FEISHU|WECHAT_WORK；当前 IAM 仅钉钉]',
-    `idp_subject` VARCHAR(128) NOT NULL COMMENT 'IdP 侧稳定主体标识，建议存钉钉 unionId',
-    `corp_id` VARCHAR(64) DEFAULT NULL COMMENT '钉钉企业 corpId；企业内部模式可由 IAM 写入默认 corp',
-    `idp_user_id` VARCHAR(128) DEFAULT NULL COMMENT '钉钉 userid（corp 内），可选，便于审计与运营排查',
-    `idp_application_code` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId），与 application_idp_provision.idp_application_code 对齐',
-    `bind_mode` VARCHAR(32) DEFAULT NULL COMMENT '接入形态[IdpBindMode: INTERNAL企业内部应用|THIRD_PARTY第三方应用；与钉钉换票链路对应，非OAuth两跳]',
-    `raw_profile` JSON DEFAULT NULL COMMENT 'IdP 返回的原始用户信息快照（可选）',
-    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `version` INT NOT NULL DEFAULT 0 COMMENT '记录版本',
-    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT '删除标识[0:未删除, 1:已删除]',
+    `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
+    `passport_id` BIGINT NOT NULL COMMENT                                                               '账号标识，关联 passport.id',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[IdpType: DINGTALK|FEISHU|WECHAT_WORK；当前 IAM 仅钉钉]',
+    `idp_subject` VARCHAR(128) NOT NULL COMMENT                                                         'IdP 侧稳定主体标识，建议存钉钉 unionId',
+    `corp_id` VARCHAR(64) DEFAULT NULL COMMENT                                                          '钉钉企业 corpId；企业内部模式可由 IAM 写入默认 corp',
+    `idp_user_id` VARCHAR(128) DEFAULT NULL COMMENT                                                     '钉钉 userid（corp 内），可选，便于审计与运营排查',
+    `idp_application_code` VARCHAR(128) NOT NULL DEFAULT '' COMMENT                                     '三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId），与 application_idp_provision.idp_application_code 对齐',
+    `bind_mode` VARCHAR(32) DEFAULT NULL COMMENT                                                        '接入形态[IdpBindMode: INTERNAL企业内部应用|THIRD_PARTY第三方应用；与钉钉换票链路对应，非OAuth两跳]',
+    `raw_profile` JSON DEFAULT NULL COMMENT                                                             'IdP 返回的原始用户信息快照（可选）',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_idp_type_subject_app` (`idp_type`, `idp_subject`, `idp_application_code`),
     KEY `idx_passport_id` (`passport_id`),
     KEY `idx_corp_idp` (`corp_id`, `idp_type`),
     KEY `idx_delete_flag` (`delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='账号与外部身份源绑定表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '账号与外部身份源绑定表';
 
 -- =============================================
--- 外部身份源应用 ↔ 平台应用（换票后 access 的 g2rain application）
+-- 3. 外部身份源应用 ↔ 平台应用（换票后 access 的 g2rain application）
 -- 通行证与 IdP 的关系见 passport_idp_binding（含 idp_application_code）
 -- =============================================
 DROP TABLE IF EXISTS `application_idp_provision`;
 CREATE TABLE `application_idp_provision` (
-    `id` BIGINT NOT NULL COMMENT '主键标识',
-    `application_id` BIGINT NOT NULL COMMENT '平台应用标识，关联 application.id',
-    `idp_type` VARCHAR(32) NOT NULL COMMENT '身份源类型，与 IdpType 枚举名一致',
-    `idp_application_code` VARCHAR(128) NOT NULL COMMENT '三方应用在 IdP 侧的标识（如钉钉 OAuth clientId）',
-    `remark` VARCHAR(512) DEFAULT NULL COMMENT '备注',
-    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `version` INT NOT NULL DEFAULT 0 COMMENT '记录版本',
-    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT '删除标识[0:未删除, 1:已删除]',
+    `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
+    `application_id` BIGINT NOT NULL COMMENT                                                            '平台应用标识，关联 application.id',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型，与 IdpType 枚举名一致',
+    `idp_application_code` VARCHAR(128) NOT NULL COMMENT                                                '三方应用在 IdP 侧的标识（如钉钉 OAuth clientId）',
+    `remark` VARCHAR(512) DEFAULT NULL COMMENT                                                          '备注',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_idp_application` (`idp_type`, `idp_application_code`),
     KEY `idx_application_id` (`application_id`),
     KEY `idx_delete_flag` (`delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='外部身份源应用与平台应用的绑定';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '外部身份源应用与平台应用的绑定';
 
 -- =============================================
--- 2. 用户表 (user)
+-- 4. 用户表 (user)
 -- =============================================
 DROP TABLE IF EXISTS `user`;
 
@@ -102,7 +102,7 @@ CREATE TABLE `user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '用户表';
 
 -- =============================================
--- 3. 机构表 (organ)
+-- 5. 机构表 (organ)
 -- =============================================
 DROP TABLE IF EXISTS `organ`;
 
@@ -123,30 +123,30 @@ CREATE TABLE `organ` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '机构表';
 
 -- =============================================
--- 外部企业/租户 ↔ 平台机构（organ）多对多
+-- 6. 外部企业/租户 ↔ 平台机构（organ）多对多
 -- 同一 (idp_type, enterprise_id) 可对应多个 organ_id（多租户）
 -- =============================================
 DROP TABLE IF EXISTS `idp_enterprise_organ`;
 CREATE TABLE `idp_enterprise_organ` (
-    `id` BIGINT NOT NULL COMMENT '主键标识',
-    `idp_type` VARCHAR(32) NOT NULL COMMENT '身份源类型[DINGTALK, WECHAT_WORK, FEISHU, ...]',
-    `enterprise_id` VARCHAR(64) NOT NULL COMMENT '外部企业/租户标识（与 passport_idp_binding.enterprise_id 一致）',
-    `organ_id` BIGINT NOT NULL COMMENT '机构标识，关联 organ.id（业务上应为租户类型机构）',
-    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT '状态[ACTIVE:有效, INACTIVE:停用]',
-    `remark` VARCHAR(512) DEFAULT NULL COMMENT '备注',
-    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `version` INT NOT NULL DEFAULT 0 COMMENT '记录版本',
-    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT '删除标识[0:未删除, 1:已删除]',
+    `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[DINGTALK, WECHAT_WORK, FEISHU, ...]',
+    `enterprise_id` VARCHAR(64) NOT NULL COMMENT                                                        '外部企业/租户标识（与 passport_idp_binding.enterprise_id 一致）',
+    `organ_id` BIGINT NOT NULL COMMENT                                                                  '机构标识，关联 organ.id（业务上应为租户类型机构）',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT                                              '状态[ACTIVE:有效, INACTIVE:停用]',
+    `remark` VARCHAR(512) DEFAULT NULL COMMENT                                                          '备注',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_idp_enterprise_organ` (`idp_type`, `enterprise_id`, `organ_id`),
     KEY `idx_organ_id` (`organ_id`),
     KEY `idx_idp_enterprise` (`idp_type`, `enterprise_id`),
     KEY `idx_delete_flag` (`delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='外部企业/租户与平台机构关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '外部企业/租户与平台机构关联表';
 
 -- =============================================
--- 4. 机构路径关系表 (organ_closure)
+-- 7. 机构路径关系表 (organ_closure)
 -- =============================================
 DROP TABLE IF EXISTS `organ_closure`;
 
@@ -167,7 +167,7 @@ CREATE TABLE `organ_closure` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '机构路径关系表';
 
 -- =============================================
--- 5. 应用资源菜单表 (resource_menu)
+-- 8. 应用资源菜单表 (resource_menu)
 -- =============================================
 DROP TABLE IF EXISTS `resource_menu`;
 
@@ -189,7 +189,7 @@ CREATE TABLE `resource_menu` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用资源菜单表';
 
 -- =============================================
--- 6. 应用资源页面表 (resource_page)
+-- 9. 应用资源页面表 (resource_page)
 -- =============================================
 DROP TABLE IF EXISTS `resource_page`;
 
@@ -208,7 +208,7 @@ CREATE TABLE `resource_page` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用资源页面表';
 
 -- =============================================
--- 7. 应用资源页面元素表 (resource_page_element)
+-- 10. 应用资源页面元素表 (resource_page_element)
 -- =============================================
 DROP TABLE IF EXISTS `resource_page_element`;
 
@@ -227,7 +227,7 @@ CREATE TABLE `resource_page_element` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用资源页面元素表';
 
 -- =============================================
--- 8. 服务注册表 (service_registry)
+-- 11. 服务注册表 (service_registry)
 -- =============================================
 DROP TABLE IF EXISTS `service_registry`;
 
@@ -247,7 +247,7 @@ CREATE TABLE `service_registry` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '服务注册表';
 
 -- =============================================
--- 9. 资源接口表 (resource_api)
+-- 12. 资源接口表 (resource_api)
 -- =============================================
 DROP TABLE IF EXISTS `resource_api`;
 
@@ -268,7 +268,7 @@ CREATE TABLE `resource_api` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '资源接口表';
 
 -- =============================================
--- 10. 控制单元表 (control_unit)
+-- 13. 控制单元表 (control_unit)
 -- =============================================
 DROP TABLE IF EXISTS `control_unit`;
 
@@ -288,7 +288,7 @@ CREATE TABLE `control_unit` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制单元表';
 
 -- =============================================
--- 11. 控制单元资源关联表 (control_unit_resource_relation)
+-- 14. 控制单元资源关联表 (control_unit_resource_relation)
 -- =============================================
 DROP TABLE IF EXISTS `control_unit_resource_relation`;
 
@@ -307,7 +307,7 @@ CREATE TABLE `control_unit_resource_relation` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制单元资源关联表';
 
 -- =============================================
--- 12. 角色表 (role)
+-- 15. 角色表 (role)
 -- =============================================
 DROP TABLE IF EXISTS `role`;
 
@@ -325,7 +325,7 @@ CREATE TABLE `role` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '角色表';
 
 -- =============================================
--- 13. 用户角色关联表 (user_role_relation)
+-- 16. 用户角色关联表 (user_role_relation)
 -- =============================================
 DROP TABLE IF EXISTS `user_role_relation`;
 
@@ -342,7 +342,7 @@ CREATE TABLE `user_role_relation` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '用户角色关联表';
 
 -- =============================================
--- 14. 角色控制单元关联表 (role_control_unit_relation)
+-- 17. 角色控制单元关联表 (role_control_unit_relation)
 -- =============================================
 DROP TABLE IF EXISTS `role_control_unit_relation`;
 
@@ -362,7 +362,7 @@ CREATE TABLE `role_control_unit_relation` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '角色控制单元关联表';
 
 -- =============================================
--- 15. 控制域表 (control_domain)
+-- 18. 控制域表 (control_domain)
 -- =============================================
 DROP TABLE IF EXISTS `control_domain`;
 
@@ -381,7 +381,7 @@ CREATE TABLE `control_domain` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制域表';
 
 -- =============================================
--- 16. 控制域控制单元关联表 (control_domain_control_unit_relation)
+-- 19. 控制域控制单元关联表 (control_domain_control_unit_relation)
 -- =============================================
 DROP TABLE IF EXISTS `control_domain_control_unit_relation`;
 
@@ -398,7 +398,7 @@ CREATE TABLE `control_domain_control_unit_relation` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制域控制单元关联表';
 
 -- =============================================
--- 17. 应用表 (application)
+-- 20. 应用表 (application)
 -- =============================================
 DROP TABLE IF EXISTS `application`;
 
@@ -409,6 +409,7 @@ CREATE TABLE `application` (
     `application_code` VARCHAR(64) DEFAULT NULL COMMENT                                                 '应用编码',
     `can_integrate` TINYINT NOT NULL DEFAULT 0 COMMENT                                                  '是否具备集成功能[0:否, 1:是]',
     `landing` TINYINT NOT NULL DEFAULT 0 COMMENT                                                        '默认数据[0:否, 1:是]',
+    `api_key_supported` TINYINT NOT NULL DEFAULT 0 COMMENT                                              '支持API密钥[0:否, 1:是]',
     `application_type` VARCHAR(32) NOT NULL COMMENT                                                     '应用类型[SUPPORT:支撑, SYSTEM:系统提供, PUBLIC:第三方提供, PRIVATE:私有]',
     `public_key_algorithm` VARCHAR(32) DEFAULT NULL COMMENT                                             '应用公钥算法',
     `public_key_format` VARCHAR(32)  DEFAULT NULL COMMENT                                               '应用公钥格式',
@@ -427,7 +428,7 @@ CREATE TABLE `application` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用表';
 
 -- =============================================
--- 18. 应用归类关系表 (application_suite)
+-- 21. 应用归类关系表 (application_suite)
 -- =============================================
 DROP TABLE IF EXISTS `application_suite`;
 
@@ -444,7 +445,7 @@ CREATE TABLE `application_suite` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用归类关系表';
 
 -- =============================================
--- 19. 应用授权记录表 (application_authorization)
+-- 22. 应用授权记录表 (application_authorization)
 -- =============================================
 DROP TABLE IF EXISTS `application_authorization`;
 
@@ -466,7 +467,31 @@ CREATE TABLE `application_authorization` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用授权记录表';
 
 -- =============================================
--- 20. 登录信息表 (login_token)
+-- 23. 个人静态访问令牌表 (personal_static_access_token)
+-- =============================================
+DROP TABLE IF EXISTS `personal_static_access_token`;
+
+CREATE TABLE `personal_static_access_token` (
+     `id` BIGINT NOT NULL COMMENT 													                    '个人静态访问令牌标识',
+     `application_authorization_id` BIGINT DEFAULT NULL COMMENT                                         '授权记录标识',
+     `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+     `organ_id` BIGINT NOT NULL COMMENT 												                '机构标识',
+     `user_id` BIGINT DEFAULT NULL COMMENT 														        '用户标识',
+     `name` VARCHAR(128) NOT NULL COMMENT 															    '访问令牌名称',
+     `token_hash` VARCHAR(64) NOT NULL COMMENT 												            '静态访问令牌的哈希摘要',
+     `masked_token` VARCHAR(28) NOT NULL COMMENT 												        '脱敏令牌',
+     `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 											'状态[ACTIVATED:已启用, REVOKED:已吊销]',
+     `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
+     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
+     `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
+     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
+     PRIMARY KEY (`id`),
+     UNIQUE KEY `uk_token_hash` (`token_hash`),
+     INDEX `idx_authorization_org_del` (`application_authorization_id`, `organ_id`, `delete_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '个人静态访问令牌表';
+
+-- =============================================
+-- 24. 登录信息表 (login_token)
 -- =============================================
 DROP TABLE IF EXISTS `login_token`;
 
@@ -491,7 +516,7 @@ CREATE TABLE `login_token` (
 ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci COMMENT=								'登录信息表, 记录了当前登录状态的相关信息';
 
 -- =============================================
--- 21. 审计事件表 (audit_event)
+-- 25. 审计事件表 (audit_event)
 -- =============================================
 DROP TABLE IF EXISTS `audit_event`;
 
@@ -538,631 +563,682 @@ CREATE TABLE `audit_event` (
 
 -- 账号
 INSERT INTO `passport`
-(`id`, `username`, `password`, `real_name`, `sex`, `birthday`, `id_no`, `mobile`, `email`, `status`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `username`, `password`, `real_name`, `sex`, `birthday`, `id_no`, `mobile`, `email`, `status`, `create_time`, `update_time`)
 VALUES
-    (200, 'admin', 'PBKDF2WithHmacSHA256$65536$YSskABrEQZiuRcM3GMl6gQ==$Hl9gA9UnYmS1BoY3Ov3XY2qYQpUKF1Sl0QneYZ5zc7k=', '平台超管', 'MALE', NULL, NULL, NULL, NULL, 'NORMAL', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (207, 'admin', 'PBKDF2WithHmacSHA256$65536$YSskABrEQZiuRcM3GMl6gQ==$Hl9gA9UnYmS1BoY3Ov3XY2qYQpUKF1Sl0QneYZ5zc7k=', '平台超管', 'MALE', NULL, NULL, NULL, NULL, 'NORMAL', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 机构
 INSERT INTO `organ`
-(`id`, `organ_name`, `organ_type`, `status`, `admin`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `organ_name`, `organ_type`, `status`, `admin`, `create_time`, `update_time`)
 VALUES
-    (201, '平台机构', 'COMPANY', 'ACTIVE', 1, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (208, '平台机构', 'COMPANY', 'ACTIVE', 1, '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 机构路径关系
 INSERT INTO `organ_closure`
-(`id`, `ancestor_id`, `descendant_id`, `descendant_type`, `relation_type`, `path_count`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `ancestor_id`, `descendant_id`, `descendant_type`, `relation_type`, `path_count`, `create_time`, `update_time`)
 VALUES
-    (202, 201, 201, 'COMPANY', 'SELF_ASSOCIATION', 1, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (209, 208, 208, 'COMPANY', 'SELF_ASSOCIATION', 1, '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 角色
 INSERT INTO `role`
-(`id`, `organ_id`, `role_name`, `role_type`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `organ_id`, `role_name`, `role_type`, `create_time`, `update_time`)
 VALUES
-    (203, 201, '超管角色', 'ADMIN', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (210, 208, '超管角色', 'ADMIN', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 用户
 INSERT INTO `user`
-(`id`, `passport_id`, `organ_id`, `email`, `mobile`, `real_name`, `admin`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `passport_id`, `organ_id`, `email`, `mobile`, `real_name`, `admin`, `create_time`, `update_time`)
 VALUES
-    (205, 200, 201, NULL, NULL, '平台管理员', 1, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (211, 207, 208, NULL, NULL, '平台管理员', 1, '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 用户角色关联
 INSERT INTO `user_role_relation`
-(`id`, `user_id`, `role_id`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `user_id`, `role_id`, `create_time`, `update_time`)
 VALUES
-    (206, 205, 203, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (212, 211, 210, '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 应用
 INSERT INTO `application`
-(`id`, `organ_id`, `application_name`, `application_code`, `can_integrate`, `landing`, `application_type`, `public_key_algorithm`, `public_key_format`, `public_key`, `access_token_expires_in`, `refresh_token_expires_in`, `endpoint_url`, `context_path`, `status`, `description`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `organ_id`, `application_name`, `application_code`, `can_integrate`, `landing`, `api_key_supported`, `application_type`, `public_key_algorithm`, `public_key_format`, `public_key`, `access_token_expires_in`, `refresh_token_expires_in`, `endpoint_url`, `context_path`, `status`, `description`, `create_time`, `update_time`)
 VALUES
-    (207, 201, '综合管理平台', 'g2rain-main-shell',  1, 1, 'SUPPORT', 'EC', 'PEM', '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEXmlg1y2fUD9KJj4WB6DrRZU+iVwA yzz60AxRoFb2yDnBvYiiK9JR1p5QUw2jkR9RPvkZez1Kx2BqxwyOoWRV/A==\n-----END PUBLIC KEY-----\n', 3600, 86400, 'http://demo.g2rain.com', '/main',    'PUBLISHED', '管理平台入口', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (208, 201, '业务支撑平台', 'g2rain-manager-app',  0, 1, 'SUPPORT', 'EC', 'PEM', '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEXGDOn5B+GFE42lcMd5u47r6na9iE H1AzxAU49KiWBz17su0M1vPZ+s57bvMlYvbcPG2nfWcJvJzRuKUakrUhsA==\n-----END PUBLIC KEY-----\n', 3600, 86400, 'http://demo.g2rain.com', '/manager',    'PUBLISHED', '业务支撑平台', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (209, 201, '基础支撑平台', 'g2rain-infra-app', 0, 1, 'SUPPORT', 'EC', 'PEM', '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEAcmLmXDroj3aJiTFxP6oy5Q+3Tawz1LFg0BY1a5CRNynqpVvG+/wVGUhXf7KOJ7/nA2OO/H+IQaHryS+SXtnOA==\n-----END PUBLIC KEY-----\n', 3600, 86400, 'http://demo.g2rain.com', '/infra', 'PUBLISHED', '用于管理字典, 国际化, 发号器功能', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (213, 208, '综合管理平台', 'g2rain-main-shell',  0, 1, 0, 'SUPPORT', 'EC', 'PEM', '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEXmlg1y2fUD9KJj4WB6DrRZU+iVwA yzz60AxRoFb2yDnBvYiiK9JR1p5QUw2jkR9RPvkZez1Kx2BqxwyOoWRV/A==\n-----END PUBLIC KEY-----\n', 3600, 86400, '//demo.g2rain.com', '/main/',    'PUBLISHED', '管理平台入口', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (215, 208, '业务支撑平台', 'g2rain-manager-app',  1, 1, 0, 'SUPPORT', 'EC', 'PEM', '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEXGDOn5B+GFE42lcMd5u47r6na9iE H1AzxAU49KiWBz17su0M1vPZ+s57bvMlYvbcPG2nfWcJvJzRuKUakrUhsA==\n-----END PUBLIC KEY-----\n', 3600, 86400, '//demo.g2rain.com', '/manager/',    'PUBLISHED', '业务支撑平台', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (216, 208, '基础支撑平台', 'g2rain-infra-app', 1, 1, 0, 'SUPPORT', 'EC', 'PEM', '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEAcmLmXDroj3aJiTFxP6oy5Q+3Tawz1LFg0BY1a5CRNynqpVvG+/wVGUhXf7KOJ7/nA2OO/H+IQaHryS+SXtnOA==\n-----END PUBLIC KEY-----\n', 3600, 86400, '//demo.g2rain.com', '/infra/', 'PUBLISHED', '用于管理字典, 国际化, 发号器功能', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 应用归类关系
 INSERT INTO `application_suite`
-(`id`, `application_id`, `master_application_id`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `application_id`, `master_application_id`, `create_time`, `update_time`)
 VALUES
-    (210, 208, 207, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (211, 209, 207, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (217, 215, 213, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (218, 216, 213, '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 控制单元
 INSERT INTO `control_unit`
-(`id`, `application_id`, `control_unit_name`, `control_unit_scope`, `landing`, `status`, `description`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `application_id`, `control_unit_name`, `control_unit_scope`, `landing`, `status`, `description`, `create_time`, `update_time`)
 VALUES
-    (212, 207, '盘古',   'PERPETUAL', 1, 'PUBLISHED', '平台准入基础能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (213, 208, '燧人氏', 'OPERATION', 1, 'PUBLISHED', '核心运营支撑组件', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (215, 208, '女娲',   'CUSTOMER',  1, 'PUBLISHED', '租户空间构建逻辑', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (216, 209, '后羿',   'OPERATION',  1, 'PUBLISHED', '保障平台技术能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (219, 213, '盘古',   'PERPETUAL', 1, 'PUBLISHED', '平台准入基础能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (220, 215, '燧人氏', 'OPERATION', 1, 'PUBLISHED', '核心运营支撑组件', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (221, 216, '女娲',   'OPERATION',  1, 'PUBLISHED', '平台保障技术能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (222, 215, '后羿',   'CUSTOMER',  1, 'PUBLISHED', '租户空间构建逻辑', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 角色控制单元关联
 INSERT INTO `role_control_unit_relation`
-(`id`, `role_id`, `control_unit_id`, `application_authorization_id`, `status`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `role_id`, `control_unit_id`, `application_authorization_id`, `status`, `create_time`, `update_time`)
 VALUES
-    (217, 203, 213, NULL, 'ACTIVATED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (218, 203, 216, NULL, 'ACTIVATED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (223, 210, 220, NULL, 'ACTIVATED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (225, 210, 221, NULL, 'ACTIVATED', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 服务注册表
 INSERT INTO `service_registry`
-(`id`, `service_code`, `name`, `endpoint`, `route_prefix`, `description`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `service_code`, `name`, `endpoint`, `route_prefix`, `description`, `create_time`, `update_time`)
 VALUES
-    (219, 'G2RAIN_BASIS', '业务支撑服务', 'lb://g2rain-basis', 'basis', '业务支撑服务', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (220, 'G2RAIN_INFRA', '基础支撑服务', 'lb://g2rain-infra', 'infra', '基础支撑服务', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (226, 'G2RAIN_BASIS', '业务支撑服务', 'lb://g2rain-basis', 'basis', '业务支撑服务', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (227, 'G2RAIN_INFRA', '基础支撑服务', 'lb://g2rain-infra', 'infra', '基础支撑服务', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 资源后端接口
 INSERT INTO `resource_api`
-(`id`, `service_code`, `api_tags`, `name`, `method`, `path`, `description`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `service_code`, `api_tags`, `name`, `method`, `path`, `description`, `create_time`, `update_time`)
 VALUES
-    (223,'G2RAIN_INFRA','地域语言','新增或更新地域语言设置','POST','/locale_setting/save','新增或更新地域与语言偏好配置','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (225,'G2RAIN_INFRA','国际化信息','新增或更新国际化信息','POST','/i18n_message/save','新增或更新国际化文案信息','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (226,'G2RAIN_INFRA','全局唯一序列','新增或更新全局唯一 ID 记录','POST','/g2rain_raindrop/save','新增或更新全局唯一 ID 管理表数据','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (227,'G2RAIN_INFRA','字典用途','新增或更新字典用途','POST','/dictionary_usage/save','新增或更新字典用途信息','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (228,'G2RAIN_INFRA','字典明细','新增或更新字典明细','POST','/dictionary_item/save','新增或更新字典明细信息','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (231,'G2RAIN_INFRA','地域语言','分页查询地域语言设置列表','GET','/locale_setting/page','分页查询地域-语言设置列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (232,'G2RAIN_INFRA','地域语言','获取地域语言字典','GET','/locale_setting/locale_dict','获取地域语言字典','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (233,'G2RAIN_INFRA','地域语言','查询地域语言设置列表','GET','/locale_setting/list','根据查询条件返回地域-语言设置列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (235,'G2RAIN_INFRA','地域语言','获取语言地域映射','GET','/locale_setting/get_language_countries','获取语言地域映射','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (236,'G2RAIN_INFRA','地域语言','获取地域语言编码和名称映射集合','GET','/locale_setting/code_name_map','获取地域语言编码和名称映射集合','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (237,'G2RAIN_INFRA','国际化信息','分页查询国际化信息列表','GET','/i18n_message/page','分页查询国际化信息列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (238,'G2RAIN_INFRA','国际化信息','查询国际化信息列表','GET','/i18n_message/list','根据查询条件返回国际化信息列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (239,'G2RAIN_INFRA','国际化信息','获取国际化用途集合','GET','/i18n_message/i18n_message_usages','获取国际化用途集合','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (260,'G2RAIN_INFRA','全局唯一序列','分页查询全局唯一 ID 记录列表','GET','/g2rain_raindrop/page','分页查询全局唯一 ID 管理记录列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (261,'G2RAIN_INFRA','全局唯一序列','查询全局唯一 ID 记录列表','GET','/g2rain_raindrop/list','根据查询条件返回全局唯一 ID 管理记录列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (262,'G2RAIN_INFRA','全局唯一序列','查询业务标签字典集合','GET','/g2rain_raindrop/biz_tag_dict','查询业务标签字典集合','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (263,'G2RAIN_INFRA','字典用途','分页查询字典用途列表','GET','/dictionary_usage/page','分页查询字典用途列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (265,'G2RAIN_INFRA','字典用途','查询字典用途列表','GET','/dictionary_usage/list','根据查询条件返回字典用途列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (266,'G2RAIN_INFRA','字典明细','分页查询字典明细列表','GET','/dictionary_item/tree','分页查询字典明细列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (267,'G2RAIN_INFRA','字典明细','分页查询字典明细列表','GET','/dictionary_item/page','分页查询字典明细列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (268,'G2RAIN_INFRA','字典明细','查询字典明细列表','GET','/dictionary_item/list','根据查询条件返回字典明细列表','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (270,'G2RAIN_INFRA','地域语言','删除地域语言设置记录','DELETE','/locale_setting/{id}','根据主键删除地域-语言设置记录','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (271,'G2RAIN_INFRA','国际化信息','删除国际化信息记录','DELETE','/i18n_message/{id}','根据主键删除国际化信息记录','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (272,'G2RAIN_INFRA','全局唯一序列','删除全局唯一 ID 记录','DELETE','/g2rain_raindrop/{id}','根据主键删除全局唯一 ID 管理记录','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (273,'G2RAIN_INFRA','字典用途','删除字典用途记录','DELETE','/dictionary_usage/{id}','根据主键删除字典用途记录','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (275,'G2RAIN_INFRA','字典明细','删除字典明细记录','DELETE','/dictionary_item/{id}','根据主键删除字典明细记录','2026-05-08 10:02:08','2026-05-08 10:02:08',0,0),
-    (276,'G2RAIN_BASIS','用户-角色关联','新增或更新用户角色关联','POST','/user_role_relation/save','新增或更新用户角色关联记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (277,'G2RAIN_BASIS','用户-角色关联','为角色分配用户','POST','/user_role_relation/assign_users','批量为指定角色分配用户关联关系','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (278,'G2RAIN_BASIS','用户','新增或更新用户信息','POST','/user/save','新增或更新用户基础信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (279,'G2RAIN_BASIS','租户初始化','开通租户账号','POST','/tenant_provision/provision_account','为指定租户开通账号并初始化最小可用功能','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (280,'G2RAIN_BASIS','服务注册','新增或更新服务注册','POST','/service_registry/save','新增或更新服务注册信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (281,'G2RAIN_BASIS','角色-控制单元关联','新增角色控制单元关联','POST','/role_control_unit_relation/save','新增角色与控制单元的关联记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (282,'G2RAIN_BASIS','角色','新增或更新角色信息','POST','/role/save','新增或更新角色基础信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (283,'G2RAIN_BASIS','资源页面元素','新增或更新页面元素','POST','/resource_page_element/save','新增或更新应用资源页面元素信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (285,'G2RAIN_BASIS','资源页面','新增或更新资源页面','POST','/resource_page/save','新增或更新应用资源页面信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (286,'G2RAIN_BASIS','资源菜单','新增或更新资源菜单','POST','/resource_menu/save','新增或更新应用资源菜单信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (287,'G2RAIN_BASIS','资源上传','上传应用资源文件','POST','/resource/{applicationId}/upload','上传并解析指定应用的资源文件内容','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (288,'G2RAIN_BASIS','账号','更新账号状态','POST','/passport/{id}/status','根据主键更新账号启用状态','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (289,'G2RAIN_BASIS','账号','更新账号密码','POST','/passport/{id}/password','根据主键更新账号登录密码','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (290,'G2RAIN_BASIS','账号','新增或更新账号','POST','/passport/save','新增或更新账号信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (291,'G2RAIN_BASIS','机构','更新机构状态','POST','/organ/{id}/status','根据主键更新机构启用状态','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (292,'G2RAIN_BASIS','机构','调整机构层级关系','POST','/organ/{descendantId}/hierarchy','对指定机构执行挂载、迁移或卸载等层级调整操作','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (293,'G2RAIN_BASIS','机构','新增或更新机构信息','POST','/organ/save','新增或更新机构基础信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (295,'G2RAIN_BASIS','权限点资源关联','新增控制单元资源关联','POST','/control_unit_resource_relation/save','批量新增控制单元与资源关联记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (296,'G2RAIN_BASIS','控制单元','更新控制单元状态','POST','/control_unit/{id}/status','根据主键更新控制单元启用状态','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (297,'G2RAIN_BASIS','控制单元','新增或更新控制单元','POST','/control_unit/save','新增或更新控制单元基础信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (298,'G2RAIN_BASIS','控制域-控制单元关联','新增控制域控制单元关联','POST','/control_domain_control_unit_relation/save','批量新增控制域与控制单元关联记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (299,'G2RAIN_BASIS','控制域','新增或更新控制域信息','POST','/control_domain/save','新增或更新控制域基础信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (300,'G2RAIN_BASIS','应用归类关系','新增或更新应用归类关系','POST','/application_suite/save','新增或更新应用与归类的关联关系','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (301,'G2RAIN_BASIS','应用授权','修改应用授权记录状态','POST','/application_authorization/{id}/status','修改应用授权记录状态','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (302,'G2RAIN_BASIS','应用授权','新增或更新应用授权记录','POST','/application_authorization/save','新增或更新应用授权记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (303,'G2RAIN_BASIS','应用','更新应用状态','POST','/application/{id}/status','根据主键更新应用启用状态','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (305,'G2RAIN_BASIS','应用','下载应用公钥','GET','/application/{id}/public_key','下载指定应用的 PEM 或 DER 格式公钥文件','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (306,'G2RAIN_BASIS','应用','上传或更新应用公钥','POST','/application/{id}/public_key','上传 PEM/DER 公钥文件并更新应用公钥配置','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (307,'G2RAIN_BASIS','应用','新增或更新应用信息','POST','/application/save','新增或更新应用基础信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (308,'G2RAIN_BASIS','用户-角色关联','分页查询用户-角色关联列表','GET','/user_role_relation/page','分页查询用户角色关联列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (309,'G2RAIN_BASIS','用户-角色关联','查询用户-角色关联列表','GET','/user_role_relation/list','根据查询条件返回用户角色关联列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (310,'G2RAIN_BASIS','用户','获取用户下拉选项','GET','/user/user_options','返回用于下拉选择的用户简要信息集合','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (311,'G2RAIN_BASIS','用户','按角色查询用户列表','GET','/user/role/{roleId}','根据角色主键查询已关联用户列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (312,'G2RAIN_BASIS','用户','分页查询用户列表','GET','/user/page','分页查询用户列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (313,'G2RAIN_BASIS','用户','查询用户列表','GET','/user/list','根据查询条件返回用户列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (315,'G2RAIN_BASIS','服务注册','分页查询服务注册列表','GET','/service_registry/page','分页查询服务注册列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (316,'G2RAIN_BASIS','服务注册','查询服务注册列表','GET','/service_registry/list','根据查询条件返回服务注册列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (317,'G2RAIN_BASIS','角色-控制单元关联','按角色查询控制单元关联','GET','/role_control_unit_relation/role/{roleId}','根据角色主键查询角色控制单元关联列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (318,'G2RAIN_BASIS','角色-控制单元关联','分页查询角色-控制单元关联列表','GET','/role_control_unit_relation/page','分页查询角色控制单元关联列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (319,'G2RAIN_BASIS','角色-控制单元关联','查询角色-控制单元关联列表','GET','/role_control_unit_relation/list','根据查询条件返回角色控制单元关联列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (320,'G2RAIN_BASIS','角色','分页查询角色列表','GET','/role/page','分页查询角色列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (321,'G2RAIN_BASIS','角色','查询角色列表','GET','/role/list','根据查询条件返回角色列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (322,'G2RAIN_BASIS','资源页面元素','分页查询资源页面元素列表','GET','/resource_page_element/page','分页查询资源页面元素列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (323,'G2RAIN_BASIS','资源页面元素','查询资源页面元素列表','GET','/resource_page_element/list','根据查询条件返回资源页面元素列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (325,'G2RAIN_BASIS','资源页面','分页查询资源页面列表','GET','/resource_page/page','分页查询资源页面列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (326,'G2RAIN_BASIS','资源页面','查询资源页面列表','GET','/resource_page/list','根据查询条件返回资源页面列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (327,'G2RAIN_BASIS','资源菜单','分页查询资源菜单列表','GET','/resource_menu/page','分页查询资源菜单列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (328,'G2RAIN_BASIS','资源菜单','查询资源菜单列表','GET','/resource_menu/list','根据查询条件返回资源菜单列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (329,'G2RAIN_BASIS','资源接口','分页查询资源接口列表','GET','/resource_api/page','分页查询资源接口列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (330,'G2RAIN_BASIS','资源接口','查询资源接口列表','GET','/resource_api/list','根据查询条件返回资源接口列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (331,'G2RAIN_BASIS','账号','分页查询账号列表','GET','/passport/page','分页查询账号列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (332,'G2RAIN_BASIS','账号','查询账号列表','GET','/passport/list','根据查询条件返回账号列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (333,'G2RAIN_BASIS','机构','搜索机构','GET','/organ/search','根据机构名称关键字模糊查询机构列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (335,'G2RAIN_BASIS','机构','分页查询机构列表','GET','/organ/page','分页查询机构列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (336,'G2RAIN_BASIS','机构','查询机构列表','GET','/organ/list','根据查询条件返回机构列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (337,'G2RAIN_BASIS','机构','获取机构层级关系','GET','/organ/hierarchy','查询机构及其子机构的树形层级结构','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (338,'G2RAIN_BASIS','登录令牌','分页查询登录令牌列表','GET','/login_token/page','分页查询登录令牌列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (339,'G2RAIN_BASIS','登录令牌','查询登录令牌列表','GET','/login_token/list','根据查询条件返回登录令牌列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (350,'G2RAIN_BASIS','权限点资源关联','分页查询权限点资源关联列表','GET','/control_unit_resource_relation/page','分页查询权限点资源关联列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (351,'G2RAIN_BASIS','权限点资源关联','查询权限点资源关联列表','GET','/control_unit_resource_relation/list','根据查询条件返回权限点资源关联列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (352,'G2RAIN_BASIS','控制单元','分页查询控制单元列表','GET','/control_unit/page','分页查询控制单元列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (353,'G2RAIN_BASIS','控制单元','查询控制单元列表','GET','/control_unit/list','根据查询条件返回控制单元列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (355,'G2RAIN_BASIS','控制域-控制单元关联','分页查询控制域-控制单元关联列表','GET','/control_domain_control_unit_relation/page','分页查询控制域控制单元关联列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (356,'G2RAIN_BASIS','控制域-控制单元关联','查询控制域-控制单元关联列表','GET','/control_domain_control_unit_relation/list','根据查询条件返回控制域控制单元关联列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (357,'G2RAIN_BASIS','控制域','分页查询控制域列表','GET','/control_domain/page','分页查询控制域列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (358,'G2RAIN_BASIS','控制域','查询控制域列表','GET','/control_domain/list','根据查询条件返回控制域列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (359,'G2RAIN_BASIS','资源授权','查询当前用户信息','GET','/authority/user','查询当前登录用户的权限相关用户信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (360,'G2RAIN_BASIS','资源授权','查询资源权限信息','GET','/authority/resources','查询当前用户的资源访问权限信息','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (361,'G2RAIN_BASIS','资源授权','查询菜单权限列表','GET','/authority/menus','查询当前用户可访问的菜单权限列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (362,'G2RAIN_BASIS','审计事件','分页查询审计事件','GET','/audit_event/page','按条件筛选审计事件并分页，含总数与当前页数据','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (363,'G2RAIN_BASIS','审计事件','查询审计事件列表','GET','/audit_event/list','按条件筛选审计事件，不分页返回列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (365,'G2RAIN_BASIS','应用归类关系','分页查询应用归类关系列表','GET','/application_suite/page','分页查询应用归类关系列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (366,'G2RAIN_BASIS','应用归类关系','查询应用归类关系列表','GET','/application_suite/list','根据查询条件返回应用归类关系列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (367,'G2RAIN_BASIS','应用授权','分页查询应用授权记录列表','GET','/application_authorization/page','分页查询应用授权记录列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (368,'G2RAIN_BASIS','应用授权','查询应用授权记录列表','GET','/application_authorization/list','根据查询条件返回应用授权记录列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (369,'G2RAIN_BASIS','应用','检查应用公钥是否存在','GET','/application/{id}/has_public_key','检查指定应用是否已配置公钥','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (370,'G2RAIN_BASIS','应用','分页查询应用列表','GET','/application/page','分页查询应用列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (371,'G2RAIN_BASIS','应用','查询应用列表','GET','/application/list','根据查询条件返回应用列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (372,'G2RAIN_BASIS','应用','查询应用名称映射','GET','/application/id_name_map','根据查询条件获取应用 ID 与名称映射列表','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (373,'G2RAIN_BASIS','用户','删除用户记录','DELETE','/user/{id}','根据主键删除用户记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (375,'G2RAIN_BASIS','服务注册','删除服务注册','DELETE','/service_registry/{id}','根据主键删除服务注册记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (376,'G2RAIN_BASIS','角色','删除角色记录','DELETE','/role/{id}','根据主键删除角色记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (377,'G2RAIN_BASIS','资源页面元素','删除页面元素记录','DELETE','/resource_page_element/{id}','根据主键删除应用资源页面元素记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (378,'G2RAIN_BASIS','资源页面','删除资源页面记录','DELETE','/resource_page/{id}','根据主键删除应用资源页面记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (379,'G2RAIN_BASIS','资源菜单','删除资源菜单记录','DELETE','/resource_menu/{id}','根据主键删除应用资源菜单记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (380,'G2RAIN_BASIS','资源接口','根据主键删除资源接口记录','DELETE','/resource_api/{id}','根据主键删除资源接口记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (381,'G2RAIN_BASIS','账号','删除账号记录','DELETE','/passport/{id}','根据主键删除账号记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (382,'G2RAIN_BASIS','机构','删除机构记录','DELETE','/organ/{id}','根据主键删除机构记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (383,'G2RAIN_BASIS','控制单元','删除控制单元记录','DELETE','/control_unit/{id}','根据主键删除控制单元记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (385,'G2RAIN_BASIS','控制域','删除控制域记录','DELETE','/control_domain/{id}','根据主键删除控制域记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (386,'G2RAIN_BASIS','应用授权','根据主键删除应用授权记录','DELETE','/application_authorization/{id}','根据主键删除应用授权记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (387,'G2RAIN_BASIS','应用','删除应用记录','DELETE','/application/{id}','根据主键删除应用记录','2026-05-08 10:03:52','2026-05-08 10:03:52',0,0),
-    (388,'G2RAIN_BASIS','资源接口','批量导入资源接口','POST','/resource_api/{serviceCode}/import','批量导入资源接口信息','2026-04-28 02:14:24','2026-04-28 02:14:24',0,0),
-    (389,'G2RAIN_BASIS','资源接口','新增或更新资源接口','POST','/resource_api/save','新增或更新资源接口信息','2026-04-28 02:14:24','2026-04-28 02:14:24',0,0);
+    (228, 'G2RAIN_INFRA', '地域语言', '新增或更新地域语言设置', 'POST', '/locale_setting/save', '新增或更新地域与语言偏好配置', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (229, 'G2RAIN_INFRA', '国际化信息', '新增或更新国际化信息', 'POST', '/i18n_message/save', '新增或更新国际化文案信息', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (230, 'G2RAIN_INFRA', '全局唯一序列', '新增或更新全局唯一 ID 记录', 'POST', '/g2rain_raindrop/save', '新增或更新全局唯一 ID 管理表数据', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (231, 'G2RAIN_INFRA', '字典用途', '新增或更新字典用途', 'POST', '/dictionary_usage/save', '新增或更新字典用途信息', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (232, 'G2RAIN_INFRA', '字典明细', '新增或更新字典明细', 'POST', '/dictionary_item/save', '新增或更新字典明细信息', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (233, 'G2RAIN_INFRA', '地域语言', '分页查询地域语言设置列表', 'GET', '/locale_setting/page', '分页查询地域-语言设置列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (235, 'G2RAIN_INFRA', '地域语言', '获取地域语言字典', 'GET', '/locale_setting/locale_dict', '获取地域语言字典', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (236, 'G2RAIN_INFRA', '地域语言', '查询地域语言设置列表', 'GET', '/locale_setting/list', '根据查询条件返回地域-语言设置列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (237, 'G2RAIN_INFRA', '地域语言', '获取语言地域映射', 'GET', '/locale_setting/get_language_countries', '获取语言地域映射', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (238, 'G2RAIN_INFRA', '地域语言', '获取地域语言编码和名称映射集合', 'GET', '/locale_setting/code_name_map', '获取地域语言编码和名称映射集合', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (239, 'G2RAIN_INFRA', '国际化信息', '分页查询国际化信息列表', 'GET', '/i18n_message/page', '分页查询国际化信息列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (251, 'G2RAIN_INFRA', '国际化信息', '查询国际化信息列表', 'GET', '/i18n_message/list', '根据查询条件返回国际化信息列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (252, 'G2RAIN_INFRA', '国际化信息', '获取国际化用途集合', 'GET', '/i18n_message/i18n_message_usages', '获取国际化用途集合', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (253, 'G2RAIN_INFRA', '全局唯一序列', '分页查询全局唯一 ID 记录列表', 'GET', '/g2rain_raindrop/page', '分页查询全局唯一 ID 管理记录列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (255, 'G2RAIN_INFRA', '全局唯一序列', '查询全局唯一 ID 记录列表', 'GET', '/g2rain_raindrop/list', '根据查询条件返回全局唯一 ID 管理记录列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (256, 'G2RAIN_INFRA', '全局唯一序列', '查询业务标签字典集合', 'GET', '/g2rain_raindrop/biz_tag_dict', '查询业务标签字典集合', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (257, 'G2RAIN_INFRA', '字典用途', '分页查询字典用途列表', 'GET', '/dictionary_usage/page', '分页查询字典用途列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (258, 'G2RAIN_INFRA', '字典用途', '查询字典用途列表', 'GET', '/dictionary_usage/list', '根据查询条件返回字典用途列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (259, 'G2RAIN_INFRA', '字典明细', '分页查询字典明细列表', 'GET', '/dictionary_item/tree', '分页查询字典明细列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (260, 'G2RAIN_INFRA', '字典明细', '分页查询字典明细列表', 'GET', '/dictionary_item/page', '分页查询字典明细列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (261, 'G2RAIN_INFRA', '字典明细', '查询字典明细列表', 'GET', '/dictionary_item/list', '根据查询条件返回字典明细列表', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (262, 'G2RAIN_INFRA', '地域语言', '删除地域语言设置记录', 'DELETE', '/locale_setting/{id}', '根据主键删除地域-语言设置记录', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (263, 'G2RAIN_INFRA', '国际化信息', '删除国际化信息记录', 'DELETE', '/i18n_message/{id}', '根据主键删除国际化信息记录', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (265, 'G2RAIN_INFRA', '全局唯一序列', '删除全局唯一 ID 记录', 'DELETE', '/g2rain_raindrop/{id}', '根据主键删除全局唯一 ID 管理记录', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (266, 'G2RAIN_INFRA', '字典用途', '删除字典用途记录', 'DELETE', '/dictionary_usage/{id}', '根据主键删除字典用途记录', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (267, 'G2RAIN_INFRA', '字典明细', '删除字典明细记录', 'DELETE', '/dictionary_item/{id}', '根据主键删除字典明细记录', '2026-05-08 02:02:08', '2026-05-08 02:02:08'),
+    (268, 'G2RAIN_BASIS', '用户-角色关联', '新增或更新用户角色关联', 'POST', '/user_role_relation/save', '新增或更新用户角色关联记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (269, 'G2RAIN_BASIS', '用户-角色关联', '为角色分配用户', 'POST', '/user_role_relation/assign_users', '批量为指定角色分配用户关联关系', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (270, 'G2RAIN_BASIS', '用户', '新增或更新用户信息', 'POST', '/user/save', '新增或更新用户基础信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (271, 'G2RAIN_BASIS', '租户初始化', '开通租户账号', 'POST', '/tenant_provision/provision_account', '为指定租户开通账号并初始化最小可用功能', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (272, 'G2RAIN_BASIS', '服务注册', '新增或更新服务注册', 'POST', '/service_registry/save', '新增或更新服务注册信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (273, 'G2RAIN_BASIS', '角色-控制单元关联', '新增角色控制单元关联', 'POST', '/role_control_unit_relation/save', '新增角色与控制单元的关联记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (275, 'G2RAIN_BASIS', '角色', '新增或更新角色信息', 'POST', '/role/save', '新增或更新角色基础信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (276, 'G2RAIN_BASIS', '资源页面元素', '新增或更新页面元素', 'POST', '/resource_page_element/save', '新增或更新应用资源页面元素信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (277, 'G2RAIN_BASIS', '资源页面', '新增或更新资源页面', 'POST', '/resource_page/save', '新增或更新应用资源页面信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (278, 'G2RAIN_BASIS', '资源菜单', '新增或更新资源菜单', 'POST', '/resource_menu/save', '新增或更新应用资源菜单信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (279, 'G2RAIN_BASIS', '资源上传', '上传应用资源文件', 'POST', '/resource/{applicationId}/upload', '上传并解析指定应用的资源文件内容', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (280, 'G2RAIN_BASIS', '账号', '更新账号状态', 'POST', '/passport/{id}/status', '根据主键更新账号启用状态', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (281, 'G2RAIN_BASIS', '账号', '更新账号密码', 'POST', '/passport/{id}/password', '根据主键更新账号登录密码', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (282, 'G2RAIN_BASIS', '账号', '新增或更新账号', 'POST', '/passport/save', '新增或更新账号信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (283, 'G2RAIN_BASIS', '机构', '更新机构状态', 'POST', '/organ/{id}/status', '根据主键更新机构启用状态', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (285, 'G2RAIN_BASIS', '机构', '调整机构层级关系', 'POST', '/organ/{descendantId}/hierarchy', '对指定机构执行挂载、迁移或卸载等层级调整操作', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (286, 'G2RAIN_BASIS', '机构', '新增或更新机构信息', 'POST', '/organ/save', '新增或更新机构基础信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (287, 'G2RAIN_BASIS', '权限点资源关联', '新增控制单元资源关联', 'POST', '/control_unit_resource_relation/save', '批量新增控制单元与资源关联记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (288, 'G2RAIN_BASIS', '控制单元', '更新控制单元状态', 'POST', '/control_unit/{id}/status', '根据主键更新控制单元启用状态', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (289, 'G2RAIN_BASIS', '控制单元', '新增或更新控制单元', 'POST', '/control_unit/save', '新增或更新控制单元基础信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (290, 'G2RAIN_BASIS', '控制域-控制单元关联', '新增控制域控制单元关联', 'POST', '/control_domain_control_unit_relation/save', '批量新增控制域与控制单元关联记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (291, 'G2RAIN_BASIS', '控制域', '新增或更新控制域信息', 'POST', '/control_domain/save', '新增或更新控制域基础信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (292, 'G2RAIN_BASIS', '应用归类关系', '新增或更新应用归类关系', 'POST', '/application_suite/save', '新增或更新应用与归类的关联关系', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (293, 'G2RAIN_BASIS', '应用授权', '修改应用授权记录状态', 'POST', '/application_authorization/{id}/status', '修改应用授权记录状态', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (295, 'G2RAIN_BASIS', '应用授权', '新增或更新应用授权记录', 'POST', '/application_authorization/save', '新增或更新应用授权记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (296, 'G2RAIN_BASIS', '应用', '更新应用状态', 'POST', '/application/{id}/status', '根据主键更新应用启用状态', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (297, 'G2RAIN_BASIS', '应用', '下载应用公钥', 'GET', '/application/{id}/public_key', '下载指定应用的 PEM 或 DER 格式公钥文件', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (298, 'G2RAIN_BASIS', '应用', '上传或更新应用公钥', 'POST', '/application/{id}/public_key', '上传 PEM/DER 公钥文件并更新应用公钥配置', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (299, 'G2RAIN_BASIS', '应用', '新增或更新应用信息', 'POST', '/application/save', '新增或更新应用基础信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (300, 'G2RAIN_BASIS', '用户-角色关联', '分页查询用户-角色关联列表', 'GET', '/user_role_relation/page', '分页查询用户角色关联列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (301, 'G2RAIN_BASIS', '用户-角色关联', '查询用户-角色关联列表', 'GET', '/user_role_relation/list', '根据查询条件返回用户角色关联列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (302, 'G2RAIN_BASIS', '用户', '获取用户下拉选项', 'GET', '/user/user_options', '返回用于下拉选择的用户简要信息集合', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (303, 'G2RAIN_BASIS', '用户', '按角色查询用户列表', 'GET', '/user/role/{roleId}', '根据角色主键查询已关联用户列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (305, 'G2RAIN_BASIS', '用户', '分页查询用户列表', 'GET', '/user/page', '分页查询用户列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (306, 'G2RAIN_BASIS', '用户', '查询用户列表', 'GET', '/user/list', '根据查询条件返回用户列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (307, 'G2RAIN_BASIS', '服务注册', '分页查询服务注册列表', 'GET', '/service_registry/page', '分页查询服务注册列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (308, 'G2RAIN_BASIS', '服务注册', '查询服务注册列表', 'GET', '/service_registry/list', '根据查询条件返回服务注册列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (309, 'G2RAIN_BASIS', '角色-控制单元关联', '按角色查询控制单元关联', 'GET', '/role_control_unit_relation/role/{roleId}', '根据角色主键查询角色控制单元关联列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (310, 'G2RAIN_BASIS', '角色-控制单元关联', '分页查询角色-控制单元关联列表', 'GET', '/role_control_unit_relation/page', '分页查询角色控制单元关联列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (311, 'G2RAIN_BASIS', '角色-控制单元关联', '查询角色-控制单元关联列表', 'GET', '/role_control_unit_relation/list', '根据查询条件返回角色控制单元关联列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (312, 'G2RAIN_BASIS', '角色', '分页查询角色列表', 'GET', '/role/page', '分页查询角色列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (313, 'G2RAIN_BASIS', '角色', '查询角色列表', 'GET', '/role/list', '根据查询条件返回角色列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (315, 'G2RAIN_BASIS', '资源页面元素', '分页查询资源页面元素列表', 'GET', '/resource_page_element/page', '分页查询资源页面元素列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (316, 'G2RAIN_BASIS', '资源页面元素', '查询资源页面元素列表', 'GET', '/resource_page_element/list', '根据查询条件返回资源页面元素列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (317, 'G2RAIN_BASIS', '资源页面', '分页查询资源页面列表', 'GET', '/resource_page/page', '分页查询资源页面列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (318, 'G2RAIN_BASIS', '资源页面', '查询资源页面列表', 'GET', '/resource_page/list', '根据查询条件返回资源页面列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (319, 'G2RAIN_BASIS', '资源菜单', '分页查询资源菜单列表', 'GET', '/resource_menu/page', '分页查询资源菜单列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (320, 'G2RAIN_BASIS', '资源菜单', '查询资源菜单列表', 'GET', '/resource_menu/list', '根据查询条件返回资源菜单列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (321, 'G2RAIN_BASIS', '资源接口', '分页查询资源接口列表', 'GET', '/resource_api/page', '分页查询资源接口列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (322, 'G2RAIN_BASIS', '资源接口', '查询资源接口列表', 'GET', '/resource_api/list', '根据查询条件返回资源接口列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (323, 'G2RAIN_BASIS', '账号', '分页查询账号列表', 'GET', '/passport/page', '分页查询账号列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (325, 'G2RAIN_BASIS', '账号', '查询账号列表', 'GET', '/passport/list', '根据查询条件返回账号列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (326, 'G2RAIN_BASIS', '机构', '搜索机构', 'GET', '/organ/search', '根据机构名称关键字模糊查询机构列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (327, 'G2RAIN_BASIS', '机构', '分页查询机构列表', 'GET', '/organ/page', '分页查询机构列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (328, 'G2RAIN_BASIS', '机构', '查询机构列表', 'GET', '/organ/list', '根据查询条件返回机构列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (329, 'G2RAIN_BASIS', '机构', '获取机构层级关系', 'GET', '/organ/hierarchy', '查询机构及其子机构的树形层级结构', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (330, 'G2RAIN_BASIS', '登录令牌', '分页查询登录令牌列表', 'GET', '/login_token/page', '分页查询登录令牌列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (331, 'G2RAIN_BASIS', '登录令牌', '查询登录令牌列表', 'GET', '/login_token/list', '根据查询条件返回登录令牌列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (332, 'G2RAIN_BASIS', '权限点资源关联', '分页查询权限点资源关联列表', 'GET', '/control_unit_resource_relation/page', '分页查询权限点资源关联列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (333, 'G2RAIN_BASIS', '权限点资源关联', '查询权限点资源关联列表', 'GET', '/control_unit_resource_relation/list', '根据查询条件返回权限点资源关联列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (335, 'G2RAIN_BASIS', '控制单元', '分页查询控制单元列表', 'GET', '/control_unit/page', '分页查询控制单元列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (336, 'G2RAIN_BASIS', '控制单元', '查询控制单元列表', 'GET', '/control_unit/list', '根据查询条件返回控制单元列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (337, 'G2RAIN_BASIS', '控制域-控制单元关联', '分页查询控制域-控制单元关联列表', 'GET', '/control_domain_control_unit_relation/page', '分页查询控制域控制单元关联列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (338, 'G2RAIN_BASIS', '控制域-控制单元关联', '查询控制域-控制单元关联列表', 'GET', '/control_domain_control_unit_relation/list', '根据查询条件返回控制域控制单元关联列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (339, 'G2RAIN_BASIS', '控制域', '分页查询控制域列表', 'GET', '/control_domain/page', '分页查询控制域列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (350, 'G2RAIN_BASIS', '控制域', '查询控制域列表', 'GET', '/control_domain/list', '根据查询条件返回控制域列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (351, 'G2RAIN_BASIS', '资源授权', '查询当前用户信息', 'GET', '/authority/user', '查询当前登录用户的权限相关用户信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (352, 'G2RAIN_BASIS', '资源授权', '查询资源权限信息', 'GET', '/authority/resources', '查询当前用户的资源访问权限信息', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (353, 'G2RAIN_BASIS', '资源授权', '查询菜单权限列表', 'GET', '/authority/menus', '查询当前用户可访问的菜单权限列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (355, 'G2RAIN_BASIS', '审计事件', '分页查询审计事件', 'GET', '/audit_event/page', '按条件筛选审计事件并分页，含总数与当前页数据', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (356, 'G2RAIN_BASIS', '审计事件', '查询审计事件列表', 'GET', '/audit_event/list', '按条件筛选审计事件，不分页返回列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (357, 'G2RAIN_BASIS', '应用归类关系', '分页查询应用归类关系列表', 'GET', '/application_suite/page', '分页查询应用归类关系列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (358, 'G2RAIN_BASIS', '应用归类关系', '查询应用归类关系列表', 'GET', '/application_suite/list', '根据查询条件返回应用归类关系列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (359, 'G2RAIN_BASIS', '应用授权', '分页查询应用授权记录列表', 'GET', '/application_authorization/page', '分页查询应用授权记录列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (360, 'G2RAIN_BASIS', '应用授权', '查询应用授权记录列表', 'GET', '/application_authorization/list', '根据查询条件返回应用授权记录列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (361, 'G2RAIN_BASIS', '应用', '检查应用公钥是否存在', 'GET', '/application/{id}/has_public_key', '检查指定应用是否已配置公钥', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (362, 'G2RAIN_BASIS', '应用', '分页查询应用列表', 'GET', '/application/page', '分页查询应用列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (363, 'G2RAIN_BASIS', '应用', '查询应用列表', 'GET', '/application/list', '根据查询条件返回应用列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (365, 'G2RAIN_BASIS', '应用', '查询应用名称映射', 'GET', '/application/id_name_map', '根据查询条件获取应用 ID 与名称映射列表', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (366, 'G2RAIN_BASIS', '用户', '删除用户记录', 'DELETE', '/user/{id}', '根据主键删除用户记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (367, 'G2RAIN_BASIS', '服务注册', '删除服务注册', 'DELETE', '/service_registry/{id}', '根据主键删除服务注册记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (368, 'G2RAIN_BASIS', '角色', '删除角色记录', 'DELETE', '/role/{id}', '根据主键删除角色记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (369, 'G2RAIN_BASIS', '资源页面元素', '删除页面元素记录', 'DELETE', '/resource_page_element/{id}', '根据主键删除应用资源页面元素记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (370, 'G2RAIN_BASIS', '资源页面', '删除资源页面记录', 'DELETE', '/resource_page/{id}', '根据主键删除应用资源页面记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (371, 'G2RAIN_BASIS', '资源菜单', '删除资源菜单记录', 'DELETE', '/resource_menu/{id}', '根据主键删除应用资源菜单记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (372, 'G2RAIN_BASIS', '资源接口', '根据主键删除资源接口记录', 'DELETE', '/resource_api/{id}', '根据主键删除资源接口记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (373, 'G2RAIN_BASIS', '账号', '删除账号记录', 'DELETE', '/passport/{id}', '根据主键删除账号记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (375, 'G2RAIN_BASIS', '机构', '删除机构记录', 'DELETE', '/organ/{id}', '根据主键删除机构记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (376, 'G2RAIN_BASIS', '控制单元', '删除控制单元记录', 'DELETE', '/control_unit/{id}', '根据主键删除控制单元记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (377, 'G2RAIN_BASIS', '控制域', '删除控制域记录', 'DELETE', '/control_domain/{id}', '根据主键删除控制域记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (378, 'G2RAIN_BASIS', '应用授权', '根据主键删除应用授权记录', 'DELETE', '/application_authorization/{id}', '根据主键删除应用授权记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (379, 'G2RAIN_BASIS', '应用', '删除应用记录', 'DELETE', '/application/{id}', '根据主键删除应用记录', '2026-05-08 02:03:52', '2026-05-08 02:03:52'),
+    (380, 'G2RAIN_BASIS', '资源接口', '批量导入资源接口', 'POST', '/resource_api/{serviceCode}/import', '批量导入资源接口信息', '2026-04-27 18:14:24', '2026-04-27 18:14:24'),
+    (381, 'G2RAIN_BASIS', '资源接口', '新增或更新资源接口', 'POST', '/resource_api/save', '新增或更新资源接口信息', '2026-04-27 18:14:24', '2026-04-27 18:14:24'),
+    (382, 'G2RAIN_BASIS', '个人静态访问令牌', '修改个人静态访问令牌记录状态', 'POST', '/personal_static_access_token/{id}/status', '修改个人静态访问令牌记录状态', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (383, 'G2RAIN_BASIS', '个人静态访问令牌', '新增或更新个人静态访问令牌信息', 'POST', '/personal_static_access_token/save', '新增或更新个人静态访问令牌基础信息', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (385, 'G2RAIN_BASIS', '账号与外部身份源绑定', '新增或更新绑定', 'POST', '/passport_idp_binding/save', '新增或更新账号与外部身份源绑定信息', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (386, 'G2RAIN_BASIS', '外部企业与机构关联', '新增或更新关联', 'POST', '/idp_enterprise_organ/save', '新增或更新外部企业/租户与平台机构关联信息', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (387, 'G2RAIN_BASIS', '外部身份源应用与平台应用的绑定', '新增或更绑定', 'POST', '/application_idp_provision/save', '新增或更绑定', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (388, 'G2RAIN_BASIS', '个人静态访问令牌', '分页查询个人静态访问令牌列表', 'GET', '/personal_static_access_token/page', '分页查询个人静态访问令牌列表', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (389, 'G2RAIN_BASIS', '个人静态访问令牌', '查询个人静态访问令牌列表', 'GET', '/personal_static_access_token/list', '根据查询条件返回个人静态访问令牌列表', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (390, 'G2RAIN_BASIS', '账号与外部身份源绑定', '分页查询账号与外部身份源绑定列表', 'GET', '/passport_idp_binding/page', '分页查询绑定列表', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (391, 'G2RAIN_BASIS', '账号与外部身份源绑定', '查询账号与外部身份源绑定列表', 'GET', '/passport_idp_binding/list', '根据查询条件返回绑定列表', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (392, 'G2RAIN_BASIS', '外部企业与机构关联', '分页查询外部企业与机构关联列表', 'GET', '/idp_enterprise_organ/page', '分页查询关联列表', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (393, 'G2RAIN_BASIS', '外部企业与机构关联', '查询外部企业与机构关联列表', 'GET', '/idp_enterprise_organ/list', '根据查询条件返回关联列表', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (395, 'G2RAIN_BASIS', '外部身份源应用与平台应用的绑定', '查询绑定分页', 'GET', '/application_idp_provision/page', '查询绑定分页', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (396, 'G2RAIN_BASIS', '外部身份源应用与平台应用的绑定', '查询绑定列表', 'GET', '/application_idp_provision/list', '查询绑定列表', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (397, 'G2RAIN_BASIS', '个人静态访问令牌', '删除个人静态访问令牌记录', 'DELETE', '/personal_static_access_token/{id}', '根据主键删除个人静态访问令牌记录', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (398, 'G2RAIN_BASIS', '账号与外部身份源绑定', '删除绑定记录', 'DELETE', '/passport_idp_binding/{id}', '根据主键删除账号与外部身份源绑定记录', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (399, 'G2RAIN_BASIS', '外部企业与机构关联', '删除关联记录', 'DELETE', '/idp_enterprise_organ/{id}', '根据主键删除外部企业与机构关联记录', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (500, 'G2RAIN_BASIS', '外部身份源应用与平台应用的绑定', '删除绑定记录', 'DELETE', '/application_idp_provision/{id}', '删除绑定记录', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
+    (501, 'G2RAIN_INFRA', '国际化信息', '查询业务标签字典集合', 'GET', '/i18n_message/tag_dict', '查询 i18n_message 表中已存在的去重业务标签，供页面选择', '2026-05-20 09:31:06', '2026-05-20 09:31:06'),
+    (502, 'G2RAIN_INFRA', '字典明细', '查询字典组件明细列表', 'GET', '/dictionary_item/localized_options', '查询字典组件明细列表', '2026-05-20 09:31:06', '2026-05-20 09:31:06');
 
 -- 应用资源菜单
 INSERT INTO `resource_menu`
-(`id`, `parent_id`, `application_id`, `menu_name`, `menu_code`, `link_path`, `icon`, `menu_sort_order`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `parent_id`, `application_id`, `menu_name`, `menu_code`, `link_path`, `icon`, `menu_sort_order`, `create_time`, `update_time`)
 VALUES
-    (390,NULL,208,'系统管理','system_management_menu','','',10000,'2026-02-01 01:12:28','2026-04-19 08:02:38',1,0),
-    (391,390,208,'机构管理','organ_management_menu','/organ','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (392,390,208,'用户管理','user_management_menu','/user','',2,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (393,390,208,'角色管理','role_management_menu','/role','',3,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (395,NULL,208,'应用管理','application_management_menu','','',10001,'2026-02-01 01:12:28','2026-04-19 08:02:44',1,0),
-    (396,395,208,'应用配置','application_config_menu','/application','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (397,395,208,'资源配置','resource_settings_menu','/resource_settings','',2,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (398,395,208,'资源菜单','resource_menu_menu','/resource_menu','',3,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (399,395,208,'资源页面','resource_page_menu','/resource_page','',5,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (500,395,208,'功能权限','control_unit_menu','/control_unit','',6,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (501,395,208,'业务能力','control_domain_menu','/control_domain','',7,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (502,395,208,'授权记录','application_authorization_menu','/application_authorization','',8,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (503,NULL,208,'平台配置','platform_settings_menu','','',10002,'2026-02-01 01:12:28','2026-04-19 08:02:50',1,0),
-    (505,503,208,'服务注册','service_registry_menu','/service_registry','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (506,503,208,'服务接口','resource_api_menu','/resource_api','',2,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (507,NULL,208,'平台运营','platform_operations_menu','','',10003,'2026-02-01 01:12:28','2026-04-19 08:02:56',1,0),
-    (508,507,208,'账号管理','passport_management_menu','/passport','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (509,507,208,'登陆日志','login_token_menu','/login_token','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (510,507,208,'审计事件','audit_event_menu','/audit_event','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (511,NULL,209,'平台技术','infra_menu','','',10004,'2026-04-11 04:06:57','2026-04-19 08:03:01',2,0),
-    (512,511,209,'序列号段调控','g2rain_raindrop_menu','/g2rain_raindrop','',1,'2026-04-11 04:15:29','2026-04-11 04:15:29',0,0),
-    (513,511,209,'字典用途设置','dictionary_usage_menu','/dictionary_usage','',2,'2026-04-11 04:10:42','2026-04-11 04:12:57',3,0),
-    (515,511,209,'地区语言设置','locale_setting_menu','/locale_setting','',3,'2026-04-11 04:15:06','2026-04-11 04:15:06',0,0),
-    (516,511,209,'多语言文案库','i18n_message_menu','/i18n_message','',5,'2026-04-11 04:13:38','2026-04-11 04:14:39',1,0);
+    (503,NULL,215,'系统管理','system_management_menu','','',10000,'2026-02-01 01:12:28','2026-04-19 08:02:38'),
+    (505,503,215,'机构管理','organ_management_menu','/organ','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (506,503,215,'用户管理','user_management_menu','/user','',2,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (507,503,215,'角色管理','role_management_menu','/role','',3,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (508,NULL,215,'应用管理','application_management_menu','','',10001,'2026-02-01 01:12:28','2026-04-19 08:02:44'),
+    (509,508,215,'应用配置','application_config_menu','/application','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (510,508,215,'资源配置','resource_settings_menu','/resource_settings','',2,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (511,508,215,'资源菜单','resource_menu_menu','/resource_menu','',3,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (512,508,215,'资源页面','resource_page_menu','/resource_page','',5,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (513,508,215,'功能权限','control_unit_menu','/control_unit','',6,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (515,508,215,'业务能力','control_domain_menu','/control_domain','',7,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (516,508,215,'授权记录','application_authorization_menu','/application_authorization','',8,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (517,NULL,215,'平台配置','platform_settings_menu','','',10002,'2026-02-01 01:12:28','2026-04-19 08:02:50'),
+    (518,517,215,'服务注册','service_registry_menu','/service_registry','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (519,517,215,'服务接口','resource_api_menu','/resource_api','',2,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (520,NULL,215,'平台运营','platform_operations_menu','','',10003,'2026-02-01 01:12:28','2026-04-19 08:02:56'),
+    (521,520,215,'账号管理','passport_management_menu','/passport','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (522,520,215,'登陆日志','login_token_menu','/login_token','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (523,520,215,'审计事件','audit_event_menu','/audit_event','',1,'2026-02-01 01:12:28','2026-02-01 01:12:28'),
+    (525,NULL,216,'平台技术','infra_menu','','',10004,'2026-04-11 04:06:57','2026-04-19 08:03:01'),
+    (526,525,216,'序列号段调控','g2rain_raindrop_menu','/g2rain_raindrop','',1,'2026-04-11 04:15:29','2026-04-11 04:15:29'),
+    (527,525,216,'字典用途设置','dictionary_usage_menu','/dictionary_usage','',2,'2026-04-11 04:10:42','2026-04-11 04:12:57'),
+    (528,525,216,'地区语言设置','locale_setting_menu','/locale_setting','',3,'2026-04-11 04:15:06','2026-04-11 04:15:06'),
+    (529,525,216,'多语言文案库','i18n_message_menu','/i18n_message','',5,'2026-04-11 04:13:38','2026-04-11 04:14:39');
 
 -- 应用资源页面
 INSERT INTO `resource_page`
-(`id`, `application_id`, `page_name`, `page_code`, `link_path`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `application_id`, `page_name`, `page_code`, `link_path`, `create_time`, `update_time`)
 VALUES
-    (517,208,'机构管理界面','organ','/organ','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (518,208,'用户管理界面','user','/user','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (519,208,'角色管理界面','role','/role','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (520,208,'应用配置界面','application','/application','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (521,208,'资源配置界面','resource_settings','/resource_settings','2026-02-01 01:12:28','2026-05-05 13:08:53',0,0),
-    (522,208,'资源菜单界面','resource_menu','/resource_menu','2026-02-01 01:12:28','2026-05-05 13:08:53',0,0),
-    (523,208,'资源页面界面','resource_page','/resource_page','2026-02-01 01:12:28','2026-05-05 13:08:53',0,0),
-    (525,208,'功能权限界面','control_unit','/control_unit','2026-02-01 01:12:28','2026-05-05 13:08:53',0,0),
-    (526,208,'业务能力界面','control_domain','/control_domain','2026-02-01 01:12:28','2026-05-05 13:08:53',0,0),
-    (527,208,'授权记录界面','application_authorization','/application_authorization','2026-02-01 01:12:28','2026-05-05 13:08:53',0,0),
-    (528,208,'服务注册界面','service_registry','/service_registry','2026-02-01 01:12:28','2026-05-05 13:08:53',0,0),
-    (529,208,'服务接口界面','resource_api','/resource_api','2026-02-01 01:12:28','2026-05-05 13:08:53',0,0),
-    (530,208,'账号管理界面','passport','/passport','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (531,208,'登陆日志界面','login_token','/login_token','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (532,208,'审计事件界面','audit_event','/audit_event','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (533,209,'序列号段调控','g2rain_raindrop','/g2rain_raindrop','2026-04-11 07:23:17','2026-04-11 07:23:17',0,0),
-    (535,209,'字典用途设置','dictionary_usage','/dictionary_usage','2026-04-11 07:22:01','2026-04-11 07:22:01',0,0),
-    (536,209,'地区语言设置','locale_setting','/locale_setting','2026-04-11 07:23:02','2026-04-11 07:23:02',0,0),
-    (537,209,'多语言文案库','i18n_message','/i18n_message','2026-04-11 07:22:16','2026-04-11 07:22:31',1,0);
+    (530,215,'机构管理界面','organ','/organ','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (531,215,'用户管理界面','user','/user','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (532,215,'角色管理界面','role','/role','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (533,215,'应用配置界面','application','/application','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (535,215,'资源配置界面','resource_settings','/resource_settings','2026-01-31 17:12:28','2026-05-05 05:08:53'),
+    (536,215,'资源菜单界面','resource_menu','/resource_menu','2026-01-31 17:12:28','2026-05-05 05:08:53'),
+    (537,215,'资源页面界面','resource_page','/resource_page','2026-01-31 17:12:28','2026-05-05 05:08:53'),
+    (538,215,'功能权限界面','control_unit','/control_unit','2026-01-31 17:12:28','2026-05-05 05:08:53'),
+    (539,215,'业务能力界面','control_domain','/control_domain','2026-01-31 17:12:28','2026-05-05 05:08:53'),
+    (550,215,'授权记录界面','application_authorization','/application_authorization','2026-01-31 17:12:28','2026-05-05 05:08:53'),
+    (551,215,'静态访问令牌','personal_static_access_token','/personal_static_access_token','2026-05-20 09:34:21','2026-05-20 09:34:21'),
+    (552,215,'服务注册界面','service_registry','/service_registry','2026-01-31 17:12:28','2026-05-05 05:08:53'),
+    (553,215,'服务接口界面','resource_api','/resource_api','2026-01-31 17:12:28','2026-05-05 05:08:53'),
+    (555,215,'账号管理界面','passport','/passport','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (556,215,'登陆日志界面','login_token','/login_token','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (557,215,'审计事件界面','audit_event','/audit_event','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (558,216,'序列号段调控','g2rain_raindrop','/g2rain_raindrop','2026-04-10 23:23:17','2026-04-10 23:23:17'),
+    (559,216,'字典用途设置','dictionary_usage','/dictionary_usage','2026-04-10 23:22:01','2026-04-10 23:22:01'),
+    (560,216,'地区语言设置','locale_setting','/locale_setting','2026-04-10 23:23:02','2026-04-10 23:23:02'),
+    (561,216,'多语言文案库','i18n_message','/i18n_message','2026-04-10 23:22:16','2026-04-10 23:22:31');
 
 -- 应用页面元素
 INSERT INTO `resource_page_element`
-(`id`, `application_id`, `page_code`, `page_element_name`, `page_element_code`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `application_id`, `page_code`, `page_element_name`, `page_element_code`, `create_time`, `update_time`)
 VALUES
-    (538,208,'organ','新增按钮','organ:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (539,208,'organ','修改按钮','organ:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (550,208,'organ','调整归属','organ:reassign','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (551,208,'organ','修改状态','organ:status_update','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (552,208,'organ','删除按钮','organ:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (553,208,'user','新增按钮','user:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (555,208,'user','修改按钮','user:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (556,208,'user','删除按钮','user:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (557,208,'role','新增按钮','role:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (558,208,'role','修改按钮','role:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (559,208,'role','分配用户','role:users_assign','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (560,208,'role','分配权限','role:control_utils_assign','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (561,208,'role','删除按钮','role:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (562,208,'application','新增按钮','application:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (563,208,'application','修改按钮','application:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (565,208,'application','关联应用','application:integrate','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (566,208,'application','公钥配置','application:public_key_config','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (567,208,'application','修改状态','application:status_update','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (568,208,'application','删除按钮','application:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (569,208,'resource_settings','导入按钮','resource_settings:upload','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (570,208,'resource_menu','新增按钮','resource_menu:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (571,208,'resource_menu','修改按钮','resource_menu:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (572,208,'resource_menu','删除按钮','resource_menu:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (573,208,'resource_page','新增按钮','resource_page:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (575,208,'resource_page','修改按钮','resource_page:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (576,208,'resource_page','页面元素','resource_page:page_element_mgmt','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (577,208,'resource_page','删除按钮','resource_page:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (578,208,'control_unit','新增按钮','control_unit:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (579,208,'control_unit','修改按钮','control_unit:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (580,208,'control_unit','配置资源','control_unit:resources_config','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (581,208,'control_unit','修改状态','control_unit:status_update','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (582,208,'control_unit','删除按钮','control_unit:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (583,208,'control_domain','新增按钮','control_domain:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (585,208,'control_domain','修改按钮','control_domain:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (586,208,'control_domain','关联权限','control_domain:control_utils_associate','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (587,208,'control_domain','开通功能','control_domain:features_activate','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (588,208,'control_domain','删除按钮','control_domain:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (589,208,'application_authorization','修改状态','application_authorization:status_update','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (590,208,'application_authorization','同步能力','application_authorization:control_utils_sync','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (591,208,'service_registry','新增按钮','service_registry:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (592,208,'service_registry','修改按钮','service_registry:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (593,208,'service_registry','删除按钮','service_registry:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (595,208,'resource_api','新增按钮','resource_api:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (596,208,'resource_api','修改按钮','resource_api:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (597,208,'resource_api','导入按钮','resource_api:import','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (598,208,'resource_api','删除按钮','resource_api:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (599,208,'passport','新增按钮','passport:add','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (600,208,'passport','修改按钮','passport:edit','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (601,208,'passport','修改状态','passport:status_update','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (602,208,'passport','删除按钮','passport:delete','2026-02-01 01:12:28','2026-02-01 01:12:28',0,0),
-    (603,209,'g2rain_raindrop','新增按钮','g2rain_raindrop:add','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (605,209,'g2rain_raindrop','编辑按钮','g2rain_raindrop:edit','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (606,209,'g2rain_raindrop','删除按钮','g2rain_raindrop:delete','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (607,209,'dictionary_usage','新增按钮','dictionary_usage:add','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (608,209,'dictionary_usage','修改按钮','dictionary_usage:edit','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (609,209,'dictionary_usage','删除按钮','dictionary_usage:delete','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (610,209,'dictionary_usage','打开明细','dictionary_usage:items','2026-04-12 13:58:31','2026-04-12 14:12:10',1,0),
-    (611,209,'dictionary_usage','新增字典','dictionary_item:add','2026-04-12 14:07:40','2026-04-12 14:11:45',1,0),
-    (612,209,'dictionary_usage','删除字典','dictionary_item:delete','2026-04-12 14:07:40','2026-04-12 14:11:55',1,0),
-    (613,209,'dictionary_usage','修改字典','dictionary_item:edit','2026-04-12 14:07:40','2026-04-12 14:12:01',1,0),
-    (615,209,'locale_setting','新增按钮','locale_setting:add','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (616,209,'locale_setting','修改按钮','locale_setting:edit','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (617,209,'locale_setting','删除按钮','locale_setting:delete','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (618,209,'i18n_message','新增按钮','i18n_message:add','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (619,209,'i18n_message','修改按钮','i18n_message:edit','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0),
-    (620,209,'i18n_message','删除按钮','i18n_message:delete','2026-04-11 14:20:20','2026-04-11 14:20:20',0,0);
+    (562,215,'organ','新增按钮','organ:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (563,215,'organ','修改按钮','organ:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (565,215,'organ','调整归属','organ:reassign','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (566,215,'organ','修改状态','organ:status_update','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (567,215,'organ','删除按钮','organ:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (568,215,'user','新增按钮','user:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (569,215,'user','修改按钮','user:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (570,215,'user','删除按钮','user:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (571,215,'role','新增按钮','role:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (572,215,'role','修改按钮','role:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (573,215,'role','分配用户','role:users_assign','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (575,215,'role','分配权限','role:control_utils_assign','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (576,215,'role','删除按钮','role:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (577,215,'application','新增按钮','application:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (578,215,'application','修改按钮','application:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (579,215,'application','关联应用','application:integrate','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (580,215,'application','公钥配置','application:public_key_config','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (581,215,'application','修改状态','application:status_update','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (582,215,'application','删除按钮','application:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (583,215,'resource_settings','导入按钮','resource_settings:upload','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (585,215,'resource_menu','新增按钮','resource_menu:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (586,215,'resource_menu','修改按钮','resource_menu:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (587,215,'resource_menu','删除按钮','resource_menu:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (588,215,'resource_page','新增按钮','resource_page:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (589,215,'resource_page','修改按钮','resource_page:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (590,215,'resource_page','页面元素','resource_page:page_element_mgmt','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (591,215,'resource_page','删除按钮','resource_page:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (592,215,'control_unit','新增按钮','control_unit:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (593,215,'control_unit','修改按钮','control_unit:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (595,215,'control_unit','配置资源','control_unit:resources_config','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (596,215,'control_unit','修改状态','control_unit:status_update','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (597,215,'control_unit','删除按钮','control_unit:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (598,215,'control_domain','新增按钮','control_domain:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (599,215,'control_domain','修改按钮','control_domain:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (600,215,'control_domain','关联权限','control_domain:control_utils_associate','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (601,215,'control_domain','开通功能','control_domain:features_activate','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (602,215,'control_domain','删除按钮','control_domain:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (603,215,'application_authorization','修改状态','application_authorization:status_update','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (605,215,'application_authorization','同步能力','application_authorization:control_utils_sync','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (606,215,'application_authorization','管理密钥','application_authorization:manager_api_keys','2026-05-20 09:34:22','2026-05-20 09:34:22'),
+    (607,215,'personal_static_access_token','新增按钮','personal_static_access_token:add','2026-05-20 09:34:22','2026-05-20 09:34:22'),
+    (608,215,'personal_static_access_token','删除按钮','personal_static_access_token:delete','2026-05-20 09:34:22','2026-05-20 09:34:22'),
+    (609,215,'personal_static_access_token','编辑按钮','personal_static_access_token:edit','2026-05-20 09:34:22','2026-05-20 09:34:22'),
+    (610,215,'service_registry','新增按钮','service_registry:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (611,215,'service_registry','修改按钮','service_registry:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (612,215,'service_registry','删除按钮','service_registry:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (613,215,'resource_api','新增按钮','resource_api:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (615,215,'resource_api','修改按钮','resource_api:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (616,215,'resource_api','导入按钮','resource_api:import','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (617,215,'resource_api','删除按钮','resource_api:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (618,215,'passport','新增按钮','passport:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (619,215,'passport','修改按钮','passport:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (620,215,'passport','修改状态','passport:status_update','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (621,215,'passport','删除按钮','passport:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (622,216,'g2rain_raindrop','新增按钮','g2rain_raindrop:add','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (623,216,'g2rain_raindrop','编辑按钮','g2rain_raindrop:edit','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (625,216,'g2rain_raindrop','删除按钮','g2rain_raindrop:delete','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (626,216,'dictionary_usage','新增按钮','dictionary_usage:add','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (627,216,'dictionary_usage','修改按钮','dictionary_usage:edit','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (628,216,'dictionary_usage','删除按钮','dictionary_usage:delete','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (629,216,'dictionary_usage','打开明细','dictionary_usage:items','2026-04-12 05:58:31','2026-04-12 06:12:10'),
+    (630,216,'dictionary_usage','新增字典','dictionary_item:add','2026-04-12 06:07:40','2026-04-12 06:11:45'),
+    (631,216,'dictionary_usage','删除字典','dictionary_item:delete','2026-04-12 06:07:40','2026-04-12 06:11:55'),
+    (632,216,'dictionary_usage','修改字典','dictionary_item:edit','2026-04-12 06:07:40','2026-04-12 06:12:01'),
+    (633,216,'locale_setting','新增按钮','locale_setting:add','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (635,216,'locale_setting','修改按钮','locale_setting:edit','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (636,216,'locale_setting','删除按钮','locale_setting:delete','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (637,216,'i18n_message','新增按钮','i18n_message:add','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (638,216,'i18n_message','修改按钮','i18n_message:edit','2026-04-11 06:20:20','2026-04-11 06:20:20'),
+    (639,216,'i18n_message','删除按钮','i18n_message:delete','2026-04-11 06:20:20','2026-04-11 06:20:20');
 
 -- 控制单元资源关联
 INSERT INTO `control_unit_resource_relation`
-(`id`, `control_unit_id`, `resource_id`, `resource_type`, `status`, `create_time`, `update_time`, `version`, `delete_flag`)
+(`id`, `control_unit_id`, `resource_id`, `resource_type`, `status`, `create_time`, `update_time`)
 VALUES
-    (621, 213, 390, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (622, 213, 391, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (623, 213, 392, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (625, 213, 393, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (626, 213, 395, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (627, 213, 396, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (628, 213, 397, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (629, 213, 398, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (630, 213, 399, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (631, 213, 500, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (632, 213, 501, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (633, 213, 502, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (635, 213, 503, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (636, 213, 505, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (637, 213, 506, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (638, 213, 507, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (639, 213, 508, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (650, 213, 509, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (651, 213, 510, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (652, 215, 390, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (653, 215, 391, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (655, 215, 392, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (656, 215, 393, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (657, 215, 395, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (658, 215, 396, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (659, 215, 502, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (660, 216, 511, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (661, 216, 512, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (662, 216, 513, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (663, 216, 515, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (665, 216, 516, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (666, 213, 517, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (667, 213, 518, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (668, 213, 519, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (669, 213, 520, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (670, 213, 521, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (671, 213, 522, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (672, 213, 523, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (673, 213, 525, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (675, 213, 526, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (676, 213, 527, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (677, 213, 528, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (678, 213, 529, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (679, 213, 530, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (680, 213, 531, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (681, 213, 532, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (682, 215, 517, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (683, 215, 518, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (685, 215, 519, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (686, 215, 520, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (687, 215, 527, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (688, 216, 533, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (689, 216, 535, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (690, 216, 536, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (691, 216, 537, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (692, 213, 538, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (693, 213, 539, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (695, 213, 550, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (696, 213, 551, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (697, 213, 552, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (698, 213, 553, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (699, 213, 555, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (700, 213, 556, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (701, 213, 557, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (702, 213, 558, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (703, 213, 559, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (705, 213, 560, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (706, 213, 561, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (707, 213, 562, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (708, 213, 563, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (709, 213, 565, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (710, 213, 566, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (711, 213, 567, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (712, 213, 568, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (713, 213, 569, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (715, 213, 570, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (716, 213, 571, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (717, 213, 572, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (718, 213, 573, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (719, 213, 575, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (720, 213, 576, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (721, 213, 577, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (722, 213, 578, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (723, 213, 579, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (725, 213, 580, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (726, 213, 581, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (727, 213, 582, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (728, 213, 583, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (729, 213, 585, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (730, 213, 586, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (731, 213, 587, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (732, 213, 588, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (733, 213, 589, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (735, 213, 590, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (736, 213, 591, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (737, 213, 592, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (738, 213, 593, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (739, 213, 595, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (750, 213, 596, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (751, 213, 597, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (752, 213, 598, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (753, 213, 599, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (755, 213, 600, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (756, 213, 601, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (757, 213, 602, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (758, 215, 538, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (759, 215, 539, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (760, 215, 550, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (761, 215, 551, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (762, 215, 552, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (763, 215, 553, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (765, 215, 555, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (766, 215, 556, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (767, 215, 557, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (768, 215, 558, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (769, 215, 559, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (770, 215, 560, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (771, 215, 561, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (772, 215, 590, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (773, 216, 603, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (775, 216, 605, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (776, 216, 606, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (777, 216, 607, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (778, 216, 608, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (779, 216, 609, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (780, 216, 610, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (781, 216, 611, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (782, 216, 612, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (783, 216, 613, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (785, 216, 615, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (786, 216, 616, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (787, 216, 617, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (788, 216, 618, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (789, 216, 619, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (790, 216, 620, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (791, 212, 236, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (792, 212, 238, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (793, 212, 268, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (795, 212, 279, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (796, 212, 289, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (797, 212, 290, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (798, 212, 359, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (799, 212, 360, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (800, 212, 361, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (801, 213, 238, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (802, 213, 268, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (803, 213, 276, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (805, 213, 277, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (806, 213, 278, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (807, 213, 279, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (808, 213, 280, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (809, 213, 281, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (810, 213, 282, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (811, 213, 283, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (812, 213, 285, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (813, 213, 286, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (815, 213, 287, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (816, 213, 288, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (817, 213, 289, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (818, 213, 290, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (819, 213, 291, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (820, 213, 292, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (821, 213, 293, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (822, 213, 295, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (823, 213, 296, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (825, 213, 297, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (826, 213, 298, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (827, 213, 299, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (828, 213, 300, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (829, 213, 301, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (830, 213, 302, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (831, 213, 303, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (832, 213, 305, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (833, 213, 306, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (835, 213, 307, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (836, 213, 308, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (837, 213, 309, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (838, 213, 310, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (839, 213, 311, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (850, 213, 312, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (851, 213, 313, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (852, 213, 315, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (853, 213, 316, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (855, 213, 317, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (856, 213, 318, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (857, 213, 319, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (858, 213, 320, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (859, 213, 321, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (860, 213, 322, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (861, 213, 323, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (862, 213, 325, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (863, 213, 326, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (865, 213, 327, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (866, 213, 328, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (867, 213, 329, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (868, 213, 330, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (869, 213, 331, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (870, 213, 332, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (871, 213, 333, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (872, 213, 335, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (873, 213, 336, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (875, 213, 337, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (876, 213, 338, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (877, 213, 339, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (878, 213, 350, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (879, 213, 351, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (880, 213, 352, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (881, 213, 353, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (882, 213, 355, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (883, 213, 356, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (885, 213, 357, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (886, 213, 358, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (887, 213, 359, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (888, 213, 360, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (889, 213, 361, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (890, 213, 362, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (891, 213, 363, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (892, 213, 365, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (893, 213, 366, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (895, 213, 367, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (896, 213, 368, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (897, 213, 369, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (898, 213, 370, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (899, 213, 371, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (900, 213, 372, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (901, 213, 373, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (902, 213, 375, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (903, 213, 376, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (905, 213, 377, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (906, 213, 378, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (907, 213, 379, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (908, 213, 380, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (909, 213, 381, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (910, 213, 382, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (911, 213, 383, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (912, 213, 385, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (913, 213, 386, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (915, 213, 387, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (916, 213, 388, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (917, 213, 389, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (918, 215, 238, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (919, 215, 268, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (920, 215, 276, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (921, 215, 277, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (922, 215, 278, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (923, 215, 281, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (925, 215, 282, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (926, 215, 291, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (927, 215, 292, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (928, 215, 293, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (929, 215, 308, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (930, 215, 309, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (931, 215, 310, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (932, 215, 311, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (933, 215, 312, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (935, 215, 313, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (936, 215, 317, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (937, 215, 318, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (938, 215, 319, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (939, 215, 320, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (950, 215, 321, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (951, 215, 333, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (952, 215, 335, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (953, 215, 336, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (955, 215, 337, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (956, 215, 360, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (957, 215, 361, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (958, 215, 367, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (959, 215, 368, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (960, 215, 370, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (961, 215, 371, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (962, 215, 372, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (963, 215, 373, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (965, 215, 376, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (966, 215, 382, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (967, 216, 360, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (968, 216, 361, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (969, 216, 223, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (970, 216, 225, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (971, 216, 226, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (972, 216, 227, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (973, 216, 228, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (975, 216, 231, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (976, 216, 232, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (977, 216, 233, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (978, 216, 235, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (979, 216, 236, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (980, 216, 237, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (981, 216, 238, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (982, 216, 239, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (983, 216, 260, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (985, 216, 261, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (986, 216, 262, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (987, 216, 263, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (988, 216, 265, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (989, 216, 266, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (990, 216, 267, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (991, 216, 268, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (992, 216, 270, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (993, 216, 271, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (995, 216, 272, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (996, 216, 273, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0),
-    (997, 216, 275, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28', 0, 0);
+    (650, 220, 503, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (651, 220, 505, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (652, 220, 506, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (653, 220, 507, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (655, 220, 508, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (656, 220, 509, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (657, 220, 510, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (658, 220, 511, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (659, 220, 512, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (660, 220, 513, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (661, 220, 515, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (662, 220, 516, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (663, 220, 517, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (665, 220, 518, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (666, 220, 519, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (667, 220, 520, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (668, 220, 521, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (669, 220, 522, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (670, 220, 523, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (671, 221, 525, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (672, 221, 526, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (673, 221, 527, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (675, 221, 528, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (676, 221, 529, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (677, 222, 503, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (678, 222, 505, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (679, 222, 506, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (680, 222, 507, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (681, 222, 508, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (682, 222, 516, 'MENU', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (683, 220, 530, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (685, 220, 531, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (686, 220, 532, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (687, 220, 533, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (688, 220, 535, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (689, 220, 536, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (690, 220, 537, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (691, 220, 538, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (692, 220, 539, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (693, 220, 550, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (695, 220, 551, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (696, 220, 552, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (697, 220, 553, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (698, 220, 555, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (699, 220, 556, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (700, 220, 557, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (701, 221, 558, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (702, 221, 559, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (703, 221, 560, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (705, 221, 561, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (706, 222, 530, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (707, 222, 531, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (708, 222, 532, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (709, 222, 550, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (710, 222, 551, 'PAGE', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (711, 220, 562, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (712, 220, 563, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (713, 220, 565, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (715, 220, 566, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (716, 220, 567, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (717, 220, 571, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (718, 220, 572, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (719, 220, 573, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (720, 220, 575, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (721, 220, 576, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (722, 220, 577, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (723, 220, 578, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (725, 220, 579, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (726, 220, 580, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (727, 220, 581, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (728, 220, 582, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (729, 220, 583, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (730, 220, 585, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (731, 220, 586, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (732, 220, 587, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (733, 220, 588, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (735, 220, 589, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (736, 220, 590, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (737, 220, 591, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (738, 220, 592, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (739, 220, 593, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (750, 220, 595, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (751, 220, 596, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (752, 220, 597, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (753, 220, 598, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (755, 220, 599, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (756, 220, 600, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (757, 220, 601, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (758, 220, 602, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (759, 220, 603, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (760, 220, 605, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (761, 220, 606, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (762, 220, 607, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (763, 220, 608, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (765, 220, 609, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (766, 220, 610, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (767, 220, 611, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (768, 220, 612, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (769, 220, 613, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (770, 220, 615, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (771, 220, 616, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (772, 220, 617, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (773, 220, 618, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (775, 220, 619, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (776, 220, 620, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (777, 220, 621, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (778, 221, 622, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (779, 221, 623, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (780, 221, 625, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (781, 221, 626, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (782, 221, 627, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (783, 221, 628, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (785, 221, 629, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (786, 221, 630, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (787, 221, 631, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (788, 221, 632, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (789, 221, 633, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (790, 221, 635, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (791, 221, 636, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (792, 221, 637, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (793, 221, 638, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (795, 221, 639, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (796, 222, 562, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (797, 222, 563, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (798, 222, 565, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (799, 222, 567, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (800, 222, 571, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (801, 222, 572, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (802, 222, 573, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (803, 222, 575, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (805, 222, 576, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (806, 222, 605, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (807, 222, 606, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (808, 222, 607, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (809, 222, 608, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (810, 222, 609, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (811, 219, 238, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (812, 219, 502, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (813, 219, 326, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (815, 219, 352, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (816, 219, 351, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (817, 219, 353, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (818, 219, 281, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (819, 219, 282, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (820, 219, 271, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (821, 220, 238, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (822, 220, 502, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (823, 220, 268, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (825, 220, 269, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (826, 220, 271, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (827, 220, 272, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (828, 220, 273, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (829, 220, 275, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (830, 220, 276, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (831, 220, 277, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (832, 220, 278, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (833, 220, 279, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (835, 220, 280, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (836, 220, 281, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (837, 220, 282, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (838, 220, 283, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (839, 220, 285, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (850, 220, 286, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (851, 220, 287, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (852, 220, 288, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (853, 220, 289, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (855, 220, 290, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (856, 220, 291, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (857, 220, 292, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (858, 220, 293, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (859, 220, 295, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (860, 220, 296, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (861, 220, 297, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (862, 220, 298, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (863, 220, 299, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (865, 220, 300, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (866, 220, 301, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (867, 220, 302, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (868, 220, 303, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (869, 220, 305, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (870, 220, 306, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (871, 220, 307, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (872, 220, 308, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (873, 220, 309, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (875, 220, 310, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (876, 220, 311, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (877, 220, 312, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (878, 220, 313, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (879, 220, 315, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (880, 220, 316, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (881, 220, 317, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (882, 220, 318, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (883, 220, 319, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (885, 220, 320, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (886, 220, 321, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (887, 220, 322, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (888, 220, 323, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (889, 220, 325, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (890, 220, 326, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (891, 220, 327, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (892, 220, 328, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (893, 220, 329, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (895, 220, 330, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (896, 220, 331, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (897, 220, 332, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (898, 220, 333, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (899, 220, 335, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (900, 220, 336, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (901, 220, 337, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (902, 220, 338, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (903, 220, 339, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (905, 220, 350, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (906, 220, 351, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (907, 220, 352, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (908, 220, 353, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (909, 220, 355, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (910, 220, 356, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (911, 220, 357, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (912, 220, 358, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (913, 220, 359, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (915, 220, 360, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (916, 220, 361, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (917, 220, 362, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (918, 220, 363, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (919, 220, 365, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (920, 220, 367, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (921, 220, 368, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (922, 220, 369, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (923, 220, 370, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (925, 220, 371, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (926, 220, 372, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (927, 220, 373, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (928, 220, 375, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (929, 220, 376, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (930, 220, 377, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (931, 220, 378, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (932, 220, 379, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (933, 220, 380, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (935, 220, 381, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (936, 220, 382, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (937, 220, 383, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (938, 220, 385, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (939, 220, 386, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (950, 220, 387, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (951, 220, 388, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (952, 220, 389, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (953, 220, 390, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (955, 220, 391, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (956, 220, 392, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (957, 220, 393, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (958, 220, 395, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (959, 220, 396, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (960, 220, 397, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (961, 220, 398, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (962, 220, 399, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (963, 220, 500, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (965, 221, 228, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (966, 221, 229, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (967, 221, 230, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (968, 221, 231, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (969, 221, 232, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (970, 221, 233, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (971, 221, 235, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (972, 221, 236, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (973, 221, 237, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (975, 221, 238, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (976, 221, 239, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (977, 221, 251, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (978, 221, 252, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (979, 221, 253, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (980, 221, 255, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (981, 221, 256, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (982, 221, 257, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (983, 221, 258, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (985, 221, 259, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (986, 221, 260, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (987, 221, 261, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (988, 221, 262, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (989, 221, 263, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (990, 221, 265, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (991, 221, 266, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (992, 221, 267, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (993, 221, 501, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (995, 221, 502, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (996, 221, 326, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (997, 221, 352, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (998, 222, 238, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (999, 222, 502, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1000, 222, 326, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1001, 222, 352, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1002, 222, 286, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1003, 222, 327, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1005, 222, 328, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1006, 222, 329, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1007, 222, 285, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1008, 222, 375, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1009, 222, 303, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1010, 222, 305, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1011, 222, 306, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1012, 222, 275, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1013, 222, 368, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1015, 222, 312, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1016, 222, 313, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1017, 222, 269, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1018, 222, 301, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1019, 222, 309, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1020, 222, 311, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1021, 222, 273, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1022, 222, 359, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1023, 222, 365, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1025, 222, 382, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1026, 222, 383, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1027, 222, 388, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1028, 222, 389, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1029, 222, 397, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1030, 222, 385, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1031, 222, 398, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1032, 222, 390, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1033, 222, 391, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1035, 222, 386, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1036, 222, 392, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1037, 222, 393, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1038, 222, 399, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1039, 222, 387, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1050, 222, 395, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1051, 222, 396, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1052, 222, 500, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1053, 219, 251, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1055, 220, 251, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1056, 222, 251, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28');

@@ -16,6 +16,7 @@
         <result column="application_code" property="applicationCode" jdbcType="VARCHAR"/>
         <result column="can_integrate" property="canIntegrate" jdbcType="TINYINT"/>
         <result column="landing" property="landing" jdbcType="TINYINT"/>
+        <result column="api_key_supported" property="apiKeySupported" jdbcType="TINYINT"/>
         <result column="application_type" property="applicationType" jdbcType="VARCHAR"/>
         <result column="access_token_expires_in" property="accessTokenExpiresIn" jdbcType="INTEGER"/>
         <result column="refresh_token_expires_in" property="refreshTokenExpiresIn" jdbcType="INTEGER"/>
@@ -75,6 +76,10 @@
                     </when>
                     <when test="item.column == 'landing'">
                         landing
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'apiKeySupported'">
+                        api_key_supported
                         <include refid="directionClause"/>
                     </when>
                     <when test="item.column == 'applicationType'">
@@ -164,6 +169,9 @@
             <if test="landing != null">
                 AND landing = #{landing, jdbcType=TINYINT}
             </if>
+            <if test="apiKeySupported != null">
+                AND api_key_supported = #{apiKeySupported, jdbcType=TINYINT}
+            </if>
             <if test="applicationType != null">
                 AND application_type = #{applicationType, jdbcType=VARCHAR}
             </if>
@@ -204,7 +212,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        organ_id, application_name, application_code, can_integrate, application_type, access_token_expires_in,
+        organ_id, application_name, application_code, can_integrate, api_key_supported, application_type, access_token_expires_in,
         refresh_token_expires_in, endpoint_url, context_path, status, description,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
@@ -217,7 +225,7 @@
         #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
         <!-- 业务字段值 -->
         #{organId, jdbcType=BIGINT}, #{applicationName, jdbcType=VARCHAR}, #{applicationCode, jdbcType=VARCHAR},
-        #{canIntegrate, jdbcType=TINYINT}, #{applicationType, jdbcType=VARCHAR},
+        #{canIntegrate, jdbcType=TINYINT}, #{apiKeySupported, jdbcType=TINYINT}, #{applicationType, jdbcType=VARCHAR},
         #{accessTokenExpiresIn, jdbcType=INTEGER}, #{refreshTokenExpiresIn, jdbcType=INTEGER},
         #{endpointUrl, jdbcType=VARCHAR}, #{contextPath, jdbcType=VARCHAR}, #{status, jdbcType=VARCHAR},
         #{description, jdbcType=VARCHAR},
@@ -236,7 +244,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        organ_id, application_name, application_code, can_integrate, application_type, access_token_expires_in,
+        organ_id, application_name, application_code, can_integrate, api_key_supported, application_type, access_token_expires_in,
         refresh_token_expires_in, endpoint_url, context_path, status, description,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
@@ -252,7 +260,7 @@
             <!-- 业务字段值 -->
             #{item.organId, jdbcType=BIGINT}, #{item.applicationName, jdbcType=VARCHAR},
             #{item.applicationCode, jdbcType=VARCHAR}, #{item.canIntegrate, jdbcType=TINYINT},
-            #{item.applicationType, jdbcType=VARCHAR}, #{item.accessTokenExpiresIn, jdbcType=INTEGER},
+            #{item.apiKeySupported, jdbcType=TINYINT}, #{item.applicationType, jdbcType=VARCHAR}, #{item.accessTokenExpiresIn, jdbcType=INTEGER},
             #{item.refreshTokenExpiresIn, jdbcType=INTEGER}, #{item.endpointUrl, jdbcType=VARCHAR},
             #{item.contextPath, jdbcType=VARCHAR}, #{item.status, jdbcType=VARCHAR},
             #{item.description, jdbcType=VARCHAR},
@@ -281,6 +289,9 @@
             </if>
             <if test="canIntegrate != null">
                 can_integrate = #{canIntegrate, jdbcType=TINYINT},
+            </if>
+            <if test="apiKeySupported != null">
+                api_key_supported = #{apiKeySupported, jdbcType=TINYINT},
             </if>
             <if test="applicationType != null">
                 application_type = #{applicationType, jdbcType=VARCHAR},
@@ -332,6 +343,9 @@
             </if>
             <if test="canIntegrate != null">
                 can_integrate = #{canIntegrate, jdbcType=TINYINT},
+            </if>
+            <if test="apiKeySupported != null">
+                api_key_supported = #{apiKeySupported, jdbcType=TINYINT},
             </if>
             <if test="applicationType != null">
                 application_type = #{applicationType, jdbcType=VARCHAR},
@@ -390,6 +404,9 @@
             <if test="canIntegrate != null">
                 can_integrate = #{canIntegrate, jdbcType=TINYINT},
             </if>
+            <if test="apiKeySupported != null">
+                api_key_supported = #{apiKeySupported, jdbcType=TINYINT},
+            </if>
             <if test="applicationType != null">
                 application_type = #{applicationType, jdbcType=VARCHAR},
             </if>
@@ -443,7 +460,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        organ_id, application_name, application_code, can_integrate, landing, application_type, public_key_algorithm,
+        organ_id, application_name, application_code, can_integrate, landing, api_key_supported, application_type, public_key_algorithm,
         access_token_expires_in, refresh_token_expires_in, endpoint_url, context_path, status, description, public_key,
         public_key_format,
         <!-- deleteFlag字段（如果存在） -->
@@ -464,7 +481,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        organ_id, application_name, application_code, can_integrate, landing, application_type, public_key_algorithm,
+        organ_id, application_name, application_code, can_integrate, landing, api_key_supported, application_type, public_key_algorithm,
         access_token_expires_in, refresh_token_expires_in, endpoint_url, context_path, status, description, public_key,
         public_key_format,
         <!-- deleteFlag字段（如果存在） -->
@@ -484,7 +501,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        organ_id, application_name, application_code, can_integrate, landing, application_type, public_key_algorithm,
+        organ_id, application_name, application_code, can_integrate, landing, api_key_supported, application_type, public_key_algorithm,
         access_token_expires_in, refresh_token_expires_in, endpoint_url, context_path, status, description, public_key,
         public_key_format,
         <!-- deleteFlag字段（如果存在） -->

@@ -134,16 +134,16 @@ public class ApplicationSuiteServiceImpl implements ApplicationSuiteService {
                 .collect(Collectors.toMap(
                     ApplicationPo::getId,
                     Function.identity(),
-                    (existing, replacement) -> existing
+                    (existing, _) -> existing
                 ));
 
             ApplicationPo sourceApplication = applicationMapping.get(applicationId);
             Asserts.isTrue(Objects.nonNull(sourceApplication), SystemErrorCode.PARAM_VAL_INVALID, applicationId);
-            Asserts.isTrue(!sourceApplication.getCanIntegrate(), BasisErrorCode.NON_SUB_APPLICATION_CLASSIFY_ILLEGAL);
+            Asserts.isTrue(sourceApplication.getCanIntegrate(), BasisErrorCode.NON_SUB_APPLICATION_CLASSIFY_ILLEGAL);
             for (Long masterApplicationId : masterApplicationIds) {
                 ApplicationPo targetApplication = applicationMapping.get(masterApplicationId);
                 Asserts.isTrue(Objects.nonNull(targetApplication), SystemErrorCode.PARAM_VAL_INVALID, masterApplicationId);
-                Asserts.isTrue(targetApplication.getCanIntegrate(), BasisErrorCode.NON_MAIN_APPLICATION_CLASSIFY_ILLEGAL);
+                Asserts.isTrue(!targetApplication.getCanIntegrate(), BasisErrorCode.NON_MAIN_APPLICATION_CLASSIFY_ILLEGAL);
             }
         }
 
