@@ -232,8 +232,8 @@ public class AuthorityServiceImpl implements AuthorityService {
      */
     @Override
     public List<BaseAuthorityApiVo> getApiPermissions(Long userId, Long applicationId) {
-        boolean isDefaultMain = applicationService.hasLandingApplication(applicationId);
-        return buildResourceApiEndpoints(isDefaultMain, userId, applicationId).stream().map(o -> {
+        // isDefaultMain 直接设置False, 因为这个接口为网关服务, 网关会缓存全局的默认接口权限
+        return buildResourceApiEndpoints(Boolean.FALSE, userId, applicationId).stream().map(o -> {
             BaseAuthorityApiVo result = new BaseAuthorityApiVo();
             result.setId(o.getId());
             result.setStatus(o.getStatus());

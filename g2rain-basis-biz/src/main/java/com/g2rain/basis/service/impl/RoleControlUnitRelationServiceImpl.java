@@ -279,6 +279,8 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
     @Override
     public Integer internalSave(RoleControlUnitRelation dto) {
         if (Collections.isEmpty(dto.getControlUnitIds())) {
+            // 推送消息, 有可能真的是删除接口权限
+            sendPermissionChange(dto.getRoleId());
             return 0;
         }
 
@@ -305,6 +307,8 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
 
         // 如果没有新控制单元需要插入，返回 0
         if (Collections.isEmpty(newControlUnitIds)) {
+            // 推送消息, 有可能真的是删除接口权限
+            sendPermissionChange(dto.getRoleId());
             return 0;
         }
 
@@ -323,23 +327,37 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
             return entity;
         }).toList();
 
+        // 批量保存数据
         int result = roleControlUnitRelationDao.insertMultiple(records);
 
-        // 找到对应的机构, 对当前的机构的接口权限置为失效
-        RoleSelectDto roleSelectDto = new RoleSelectDto();
-        roleSelectDto.setId(dto.getRoleId());
-        List<RolePo> roles = roleDao.selectListWithoutIsolation(roleSelectDto);
-        if (Collections.isNotEmpty(roles)) {
-            // 广播删除`接口权限`信息
-            eventPublisherHub.sendDelete(
-                Constants.SYNC_OUTPUT_BINDING,
-                BasisSyncerEnum.USER_PERM.name(),
-                roles.getFirst().getOrganId()
-            );
-        }
+        // 推送消息
+        sendPermissionChange(dto.getRoleId());
 
         return result;
     }
+
+    /**
+     * 推送当前机构的权限失效
+     *
+     * @param roleId 角色标识
+     */
+    private void sendPermissionChange(Long roleId) {
+        // 找到对应的机构, 对当前的机构的接口权限置为失效
+        RoleSelectDto roleSelectDto = new RoleSelectDto();
+        roleSelectDto.setId(roleId);
+        List<RolePo> roles = roleDao.selectListWithoutIsolation(roleSelectDto);
+        if (Collections.isEmpty(roles)) {
+            return;
+        }
+
+        // 广播删除`接口权限`信息
+        eventPublisherHub.sendDelete(
+            Constants.SYNC_OUTPUT_BINDING,
+            BasisSyncerEnum.USER_PERM.name(),
+            roles.getFirst().getOrganId()
+        );
+    }
+
 
     /**
      * 根据机构 ID 和应用授权 ID，批量修改该机构控制单元的状态（激活或关停）。
