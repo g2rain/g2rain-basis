@@ -13,16 +13,22 @@ import com.g2rain.basis.dto.PersonalStaticAccessTokenDto;
 import com.g2rain.basis.dto.PersonalStaticAccessTokenSelectDto;
 import com.g2rain.basis.dto.UpdateStatusDto;
 import com.g2rain.basis.dto.UserSelectDto;
+import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.enums.StaticTokenStatus;
 import com.g2rain.basis.service.PersonalStaticAccessTokenService;
+import com.g2rain.basis.utils.BasisUtils;
+import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.PersonalStaticAccessTokenVo;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
+import com.g2rain.common.syncer.EventPublisherHub;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Moments;
+import com.g2rain.common.utils.Strings;
 import com.g2rain.common.web.PrincipalContextHolder;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
@@ -32,8 +38,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,6 +71,9 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
 
     @Resource(name = "userDao")
     private UserDao userDao;
+
+    @Resource
+    private EventPublisherHub eventPublisherHub;
 
     private IdGenerator idGenerator;
 
@@ -110,7 +123,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         // 当前用户不属于当前的应用授权记录, 禁止生成, 防止运营乱创建
         Long userOrganId = PrincipalContextHolder.getOrganId();
         Long appAuthorizationOrganId = applicationAuthorization.getOrganId();
-        Asserts.isTrue(Objects.equals(userOrganId, appAuthorizationOrganId), SystemErrorCode.CREATE_DATA_ERROR);
+        Asserts.isTrue(Objects.equals(userOrganId, appAuthorizationOrganId), BasisErrorCode.ONLY_OWN_ORG_APIKEY_ALLOWED);
 
         ApplicationPo application = applicationDao.selectById(applicationAuthorization.getApplicationId());
         Asserts.isTrue(Objects.nonNull(application), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorizationId);
@@ -133,7 +146,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         Asserts.isTrue(Objects.nonNull(dto.getTokenHash()), SystemErrorCode.PARAM_REQUIRED, "tokenHash");
         Asserts.isTrue(Objects.nonNull(dto.getMaskedToken()), SystemErrorCode.PARAM_REQUIRED, "maskedToken");
 
-        // 校验 同一机构类型 机构名 是否重复
+        // 校验 token hash 是否重复, 因为他是全局唯一
         PersonalStaticAccessTokenSelectDto selectDto = new PersonalStaticAccessTokenSelectDto();
         selectDto.setTokenHash(dto.getTokenHash());
         Long total = personalStaticAccessTokenDao.checkStaticAccessTokenExists(selectDto);
@@ -153,6 +166,25 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         int success = personalStaticAccessTokenDao.insert(entity);
         Asserts.greaterThan(success, 0, SystemErrorCode.CREATE_DATA_ERROR);
         return entity.getId();
+    }
+
+    /**
+     * 按明文 API Key 查询：内部 SHA-256 后与表字段 {@code token_hash} 匹配，不记录明文。
+     */
+    @Override
+    public PersonalStaticAccessTokenVo selectByApiKey(String apiKey) {
+        if (Strings.isBlank(apiKey)) {
+            return null;
+        }
+
+        PersonalStaticAccessTokenPo sat = personalStaticAccessTokenDao.selectByTokenHash(
+            BasisUtils.sha256Hex(apiKey)
+        );
+        if (Objects.isNull(sat)) {
+            return null;
+        }
+
+        return PersonalStaticAccessTokenConverter.INSTANCE.po2vo(sat);
     }
 
     /**
@@ -188,12 +220,45 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         staticAccessToken.setId(personalStaticAccessToken.getId());
         staticAccessToken.setStatus(status);
         staticAccessToken.setUpdateTime(Moments.now());
-        return personalStaticAccessTokenDao.update(staticAccessToken);
+        int updated = personalStaticAccessTokenDao.update(staticAccessToken);
+        if (updated == 0) {
+            return 0;
+        }
+
+        publishTokenCacheSync(personalStaticAccessToken.getTokenHash());
+        return updated;
     }
 
     @Override
+    @Transactional
     public int delete(Long id) {
-        return personalStaticAccessTokenDao.delete(id);
+        PersonalStaticAccessTokenPo existing = personalStaticAccessTokenDao.selectById(id);
+        if (Objects.isNull(existing)) {
+            return 0;
+        }
+
+        int deleted = personalStaticAccessTokenDao.delete(id);
+        if (deleted == 0) {
+            return 0;
+        }
+
+        publishTokenCacheSync(existing.getTokenHash());
+        return deleted;
+    }
+
+    /**
+     * 令牌状态变更或物理删除后，向 cache-sync 广播 tokenHash，通知各网关节点失效 API Key 本地缓存。
+     */
+    private void publishTokenCacheSync(String tokenHash) {
+        if (Strings.isBlank(tokenHash)) {
+            return;
+        }
+
+        eventPublisherHub.sendUpdate(
+            Constants.SYNC_OUTPUT_BINDING,
+            BasisSyncerEnum.STATIC_ACCESS_TOKEN.name(),
+            tokenHash
+        );
     }
 
     /**

@@ -279,7 +279,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
     @Override
     public Integer internalSave(RoleControlUnitRelation dto) {
         if (Collections.isEmpty(dto.getControlUnitIds())) {
-            // 推送消息, 有可能真的是删除接口权限
+            // 推送消息, 可能存在的场景, 控制域删除控制单元, 防止遗漏, 需要推送
             sendPermissionChange(dto.getRoleId());
             return 0;
         }
@@ -307,7 +307,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
 
         // 如果没有新控制单元需要插入，返回 0
         if (Collections.isEmpty(newControlUnitIds)) {
-            // 推送消息, 有可能真的是删除接口权限
+            // 推送消息, 可能存在的场景, 控制单元调整接口资源, 防止遗漏, 需要推送
             sendPermissionChange(dto.getRoleId());
             return 0;
         }

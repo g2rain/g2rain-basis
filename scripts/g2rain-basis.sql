@@ -13,49 +13,50 @@ USE `g2rain_basis`;
 DROP TABLE IF EXISTS `passport`;
 
 CREATE TABLE `passport` (
-                            `id` BIGINT NOT NULL COMMENT 													                    '账号标识',
-                            `username` VARCHAR(64) NOT NULL UNIQUE COMMENT 											            '登录用户',
-                            `password` VARCHAR(256) NOT NULL DEFAULT '' COMMENT 												'登录密码',
-                            `real_name` VARCHAR(128) DEFAULT NULL COMMENT 														'真实姓名',
-                            `sex` VARCHAR(12) DEFAULT NULL COMMENT 															    '性别[MALE:男性, FEMALE:女性]',
-                            `birthday` VARCHAR(16) DEFAULT NULL COMMENT 														'生日',
-                            `id_no` VARCHAR(32) DEFAULT NULL COMMENT 															'身份证号',
-                            `mobile` VARCHAR(32) DEFAULT '' COMMENT 															'手机号码',
-                            `email` VARCHAR(128) DEFAULT NULL COMMENT 														    '邮箱地址',
-                            `status` VARCHAR(32) NOT NULL DEFAULT 'NORMAL' COMMENT 												'状态[NORMAL:正常, FROZEN:冻结]',
-                            `password_trusted` TINYINT NOT NULL DEFAULT 1 COMMENT                                               '密码是否可信[0:不可信/临时密码, 1:可信/用户已设置]',
-                            `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                            `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                            `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                            `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                            PRIMARY KEY (`id`),
-                            INDEX `idx_username` (`username`),
-                            INDEX `idx_status` (`status`)
+    `id` BIGINT NOT NULL COMMENT 													                    '账号标识',
+    `username` VARCHAR(64) NOT NULL UNIQUE COMMENT 											            '登录用户',
+    `password` VARCHAR(256) NOT NULL DEFAULT '' COMMENT 												'登录密码',
+    `real_name` VARCHAR(128) DEFAULT NULL COMMENT 														'真实姓名',
+    `sex` VARCHAR(12) DEFAULT NULL COMMENT 															    '性别[MALE:男性, FEMALE:女性]',
+    `birthday` VARCHAR(16) DEFAULT NULL COMMENT 														'生日',
+    `id_no` VARCHAR(32) DEFAULT NULL COMMENT 															'身份证号',
+    `mobile` VARCHAR(32) DEFAULT '' COMMENT 															'手机号码',
+    `email` VARCHAR(128) DEFAULT NULL COMMENT 														    '邮箱地址',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'NORMAL' COMMENT 												'状态[NORMAL:正常, FROZEN:冻结]',
+    `password_trusted` TINYINT NOT NULL DEFAULT 1 COMMENT                                               '密码是否可信[0:不可信/临时密码, 1:可信/用户已设置]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_username` (`username`),
+    INDEX `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '账号表';
 
 -- =============================================
 -- 2. 身份源绑定：passport <-> 钉钉等 IdP（不自动建 passport）
 -- =============================================
 DROP TABLE IF EXISTS `passport_idp_binding`;
+
 CREATE TABLE `passport_idp_binding` (
-                                        `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
-                                        `passport_id` BIGINT NOT NULL COMMENT                                                               '账号标识，关联 passport.id',
-                                        `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[IdpType: DINGTALK|FEISHU|WECHAT_WORK；当前 IAM 仅钉钉]',
-                                        `idp_subject` VARCHAR(128) NOT NULL COMMENT                                                         'IdP 侧稳定主体标识，建议存钉钉 unionId',
-                                        `corp_id` VARCHAR(64) DEFAULT NULL COMMENT                                                          '钉钉企业 corpId；企业内部模式可由 IAM 写入默认 corp',
-                                        `idp_user_id` VARCHAR(128) DEFAULT NULL COMMENT                                                     '钉钉 userid（corp 内），可选，便于审计与运营排查',
-                                        `idp_application_code` VARCHAR(128) NOT NULL DEFAULT '' COMMENT                                     '三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId），与 application_idp_provision.idp_application_code 对齐',
-                                        `bind_mode` VARCHAR(32) DEFAULT NULL COMMENT                                                        '接入形态[IdpBindMode: INTERNAL企业内部应用|THIRD_PARTY第三方应用；与钉钉换票链路对应，非OAuth两跳]',
-                                        `raw_profile` JSON DEFAULT NULL COMMENT                                                             'IdP 返回的原始用户信息快照（可选）',
-                                        `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                        `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                        `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                        `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                        PRIMARY KEY (`id`),
-                                        UNIQUE KEY `uk_idp_type_subject_app` (`idp_type`, `idp_subject`, `idp_application_code`),
-                                        KEY `idx_passport_id` (`passport_id`),
-                                        KEY `idx_corp_idp` (`corp_id`, `idp_type`),
-                                        KEY `idx_delete_flag` (`delete_flag`)
+    `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
+    `passport_id` BIGINT NOT NULL COMMENT                                                               '账号标识，关联 passport.id',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[IdpType: DINGTALK|FEISHU|WECHAT_WORK；当前 IAM 仅钉钉]',
+    `idp_subject` VARCHAR(128) NOT NULL COMMENT                                                         'IdP 侧稳定主体标识，建议存钉钉 unionId',
+    `corp_id` VARCHAR(64) DEFAULT NULL COMMENT                                                          '钉钉企业 corpId；企业内部模式可由 IAM 写入默认 corp',
+    `idp_user_id` VARCHAR(128) DEFAULT NULL COMMENT                                                     '钉钉 userid（corp 内），可选，便于审计与运营排查',
+    `idp_application_code` VARCHAR(128) NOT NULL DEFAULT '' COMMENT                                     '三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId），与 application_idp_provision.idp_application_code 对齐',
+    `bind_mode` VARCHAR(32) DEFAULT NULL COMMENT                                                        '接入形态[IdpBindMode: INTERNAL企业内部应用|THIRD_PARTY第三方应用；与钉钉换票链路对应，非OAuth两跳]',
+    `raw_profile` JSON DEFAULT NULL COMMENT                                                             'IdP 返回的原始用户信息快照（可选）',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_idp_type_subject_app` (`idp_type`, `idp_subject`, `idp_application_code`),
+    KEY `idx_passport_id` (`passport_id`),
+    KEY `idx_corp_idp` (`corp_id`, `idp_type`),
+    KEY `idx_delete_flag` (`delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '账号与外部身份源绑定表';
 
 -- =============================================
@@ -63,20 +64,21 @@ CREATE TABLE `passport_idp_binding` (
 -- 通行证与 IdP 的关系见 passport_idp_binding（含 idp_application_code）
 -- =============================================
 DROP TABLE IF EXISTS `application_idp_provision`;
+
 CREATE TABLE `application_idp_provision` (
-                                             `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
-                                             `application_id` BIGINT NOT NULL COMMENT                                                            '平台应用标识，关联 application.id',
-                                             `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型，与 IdpType 枚举名一致',
-                                             `idp_application_code` VARCHAR(128) NOT NULL COMMENT                                                '三方应用在 IdP 侧的标识（如钉钉 OAuth clientId）',
-                                             `remark` VARCHAR(512) DEFAULT NULL COMMENT                                                          '备注',
-                                             `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                             `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                             `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                             `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                             PRIMARY KEY (`id`),
-                                             UNIQUE KEY `uk_idp_application` (`idp_type`, `idp_application_code`),
-                                             KEY `idx_application_id` (`application_id`),
-                                             KEY `idx_delete_flag` (`delete_flag`)
+    `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
+    `application_id` BIGINT NOT NULL COMMENT                                                            '平台应用标识，关联 application.id',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型，与 IdpType 枚举名一致',
+    `idp_application_code` VARCHAR(128) NOT NULL COMMENT                                                '三方应用在 IdP 侧的标识（如钉钉 OAuth clientId）',
+    `remark` VARCHAR(512) DEFAULT NULL COMMENT                                                          '备注',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_idp_application` (`idp_type`, `idp_application_code`),
+    KEY `idx_application_id` (`application_id`),
+    KEY `idx_delete_flag` (`delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '外部身份源应用与平台应用的绑定';
 
 -- =============================================
@@ -85,20 +87,20 @@ CREATE TABLE `application_idp_provision` (
 DROP TABLE IF EXISTS `user`;
 
 CREATE TABLE `user` (
-                        `id` BIGINT NOT NULL COMMENT 													                    '用户标识',
-                        `passport_id` BIGINT NOT NULL COMMENT 														        '账号标识',
-                        `organ_id` BIGINT NOT NULL COMMENT 												                    '机构标识',
-                        `email` VARCHAR(128) DEFAULT NULL COMMENT 														    '邮箱地址',
-                        `mobile` VARCHAR(32) DEFAULT '' COMMENT 															'手机号码',
-                        `real_name` VARCHAR(128) DEFAULT NULL COMMENT 														'真实姓名',
-                        `admin` TINYINT NOT NULL DEFAULT 0 COMMENT 													        '管理员标记[0:否, 1:是]',
-                        `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                        `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                        `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                        `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                        PRIMARY KEY (`id`),
-                        INDEX `idx_passport_id` (`passport_id`),
-                        INDEX `idx_organ_id` (`organ_id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '用户标识',
+    `passport_id` BIGINT NOT NULL COMMENT 														        '账号标识',
+    `organ_id` BIGINT NOT NULL COMMENT 												                    '机构标识',
+    `email` VARCHAR(128) DEFAULT NULL COMMENT 														    '邮箱地址',
+    `mobile` VARCHAR(32) DEFAULT '' COMMENT 															'手机号码',
+    `real_name` VARCHAR(128) DEFAULT NULL COMMENT 														'真实姓名',
+    `admin` TINYINT NOT NULL DEFAULT 0 COMMENT 													        '管理员标记[0:否, 1:是]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_passport_id` (`passport_id`),
+    INDEX `idx_organ_id` (`organ_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '用户表';
 
 -- =============================================
@@ -107,19 +109,19 @@ CREATE TABLE `user` (
 DROP TABLE IF EXISTS `organ`;
 
 CREATE TABLE `organ` (
-                         `id` BIGINT NOT NULL COMMENT 													                    '机构标识',
-                         `organ_name` VARCHAR(128) NOT NULL COMMENT 															'机构名称',
-                         `organ_type` VARCHAR(32) NOT NULL COMMENT 															'机构类型[服务商、渠道、公司、租户]',
-                         `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT 											    '机构状态[ACTIVE:有效, INACTIVE:无效]',
-                         `admin` TINYINT NOT NULL DEFAULT 0 COMMENT 													        '运营标记[0:否, 1:是]',
-                         `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                         `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                         `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                         `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                         PRIMARY KEY (`id`),
-                         INDEX `idx_organ_name` (`organ_name`),
-                         INDEX `idx_organ_type` (`organ_type`),
-                         INDEX `idx_organ_status` (`status`)
+    `id` BIGINT NOT NULL COMMENT 													                    '机构标识',
+    `organ_name` VARCHAR(128) NOT NULL COMMENT 															'机构名称',
+    `organ_type` VARCHAR(32) NOT NULL COMMENT 															'机构类型[服务商、渠道、公司、租户]',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT 											    '机构状态[ACTIVE:有效, INACTIVE:无效]',
+    `admin` TINYINT NOT NULL DEFAULT 0 COMMENT 													        '运营标记[0:否, 1:是]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_organ_name` (`organ_name`),
+    INDEX `idx_organ_type` (`organ_type`),
+    INDEX `idx_organ_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '机构表';
 
 -- =============================================
@@ -127,22 +129,23 @@ CREATE TABLE `organ` (
 -- 同一 (idp_type, enterprise_id) 可对应多个 organ_id（多租户）
 -- =============================================
 DROP TABLE IF EXISTS `idp_enterprise_organ`;
+
 CREATE TABLE `idp_enterprise_organ` (
-                                        `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
-                                        `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[DINGTALK, WECHAT_WORK, FEISHU, ...]',
-                                        `enterprise_id` VARCHAR(64) NOT NULL COMMENT                                                        '外部企业/租户标识（与 passport_idp_binding.enterprise_id 一致）',
-                                        `organ_id` BIGINT NOT NULL COMMENT                                                                  '机构标识，关联 organ.id（业务上应为租户类型机构）',
-                                        `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT                                              '状态[ACTIVE:有效, INACTIVE:停用]',
-                                        `remark` VARCHAR(512) DEFAULT NULL COMMENT                                                          '备注',
-                                        `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                        `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                        `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                        `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                        PRIMARY KEY (`id`),
-                                        UNIQUE KEY `uk_idp_enterprise_organ` (`idp_type`, `enterprise_id`, `organ_id`),
-                                        KEY `idx_organ_id` (`organ_id`),
-                                        KEY `idx_idp_enterprise` (`idp_type`, `enterprise_id`),
-                                        KEY `idx_delete_flag` (`delete_flag`)
+    `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[DINGTALK, WECHAT_WORK, FEISHU, ...]',
+    `enterprise_id` VARCHAR(64) NOT NULL COMMENT                                                        '外部企业/租户标识（与 passport_idp_binding.enterprise_id 一致）',
+    `organ_id` BIGINT NOT NULL COMMENT                                                                  '机构标识，关联 organ.id（业务上应为租户类型机构）',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT                                              '状态[ACTIVE:有效, INACTIVE:停用]',
+    `remark` VARCHAR(512) DEFAULT NULL COMMENT                                                          '备注',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_idp_enterprise_organ` (`idp_type`, `enterprise_id`, `organ_id`),
+    KEY `idx_organ_id` (`organ_id`),
+    KEY `idx_idp_enterprise` (`idp_type`, `enterprise_id`),
+    KEY `idx_delete_flag` (`delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '外部企业/租户与平台机构关联表';
 
 -- =============================================
@@ -151,19 +154,19 @@ CREATE TABLE `idp_enterprise_organ` (
 DROP TABLE IF EXISTS `organ_closure`;
 
 CREATE TABLE `organ_closure` (
-                                 `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
-                                 `ancestor_id` BIGINT NOT NULL COMMENT  													            '祖先机构标识[上级]',
-                                 `descendant_id` BIGINT NOT NULL COMMENT   													        '后代机构标识[下级]',
-                                 `descendant_type` VARCHAR(32) NOT NULL COMMENT 													    '后代机构类型[服务商、渠道、公司、租户]',
-                                 `relation_type` VARCHAR(32) NOT NULL COMMENT                                                        '关系类型[SELF_ASSOCIATION:自身关联, DIRECT_SUBORDINATE:直属, INDIRECT_SUBORDINATE:从属]',
-                                 `path_count` INT NOT NULL DEFAULT 1 COMMENT                                                         '路径引用次数[用于DAG交叉挂载维护]',
-                                 `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                 `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                 `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                 `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                 PRIMARY KEY (`id`),
-                                 INDEX idx_ancestor_id (ancestor_id),
-                                 INDEX idx_descendant_id (descendant_id)
+    `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
+    `ancestor_id` BIGINT NOT NULL COMMENT  													            '祖先机构标识[上级]',
+    `descendant_id` BIGINT NOT NULL COMMENT   													        '后代机构标识[下级]',
+    `descendant_type` VARCHAR(32) NOT NULL COMMENT 													    '后代机构类型[服务商、渠道、公司、租户]',
+    `relation_type` VARCHAR(32) NOT NULL COMMENT                                                        '关系类型[SELF_ASSOCIATION:自身关联, DIRECT_SUBORDINATE:直属, INDIRECT_SUBORDINATE:从属]',
+    `path_count` INT NOT NULL DEFAULT 1 COMMENT                                                         '路径引用次数[用于DAG交叉挂载维护]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX idx_ancestor_id (ancestor_id),
+    INDEX idx_descendant_id (descendant_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '机构路径关系表';
 
 -- =============================================
@@ -172,20 +175,20 @@ CREATE TABLE `organ_closure` (
 DROP TABLE IF EXISTS `resource_menu`;
 
 CREATE TABLE `resource_menu` (
-                                 `id` BIGINT NOT NULL COMMENT 													                    '菜单标识',
-                                 `parent_id` BIGINT DEFAULT NULL COMMENT 												            '父菜单标识',
-                                 `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
-                                 `menu_name` VARCHAR(128) NOT NULL COMMENT													        '菜单名称',
-                                 `menu_code` VARCHAR(64) NOT NULL COMMENT 														    '菜单编码',
-                                 `link_path` VARCHAR(128) DEFAULT NULL COMMENT 													    '链接路径',
-                                 `icon` VARCHAR(32) DEFAULT NULL COMMENT 															'展示图标',
-                                 `menu_sort_order` INT NOT NULL DEFAULT 0 COMMENT 												    '菜单排序',
-                                 `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                 `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                 `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                 `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                 PRIMARY KEY (`id`),
-                                 INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
+    `id` BIGINT NOT NULL COMMENT 													                    '菜单标识',
+    `parent_id` BIGINT DEFAULT NULL COMMENT 												            '父菜单标识',
+    `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `menu_name` VARCHAR(128) NOT NULL COMMENT													        '菜单名称',
+    `menu_code` VARCHAR(64) NOT NULL COMMENT 														    '菜单编码',
+    `link_path` VARCHAR(128) DEFAULT NULL COMMENT 													    '链接路径',
+    `icon` VARCHAR(32) DEFAULT NULL COMMENT 															'展示图标',
+    `menu_sort_order` INT NOT NULL DEFAULT 0 COMMENT 												    '菜单排序',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用资源菜单表';
 
 -- =============================================
@@ -194,17 +197,17 @@ CREATE TABLE `resource_menu` (
 DROP TABLE IF EXISTS `resource_page`;
 
 CREATE TABLE `resource_page` (
-                                 `id` BIGINT NOT NULL COMMENT 													                    '页面标识',
-                                 `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
-                                 `page_name` VARCHAR(128) NOT NULL COMMENT												            '页面名称',
-                                 `page_code` VARCHAR(128) NOT NULL COMMENT												            '页面编码',
-                                 `link_path` VARCHAR(128) NOT NULL COMMENT 													        '链接路径',
-                                 `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
-                                 `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
-                                 `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
-                                 `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
-                                 PRIMARY KEY (`id`),
-                                 INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
+    `id` BIGINT NOT NULL COMMENT 													                    '页面标识',
+    `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `page_name` VARCHAR(128) NOT NULL COMMENT												            '页面名称',
+    `page_code` VARCHAR(128) NOT NULL COMMENT												            '页面编码',
+    `link_path` VARCHAR(128) NOT NULL COMMENT 													        '链接路径',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用资源页面表';
 
 -- =============================================
@@ -213,17 +216,17 @@ CREATE TABLE `resource_page` (
 DROP TABLE IF EXISTS `resource_page_element`;
 
 CREATE TABLE `resource_page_element` (
-                                         `id` BIGINT NOT NULL COMMENT 													                    '页面元素标识',
-                                         `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
-                                         `page_code` VARCHAR(128) NOT NULL COMMENT														    '页面编码',
-                                         `page_element_name` VARCHAR(128) NOT NULL COMMENT												    '页面元素名称',
-                                         `page_element_code` VARCHAR(64) NOT NULL COMMENT												    '页面元素编码',
-                                         `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                         `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                         `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                         `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                         PRIMARY KEY (`id`),
-                                         INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
+    `id` BIGINT NOT NULL COMMENT 													                    '页面元素标识',
+    `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `page_code` VARCHAR(128) NOT NULL COMMENT														    '页面编码',
+    `page_element_name` VARCHAR(128) NOT NULL COMMENT												    '页面元素名称',
+    `page_element_code` VARCHAR(64) NOT NULL COMMENT												    '页面元素编码',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用资源页面元素表';
 
 -- =============================================
@@ -232,18 +235,18 @@ CREATE TABLE `resource_page_element` (
 DROP TABLE IF EXISTS `service_registry`;
 
 CREATE TABLE `service_registry` (
-                                    `id` BIGINT NOT NULL COMMENT 													                   '后端服务标识',
-                                    `service_code` VARCHAR(64) NOT NULL COMMENT                                                         '服务逻辑编码',
-                                    `name` VARCHAR(128) NOT NULL COMMENT                                                                '服务显示名称',
-                                    `endpoint` VARCHAR(256) NOT NULL COMMENT                                                            '服务目标地址',
-                                    `route_prefix` VARCHAR(128) NOT NULL COMMENT                                                        '网关路由前缀',
-                                    `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '后端服务说明',
-                                    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                    PRIMARY KEY (`id`),
-                                    UNIQUE KEY `uk_service_code` (`service_code`)
+    `id` BIGINT NOT NULL COMMENT 													                   '后端服务标识',
+    `service_code` VARCHAR(64) NOT NULL COMMENT                                                         '服务逻辑编码',
+    `name` VARCHAR(128) NOT NULL COMMENT                                                                '服务显示名称',
+    `endpoint` VARCHAR(256) NOT NULL COMMENT                                                            '服务目标地址',
+    `route_prefix` VARCHAR(128) NOT NULL COMMENT                                                        '网关路由前缀',
+    `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '后端服务说明',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_service_code` (`service_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '服务注册表';
 
 -- =============================================
@@ -252,19 +255,19 @@ CREATE TABLE `service_registry` (
 DROP TABLE IF EXISTS `resource_api`;
 
 CREATE TABLE `resource_api` (
-                                `id` BIGINT NOT NULL COMMENT                                                                        '资源接口标识',
-                                `service_code` VARCHAR(64) NOT NULL COMMENT                                                         '服务逻辑编码',
-                                `api_tags` VARCHAR(128) NOT NULL COMMENT                                                            '资源接口标签',
-                                `name` VARCHAR(128) NOT NULL COMMENT                                                                '资源接口名称',
-                                `method` VARCHAR(32) NOT NULL COMMENT                                                               '接口请求方法',
-                                `path` VARCHAR(512) NOT NULL COMMENT                                                                '接口请求路径',
-                                `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '资源接口说明',
-                                `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                PRIMARY KEY (`id`),
-                                UNIQUE KEY `uk_service_method_path` (`service_code`,`method`,`path`)
+    `id` BIGINT NOT NULL COMMENT                                                                        '资源接口标识',
+    `service_code` VARCHAR(64) NOT NULL COMMENT                                                         '服务逻辑编码',
+    `api_tags` VARCHAR(128) NOT NULL COMMENT                                                            '资源接口标签',
+    `name` VARCHAR(128) NOT NULL COMMENT                                                                '资源接口名称',
+    `method` VARCHAR(32) NOT NULL COMMENT                                                               '接口请求方法',
+    `path` VARCHAR(512) NOT NULL COMMENT                                                                '接口请求路径',
+    `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '资源接口说明',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_service_method_path` (`service_code`,`method`,`path`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '资源接口表';
 
 -- =============================================
@@ -273,18 +276,18 @@ CREATE TABLE `resource_api` (
 DROP TABLE IF EXISTS `control_unit`;
 
 CREATE TABLE `control_unit` (
-                                `id` BIGINT NOT NULL COMMENT 													                    '控制单元标识',
-                                `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
-                                `control_unit_name` VARCHAR(128) NOT NULL COMMENT                                                   '控制单元名称',
-                                `control_unit_scope` VARCHAR(32) NOT NULL COMMENT                                                   '控制单元类型[OPERATION("运营功能"), CUSTOMER("客户功能"), PERPETUAL("永久有效功能")]',
-                                `landing` TINYINT NOT NULL DEFAULT 0 COMMENT                                                        '默认数据[0:否, 1:是]',
-                                `status` VARCHAR(32) NOT NULL DEFAULT 'UNPUBLISHED' COMMENT 										'控制单元状态[PUBLISHED:已发布, UNPUBLISHED:未发布]',
-                                `description` VARCHAR(512) DEFAULT NULL COMMENT   												    '业务说明',
-                                `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                PRIMARY KEY (`id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '控制单元标识',
+    `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `control_unit_name` VARCHAR(128) NOT NULL COMMENT                                                   '控制单元名称',
+    `control_unit_scope` VARCHAR(32) NOT NULL COMMENT                                                   '控制单元类型[OPERATION("运营功能"), CUSTOMER("客户功能"), PERPETUAL("永久有效功能")]',
+    `landing` TINYINT NOT NULL DEFAULT 0 COMMENT                                                        '默认数据[0:否, 1:是]',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'UNPUBLISHED' COMMENT 										'控制单元状态[PUBLISHED:已发布, UNPUBLISHED:未发布]',
+    `description` VARCHAR(512) DEFAULT NULL COMMENT   												    '业务说明',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制单元表';
 
 -- =============================================
@@ -293,17 +296,17 @@ CREATE TABLE `control_unit` (
 DROP TABLE IF EXISTS `control_unit_resource_relation`;
 
 CREATE TABLE `control_unit_resource_relation` (
-                                                  `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
-                                                  `control_unit_id` BIGINT NOT NULL COMMENT							    					        '控制单元标识',
-                                                  `resource_id` BIGINT NOT NULL COMMENT							    					            '资源标识',
-                                                  `resource_type` VARCHAR(32) NOT NULL COMMENT												        '资源类型[MENU:菜单, PAGE:页面, PAGE_ELEMENT:页面元素, API_ENDPOINT:接口地址]',
-                                                  `status`       VARCHAR(32) DEFAULT NULL COMMENT												        '激活状态[VISIBLE:显示, ENABLED:可用]',
-                                                  `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                                  `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                                  `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                                  `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                                  PRIMARY KEY (`id`),
-                                                  INDEX `idx_cu_type_del_res` (`control_unit_id`, `resource_type`, `delete_flag`, `resource_id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
+    `control_unit_id` BIGINT NOT NULL COMMENT							    					        '控制单元标识',
+    `resource_id` BIGINT NOT NULL COMMENT							    					            '资源标识',
+    `resource_type` VARCHAR(32) NOT NULL COMMENT												        '资源类型[MENU:菜单, PAGE:页面, PAGE_ELEMENT:页面元素, API_ENDPOINT:接口地址]',
+    `status`       VARCHAR(32) DEFAULT NULL COMMENT												        '激活状态[VISIBLE:显示, ENABLED:可用]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_cu_type_del_res` (`control_unit_id`, `resource_type`, `delete_flag`, `resource_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制单元资源关联表';
 
 -- =============================================
@@ -312,16 +315,16 @@ CREATE TABLE `control_unit_resource_relation` (
 DROP TABLE IF EXISTS `role`;
 
 CREATE TABLE `role` (
-                        `id` BIGINT NOT NULL COMMENT 													                    '角色标识',
-                        `organ_id` BIGINT DEFAULT NULL COMMENT 														        '机构标识',
-                        `role_name` VARCHAR(128) NOT NULL COMMENT 														    '角色名称',
-                        `role_type` VARCHAR(32) NOT NULL COMMENT 													        '角色类型[ADMIN:超管角色-只读, USER:用户角色]',
-                        `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                        `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                        `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                        `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                        PRIMARY KEY (`id`),
-                        INDEX `idx_organ_id_id` (`organ_id`, `id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '角色标识',
+    `organ_id` BIGINT DEFAULT NULL COMMENT 														        '机构标识',
+    `role_name` VARCHAR(128) NOT NULL COMMENT 														    '角色名称',
+    `role_type` VARCHAR(32) NOT NULL COMMENT 													        '角色类型[ADMIN:超管角色-只读, USER:用户角色]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_organ_id_id` (`organ_id`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '角色表';
 
 -- =============================================
@@ -330,15 +333,15 @@ CREATE TABLE `role` (
 DROP TABLE IF EXISTS `user_role_relation`;
 
 CREATE TABLE `user_role_relation` (
-                                      `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
-                                      `user_id` BIGINT NOT NULL COMMENT 															        '用户标识',
-                                      `role_id` BIGINT NOT NULL COMMENT 															        '角色标识',
-                                      `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                      `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                      `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                      `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                      PRIMARY KEY (`id`),
-                                      INDEX `idx_organ_id_id` (`user_id`, `role_id`, `delete_flag`)
+    `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
+    `user_id` BIGINT NOT NULL COMMENT 															        '用户标识',
+    `role_id` BIGINT NOT NULL COMMENT 															        '角色标识',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_organ_id_id` (`user_id`, `role_id`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '用户角色关联表';
 
 -- =============================================
@@ -347,18 +350,18 @@ CREATE TABLE `user_role_relation` (
 DROP TABLE IF EXISTS `role_control_unit_relation`;
 
 CREATE TABLE `role_control_unit_relation` (
-                                              `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
-                                              `role_id` BIGINT NOT NULL COMMENT 															        '角色标识',
-                                              `control_unit_id` BIGINT NOT NULL COMMENT 													        '控制单元标识',
-                                              `application_authorization_id` BIGINT DEFAULT NULL COMMENT                                          '应用授权标识',
-                                              `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 											'控制单元状态[ACTIVATED:激活, DEACTIVATED:关停]',
-                                              `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                              `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                              `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                              `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                              PRIMARY KEY (`id`),
+    `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
+    `role_id` BIGINT NOT NULL COMMENT 															        '角色标识',
+    `control_unit_id` BIGINT NOT NULL COMMENT 													        '控制单元标识',
+    `application_authorization_id` BIGINT DEFAULT NULL COMMENT                                          '应用授权标识',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 											'控制单元状态[ACTIVATED:激活, DEACTIVATED:关停]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
     -- 默认索引：按角色 + 控制单元 + 状态
-                                              INDEX `idx_role_sts_del_cu` (`role_id`, `status`, `delete_flag`, `control_unit_id`)
+    INDEX `idx_role_sts_del_cu` (`role_id`, `status`, `delete_flag`, `control_unit_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '角色控制单元关联表';
 
 -- =============================================
@@ -367,17 +370,17 @@ CREATE TABLE `role_control_unit_relation` (
 DROP TABLE IF EXISTS `control_domain`;
 
 CREATE TABLE `control_domain` (
-                                  `id` BIGINT NOT NULL COMMENT 													                    '控制域标识',
-                                  `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
-                                  `control_domain_name` VARCHAR(128) NOT NULL COMMENT                                                 '控制域名称',
-                                  `control_domain_type` VARCHAR(32) NOT NULL COMMENT                                                  '控制域类型[TRADE("交易开通"), APPLICATION("应用授权开通")]',
-                                  `control_domain_scope` VARCHAR(32) NOT NULL COMMENT                                                 '交付范围[CUSTOMER("客户交付"), OPERATION("平台运营")]',
-                                  `description` TEXT DEFAULT NULL COMMENT   												            '业务说明',
-                                  `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                  `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                  `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                  `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                  PRIMARY KEY (`id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '控制域标识',
+    `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `control_domain_name` VARCHAR(128) NOT NULL COMMENT                                                 '控制域名称',
+    `control_domain_type` VARCHAR(32) NOT NULL COMMENT                                                  '控制域类型[TRADE("交易开通"), APPLICATION("应用授权开通")]',
+    `control_domain_scope` VARCHAR(32) NOT NULL COMMENT                                                 '交付范围[CUSTOMER("客户交付"), OPERATION("平台运营")]',
+    `description` TEXT DEFAULT NULL COMMENT   												            '业务说明',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制域表';
 
 -- =============================================
@@ -386,15 +389,15 @@ CREATE TABLE `control_domain` (
 DROP TABLE IF EXISTS `control_domain_control_unit_relation`;
 
 CREATE TABLE `control_domain_control_unit_relation` (
-                                                        `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
-                                                        `control_domain_id` BIGINT NOT NULL COMMENT                                                         '控制域标识',
-                                                        `control_unit_id` BIGINT NOT NULL COMMENT							    					        '控制单元标识',
-                                                        `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                                        `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                                        `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                                        `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                                        PRIMARY KEY (`id`),
-                                                        INDEX `idx_control_domain_unit` (`control_domain_id`, `control_unit_id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
+    `control_domain_id` BIGINT NOT NULL COMMENT                                                         '控制域标识',
+    `control_unit_id` BIGINT NOT NULL COMMENT							    					        '控制单元标识',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_control_domain_unit` (`control_domain_id`, `control_unit_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制域控制单元关联表';
 
 -- =============================================
@@ -403,28 +406,28 @@ CREATE TABLE `control_domain_control_unit_relation` (
 DROP TABLE IF EXISTS `application`;
 
 CREATE TABLE `application` (
-                               `id` BIGINT NOT NULL COMMENT 													                    '应用标识',
-                               `organ_id` BIGINT NOT NULL COMMENT 												                    '机构标识',
-                               `application_name` VARCHAR(128) NOT NULL COMMENT                                                    '应用名称',
-                               `application_code` VARCHAR(64) DEFAULT NULL COMMENT                                                 '应用编码',
-                               `can_integrate` TINYINT NOT NULL DEFAULT 0 COMMENT                                                  '是否具备集成功能[0:否, 1:是]',
-                               `landing` TINYINT NOT NULL DEFAULT 0 COMMENT                                                        '默认数据[0:否, 1:是]',
-                               `api_key_supported` TINYINT NOT NULL DEFAULT 0 COMMENT                                              '支持API密钥[0:否, 1:是]',
-                               `application_type` VARCHAR(32) NOT NULL COMMENT                                                     '应用类型[SUPPORT:支撑, SYSTEM:系统提供, PUBLIC:第三方提供, PRIVATE:私有]',
-                               `public_key_algorithm` VARCHAR(32) DEFAULT NULL COMMENT                                             '应用公钥算法',
-                               `public_key_format` VARCHAR(32)  DEFAULT NULL COMMENT                                               '应用公钥格式',
-                               `public_key` TEXT DEFAULT NULL COMMENT                                                              '应用公钥内容',
-                               `access_token_expires_in` INT NOT NULL COMMENT                                                      '访问令牌生存时间(秒)',
-                               `refresh_token_expires_in` INT NOT NULL COMMENT                                                     '刷新访问令牌生存时间(秒)',
-                               `endpoint_url` VARCHAR(512) NOT NULL COMMENT   												        '访问地址',
-                               `context_path` VARCHAR(512) DEFAULT NULL COMMENT   												    '应用路径',
-                               `status` VARCHAR(32) NOT NULL DEFAULT 'UNPUBLISHED' COMMENT 										'应用状态[PUBLISHED:已发布, UNPUBLISHED:未发布]',
-                               `description` VARCHAR(512) DEFAULT NULL COMMENT   												    '业务说明',
-                               `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                               `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                               `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                               `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                               PRIMARY KEY (`id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '应用标识',
+    `organ_id` BIGINT NOT NULL COMMENT 												                    '机构标识',
+    `application_name` VARCHAR(128) NOT NULL COMMENT                                                    '应用名称',
+    `application_code` VARCHAR(64) DEFAULT NULL COMMENT                                                 '应用编码',
+    `can_integrate` TINYINT NOT NULL DEFAULT 0 COMMENT                                                  '是否具备集成功能[0:否, 1:是]',
+    `landing` TINYINT NOT NULL DEFAULT 0 COMMENT                                                        '默认数据[0:否, 1:是]',
+    `api_key_supported` TINYINT NOT NULL DEFAULT 0 COMMENT                                              '支持API密钥[0:否, 1:是]',
+    `application_type` VARCHAR(32) NOT NULL COMMENT                                                     '应用类型[SUPPORT:支撑, SYSTEM:系统提供, PUBLIC:第三方提供, PRIVATE:私有]',
+    `public_key_algorithm` VARCHAR(32) DEFAULT NULL COMMENT                                             '应用公钥算法',
+    `public_key_format` VARCHAR(32)  DEFAULT NULL COMMENT                                               '应用公钥格式',
+    `public_key` TEXT DEFAULT NULL COMMENT                                                              '应用公钥内容',
+    `access_token_expires_in` INT NOT NULL COMMENT                                                      '访问令牌生存时间(秒)',
+    `refresh_token_expires_in` INT NOT NULL COMMENT                                                     '刷新访问令牌生存时间(秒)',
+    `endpoint_url` VARCHAR(512) NOT NULL COMMENT   												        '访问地址',
+    `context_path` VARCHAR(512) DEFAULT NULL COMMENT   												    '应用路径',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'UNPUBLISHED' COMMENT 										'应用状态[PUBLISHED:已发布, UNPUBLISHED:未发布]',
+    `description` VARCHAR(512) DEFAULT NULL COMMENT   												    '业务说明',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用表';
 
 -- =============================================
@@ -433,15 +436,15 @@ CREATE TABLE `application` (
 DROP TABLE IF EXISTS `application_suite`;
 
 CREATE TABLE `application_suite` (
-                                     `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
-                                     `application_id` BIGINT NOT NULL COMMENT 											                '应用标识',
-                                     `master_application_id` BIGINT NOT NULL COMMENT                                                     '主应用标识',
-                                     `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                     PRIMARY KEY (`id`),
-                                     INDEX `uk_application_id` (`application_id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
+    `application_id` BIGINT NOT NULL COMMENT 											                '应用标识',
+    `master_application_id` BIGINT NOT NULL COMMENT                                                     '主应用标识',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `uk_application_id` (`application_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用归类关系表';
 
 -- =============================================
@@ -450,20 +453,20 @@ CREATE TABLE `application_suite` (
 DROP TABLE IF EXISTS `application_authorization`;
 
 CREATE TABLE `application_authorization` (
-                                             `id` BIGINT NOT NULL COMMENT 													                    '应用授权标识',
-                                             `organ_id` BIGINT NOT NULL COMMENT 												                    '机构标识',
-                                             `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
-                                             `control_domain_id` BIGINT NOT NULL COMMENT                                                         '控制域标识',
-                                             `subscription_id` BIGINT DEFAULT NULL COMMENT                                                       '订阅标识',
-                                             `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 											'应用授权状态[ACTIVATED:激活, DEACTIVATED:关停]',
-                                             `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                                             `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                                             `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                                             `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                                             PRIMARY KEY (`id`),
-                                             INDEX `idx_application_id` (`application_id`),
-                                             INDEX `idx_control_domain_id` (`control_domain_id`),
-                                             INDEX `idx_organ_st_del_app` (`organ_id`, `status`, `delete_flag`, `application_id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '应用授权标识',
+    `organ_id` BIGINT NOT NULL COMMENT 												                    '机构标识',
+    `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `control_domain_id` BIGINT NOT NULL COMMENT                                                         '控制域标识',
+    `subscription_id` BIGINT DEFAULT NULL COMMENT                                                       '订阅标识',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 											'应用授权状态[ACTIVATED:激活, DEACTIVATED:关停]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_application_id` (`application_id`),
+    INDEX `idx_control_domain_id` (`control_domain_id`),
+    INDEX `idx_organ_st_del_app` (`organ_id`, `status`, `delete_flag`, `application_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用授权记录表';
 
 -- =============================================
@@ -472,22 +475,22 @@ CREATE TABLE `application_authorization` (
 DROP TABLE IF EXISTS `personal_static_access_token`;
 
 CREATE TABLE `personal_static_access_token` (
-                                                `id` BIGINT NOT NULL COMMENT 													                    '个人静态访问令牌标识',
-                                                `application_authorization_id` BIGINT DEFAULT NULL COMMENT                                         '授权记录标识',
-                                                `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
-                                                `organ_id` BIGINT NOT NULL COMMENT 												                '机构标识',
-                                                `user_id` BIGINT DEFAULT NULL COMMENT 														        '用户标识',
-                                                `name` VARCHAR(128) NOT NULL COMMENT 															    '访问令牌名称',
-                                                `token_hash` VARCHAR(64) NOT NULL COMMENT 												            '静态访问令牌的哈希摘要',
-                                                `masked_token` VARCHAR(28) NOT NULL COMMENT 												        '脱敏令牌',
-                                                `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 											'状态[ACTIVATED:已启用, REVOKED:已吊销]',
-                                                `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
-                                                `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
-                                                `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
-                                                `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
-                                                PRIMARY KEY (`id`),
-                                                UNIQUE KEY `uk_token_hash` (`token_hash`),
-                                                INDEX `idx_authorization_org_del` (`application_authorization_id`, `organ_id`, `delete_flag`)
+    `id` BIGINT NOT NULL COMMENT 													                    '个人静态访问令牌标识',
+    `application_authorization_id` BIGINT DEFAULT NULL COMMENT                                         '授权记录标识',
+    `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `organ_id` BIGINT NOT NULL COMMENT 												                '机构标识',
+    `user_id` BIGINT DEFAULT NULL COMMENT 														        '用户标识',
+    `name` VARCHAR(128) NOT NULL COMMENT 															    '访问令牌名称',
+    `token_hash` VARCHAR(64) NOT NULL COMMENT 												            '静态访问令牌的哈希摘要',
+    `masked_token` VARCHAR(28) NOT NULL COMMENT 												        '脱敏令牌',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 											'状态[ACTIVATED:已启用, REVOKED:已吊销]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_token_hash` (`token_hash`),
+    INDEX `idx_authorization_org_del` (`application_authorization_id`, `organ_id`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '个人静态访问令牌表';
 
 -- =============================================
@@ -496,23 +499,23 @@ CREATE TABLE `personal_static_access_token` (
 DROP TABLE IF EXISTS `login_token`;
 
 CREATE TABLE `login_token` (
-                               `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
-                               `session_type` VARCHAR(32) DEFAULT NULL COMMENT 													'会话类型',
-                               `organ_id` BIGINT DEFAULT NULL COMMENT 														        '机构标识',
-                               `organ_type` VARCHAR(32) DEFAULT NULL COMMENT 													    '机构类型',
-                               `admin_company` TINYINT NOT NULL DEFAULT 0 COMMENT 											        '运营标记[0:否, 1:是]',
-                               `passport_id` BIGINT DEFAULT NULL COMMENT													        '账号标识',
-                               `user_id` BIGINT DEFAULT NULL COMMENT 														        '用户标识',
-                               `real_name` VARCHAR(128) DEFAULT NULL COMMENT 														'真实姓名',
-                               `admin_user` TINYINT NOT NULL DEFAULT 0 COMMENT 												    '管理员标记[0:否, 1:是]',
-                               `application_id` BIGINT DEFAULT NULL COMMENT 												        '应用标识',
-                               `application_organ_id` BIGINT DEFAULT NULL COMMENT 											        '应用组织标识',
-                               `client_id` VARCHAR(64) DEFAULT NULL COMMENT                                                        '客户端ID',
-                               `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                               `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                               `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                               `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-                               PRIMARY KEY (`id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
+    `session_type` VARCHAR(32) DEFAULT NULL COMMENT 													'会话类型',
+    `organ_id` BIGINT DEFAULT NULL COMMENT 														        '机构标识',
+    `organ_type` VARCHAR(32) DEFAULT NULL COMMENT 													    '机构类型',
+    `admin_company` TINYINT NOT NULL DEFAULT 0 COMMENT 											        '运营标记[0:否, 1:是]',
+    `passport_id` BIGINT DEFAULT NULL COMMENT													        '账号标识',
+    `user_id` BIGINT DEFAULT NULL COMMENT 														        '用户标识',
+    `real_name` VARCHAR(128) DEFAULT NULL COMMENT 														'真实姓名',
+    `admin_user` TINYINT NOT NULL DEFAULT 0 COMMENT 												    '管理员标记[0:否, 1:是]',
+    `application_id` BIGINT DEFAULT NULL COMMENT 												        '应用标识',
+    `application_organ_id` BIGINT DEFAULT NULL COMMENT 											        '应用组织标识',
+    `client_id` VARCHAR(64) DEFAULT NULL COMMENT                                                        '客户端ID',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci COMMENT=								'登录信息表, 记录了当前登录状态的相关信息';
 
 -- =============================================
@@ -521,44 +524,44 @@ CREATE TABLE `login_token` (
 DROP TABLE IF EXISTS `audit_event`;
 
 CREATE TABLE `audit_event` (
-                               `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
-                               `trace_id` VARCHAR(64) DEFAULT NULL COMMENT                                                         '网关跟踪标识',
-                               `client_id` VARCHAR(128) DEFAULT NULL COMMENT                                                       '客户端标识',
-                               `request_id` VARCHAR(64) DEFAULT NULL COMMENT                                                       '前端请求标识',
-                               `request_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '前端请求时间',
-                               `accept_language` VARCHAR(32) DEFAULT NULL COMMENT                                                  '语言偏好',
-                               `path` VARCHAR(512) DEFAULT NULL COMMENT                                                            '请求路径',
-                               `method` VARCHAR(32) DEFAULT NULL COMMENT                                                           '请求方法',
-                               `user_agent` VARCHAR(512) DEFAULT NULL COMMENT                                                      '客户端标识',
-                               `host` VARCHAR(255) DEFAULT NULL COMMENT                                                            '请求主机',
-                               `x_forwarded_for` VARCHAR(1024) DEFAULT NULL COMMENT                                                '代理链IP列表',
-                               `x_real_ip` VARCHAR(64) DEFAULT NULL COMMENT                                                        '真实客户端IP',
-                               `referer` VARCHAR(2048) DEFAULT NULL COMMENT                                                        '请求来源URL',
-                               `session_type` VARCHAR(32) DEFAULT NULL COMMENT                                                     '会话类型',
-                               `passport_id` BIGINT DEFAULT NULL COMMENT                                                           '账号标识',
-                               `user_id` BIGINT DEFAULT NULL COMMENT                                                               '用户标识',
-                               `name` VARCHAR(128) DEFAULT NULL COMMENT                                                            '真实姓名',
-                               `admin_user` TINYINT DEFAULT 0 COMMENT                                                              '超级管理员',
-                               `organ_id` BIGINT DEFAULT NULL COMMENT                                                              '组织标识',
-                               `organ_name` VARCHAR(255) DEFAULT NULL COMMENT                                                      '组织名称',
-                               `organ_type` VARCHAR(32) DEFAULT NULL COMMENT                                                       '组织类型',
-                               `admin_company` TINYINT DEFAULT 0 COMMENT                                                           '平台运营组织',
-                               `target_organ_id` BIGINT DEFAULT NULL COMMENT                                                       '数据操作的目标组织标识',
-                               `application_id` BIGINT DEFAULT NULL COMMENT                                                        '请求来源应用标识',
-                               `application_code` VARCHAR(64) DEFAULT NULL COMMENT                                                 '请求来源应用编码',
-                               `application_organ_id` BIGINT DEFAULT NULL COMMENT                                                  '请求来源应用所属机构标识',
-                               `payload` JSON DEFAULT NULL COMMENT                                                                 '请求/响应摘要',
-                               `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-                               `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-                               `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-                               PRIMARY KEY (`id`),
-                               INDEX `idx_trace_id` (`trace_id`),
-                               INDEX `idx_request_id` (`request_id`),
-                               INDEX `idx_client_id` (`client_id`),
-                               INDEX `idx_passport_id` (`passport_id`),
-                               INDEX `idx_user_id` (`user_id`),
-                               INDEX `idx_organ_id` (`organ_id`),
-                               INDEX `idx_application_id` (`application_id`)
+    `id` BIGINT NOT NULL COMMENT 													                    '主键标识',
+    `trace_id` VARCHAR(64) DEFAULT NULL COMMENT                                                         '网关跟踪标识',
+    `client_id` VARCHAR(128) DEFAULT NULL COMMENT                                                       '客户端标识',
+    `request_id` VARCHAR(64) DEFAULT NULL COMMENT                                                       '前端请求标识',
+    `request_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '前端请求时间',
+    `accept_language` VARCHAR(32) DEFAULT NULL COMMENT                                                  '语言偏好',
+    `path` VARCHAR(512) DEFAULT NULL COMMENT                                                            '请求路径',
+    `method` VARCHAR(32) DEFAULT NULL COMMENT                                                           '请求方法',
+    `user_agent` VARCHAR(512) DEFAULT NULL COMMENT                                                      '客户端标识',
+    `host` VARCHAR(255) DEFAULT NULL COMMENT                                                            '请求主机',
+    `x_forwarded_for` VARCHAR(1024) DEFAULT NULL COMMENT                                                '代理链IP列表',
+    `x_real_ip` VARCHAR(64) DEFAULT NULL COMMENT                                                        '真实客户端IP',
+    `referer` VARCHAR(2048) DEFAULT NULL COMMENT                                                        '请求来源URL',
+    `session_type` VARCHAR(32) DEFAULT NULL COMMENT                                                     '会话类型',
+    `passport_id` BIGINT DEFAULT NULL COMMENT                                                           '账号标识',
+    `user_id` BIGINT DEFAULT NULL COMMENT                                                               '用户标识',
+    `name` VARCHAR(128) DEFAULT NULL COMMENT                                                            '真实姓名',
+    `admin_user` TINYINT DEFAULT 0 COMMENT                                                              '超级管理员',
+    `organ_id` BIGINT DEFAULT NULL COMMENT                                                              '组织标识',
+    `organ_name` VARCHAR(255) DEFAULT NULL COMMENT                                                      '组织名称',
+    `organ_type` VARCHAR(32) DEFAULT NULL COMMENT                                                       '组织类型',
+    `admin_company` TINYINT DEFAULT 0 COMMENT                                                           '平台运营组织',
+    `target_organ_id` BIGINT DEFAULT NULL COMMENT                                                       '数据操作的目标组织标识',
+    `application_id` BIGINT DEFAULT NULL COMMENT                                                        '请求来源应用标识',
+    `application_code` VARCHAR(64) DEFAULT NULL COMMENT                                                 '请求来源应用编码',
+    `application_organ_id` BIGINT DEFAULT NULL COMMENT                                                  '请求来源应用所属机构标识',
+    `payload` JSON DEFAULT NULL COMMENT                                                                 '请求/响应摘要',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    PRIMARY KEY (`id`),
+    INDEX `idx_trace_id` (`trace_id`),
+    INDEX `idx_request_id` (`request_id`),
+    INDEX `idx_client_id` (`client_id`),
+    INDEX `idx_passport_id` (`passport_id`),
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_organ_id` (`organ_id`),
+    INDEX `idx_application_id` (`application_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                         '审计事件表';
 
 -- 账号

@@ -173,7 +173,10 @@ public enum BasisErrorCode implements ErrorCode {
     PASSPORT_IDP_BINDING_MISMATCH("basis.40054", "当前通行证与此外部身份源主体或应用绑定不一致"),
 
     @Schema(description = "PASSWORD_NOT_TRUSTED")
-    PASSWORD_NOT_TRUSTED("basis.40055", "账号尚未设置可信密码，请使用第三方登录或修改密码后再试");
+    PASSWORD_NOT_TRUSTED("basis.40055", "账号尚未设置可信密码，请使用第三方登录或修改密码后再试"),
+
+    @Schema(description = "ONLY_OWN_ORG_APIKEY_ALLOWED")
+    ONLY_OWN_ORG_APIKEY_ALLOWED("basis.40056", "只能创建本机构的 API Key");
 
     private final String code;
 
