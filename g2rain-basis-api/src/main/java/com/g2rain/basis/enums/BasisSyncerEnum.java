@@ -20,7 +20,7 @@ public enum BasisSyncerEnum {
     PASSPORT_PERM,
     USER_PERM,
     /**
-     * 个人静态访问令牌：载荷为 {@code tokenHash}（原始 API Key 的 SHA-256 十六进制），
+     * 个人静态访问令牌：载荷为 {@link com.g2rain.basis.vo.StaticAccessTokenHashVo}（{@code tokenHash} 字段），
      * 在令牌吊销或删除时推送，驱动网关 {@code ApiKeyCache} 失效。
      */
     STATIC_ACCESS_TOKEN

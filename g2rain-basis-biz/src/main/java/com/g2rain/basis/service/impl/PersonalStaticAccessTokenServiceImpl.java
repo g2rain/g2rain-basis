@@ -20,6 +20,7 @@ import com.g2rain.basis.service.PersonalStaticAccessTokenService;
 import com.g2rain.basis.utils.BasisUtils;
 import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.PersonalStaticAccessTokenVo;
+import com.g2rain.basis.vo.StaticAccessTokenHashVo;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
@@ -255,7 +256,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         eventPublisherHub.sendUpdate(
             Constants.SYNC_OUTPUT_BINDING,
             BasisSyncerEnum.STATIC_ACCESS_TOKEN.name(),
-            tokenHash
+            new StaticAccessTokenHashVo(tokenHash)
         );
     }
 
