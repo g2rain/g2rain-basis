@@ -33,6 +33,7 @@ import com.g2rain.common.web.PrincipalContextHolder;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,7 @@ import java.util.stream.Collectors;
  *
  * @author G2rain Generator
  */
+@Slf4j
 @Service(value = "personalStaticAccessTokenServiceImpl")
 public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAccessTokenService {
 
@@ -250,6 +252,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
      * 令牌状态变更或物理删除后，向 cache-sync 广播 tokenHash，通知各网关节点失效 API Key 本地缓存。
      */
     private void publishTokenCacheSync(String tokenHash) {
+        log.info("tokenHash:{}", tokenHash);
         if (Strings.isBlank(tokenHash)) {
             return;
         }
