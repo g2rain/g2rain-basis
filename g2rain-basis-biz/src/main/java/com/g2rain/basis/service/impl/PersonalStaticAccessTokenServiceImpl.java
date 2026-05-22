@@ -39,12 +39,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -252,7 +248,6 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
      * 令牌状态变更或物理删除后，向 cache-sync 广播 tokenHash，通知各网关节点失效 API Key 本地缓存。
      */
     private void publishTokenCacheSync(String tokenHash) {
-        log.info("tokenHash:{}", tokenHash);
         if (Strings.isBlank(tokenHash)) {
             return;
         }
