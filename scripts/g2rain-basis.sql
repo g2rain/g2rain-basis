@@ -546,7 +546,6 @@ CREATE TABLE `audit_event` (
     `organ_name` VARCHAR(255) DEFAULT NULL COMMENT                                                      '组织名称',
     `organ_type` VARCHAR(32) DEFAULT NULL COMMENT                                                       '组织类型',
     `admin_company` TINYINT DEFAULT 0 COMMENT                                                           '平台运营组织',
-    `target_organ_id` BIGINT DEFAULT NULL COMMENT                                                       '数据操作的目标组织标识',
     `application_id` BIGINT DEFAULT NULL COMMENT                                                        '请求来源应用标识',
     `application_code` VARCHAR(64) DEFAULT NULL COMMENT                                                 '请求来源应用编码',
     `application_organ_id` BIGINT DEFAULT NULL COMMENT                                                  '请求来源应用所属机构标识',

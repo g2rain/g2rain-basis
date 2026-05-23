@@ -32,7 +32,6 @@
         <result column="organ_name" property="organName" jdbcType="VARCHAR"/>
         <result column="organ_type" property="organType" jdbcType="VARCHAR"/>
         <result column="admin_company" property="adminCompany" jdbcType="TINYINT"/>
-        <result column="target_organ_id" property="targetOrganId" jdbcType="BIGINT"/>
         <result column="application_id" property="applicationId" jdbcType="BIGINT"/>
         <result column="application_code" property="applicationCode" jdbcType="VARCHAR"/>
         <result column="application_organ_id" property="applicationOrganId" jdbcType="BIGINT"/>
@@ -150,10 +149,6 @@
                         admin_company
                         <include refid="directionClause"/>
                     </when>
-                    <when test="item.column == 'targetOrganId'">
-                        target_organ_id
-                        <include refid="directionClause"/>
-                    </when>
                     <when test="item.column == 'applicationId'">
                         application_id
                         <include refid="directionClause"/>
@@ -183,7 +178,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, target_organ_id, application_id, application_code, application_organ_id, payload,
+        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, application_id, application_code, application_organ_id, payload,
         <!-- version字段（如果存在） -->
         version
         ) VALUES (
@@ -192,7 +187,7 @@
         <!-- 基础字段值 -->
         #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
         <!-- 业务字段值 -->
-        #{traceId, jdbcType=VARCHAR}, #{clientId, jdbcType=VARCHAR}, #{requestId, jdbcType=VARCHAR}, #{requestTime, jdbcType=TIMESTAMP}, #{acceptLanguage, jdbcType=VARCHAR}, #{path, jdbcType=VARCHAR}, #{method, jdbcType=VARCHAR}, #{userAgent, jdbcType=VARCHAR}, #{host, jdbcType=VARCHAR}, #{xForwardedFor, jdbcType=VARCHAR}, #{xRealIp, jdbcType=VARCHAR}, #{referer, jdbcType=VARCHAR}, #{sessionType, jdbcType=VARCHAR}, #{passportId, jdbcType=BIGINT}, #{userId, jdbcType=BIGINT}, #{name, jdbcType=VARCHAR}, #{adminUser, jdbcType=TINYINT}, #{organId, jdbcType=BIGINT}, #{organName, jdbcType=VARCHAR}, #{organType, jdbcType=VARCHAR}, #{adminCompany, jdbcType=TINYINT}, #{targetOrganId, jdbcType=BIGINT}, #{applicationId, jdbcType=BIGINT}, #{applicationCode, jdbcType=VARCHAR}, #{applicationOrganId, jdbcType=BIGINT}, #{payload, jdbcType=LONGVARCHAR},
+        #{traceId, jdbcType=VARCHAR}, #{clientId, jdbcType=VARCHAR}, #{requestId, jdbcType=VARCHAR}, #{requestTime, jdbcType=TIMESTAMP}, #{acceptLanguage, jdbcType=VARCHAR}, #{path, jdbcType=VARCHAR}, #{method, jdbcType=VARCHAR}, #{userAgent, jdbcType=VARCHAR}, #{host, jdbcType=VARCHAR}, #{xForwardedFor, jdbcType=VARCHAR}, #{xRealIp, jdbcType=VARCHAR}, #{referer, jdbcType=VARCHAR}, #{sessionType, jdbcType=VARCHAR}, #{passportId, jdbcType=BIGINT}, #{userId, jdbcType=BIGINT}, #{name, jdbcType=VARCHAR}, #{adminUser, jdbcType=TINYINT}, #{organId, jdbcType=BIGINT}, #{organName, jdbcType=VARCHAR}, #{organType, jdbcType=VARCHAR}, #{adminCompany, jdbcType=TINYINT}, #{applicationId, jdbcType=BIGINT}, #{applicationCode, jdbcType=VARCHAR}, #{applicationOrganId, jdbcType=BIGINT}, #{payload, jdbcType=LONGVARCHAR},
         <!-- version字段值（如果存在，设置默认值为0） -->
         0
         )
@@ -206,7 +201,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, target_organ_id, application_id, application_code, application_organ_id, payload,
+        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, application_id, application_code, application_organ_id, payload,
         <!-- version字段（如果存在） -->
         version
         ) VALUES
@@ -217,7 +212,7 @@
             <!-- 基础字段值 -->
             #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
             <!-- 业务字段值 -->
-            #{item.traceId, jdbcType=VARCHAR}, #{item.clientId, jdbcType=VARCHAR}, #{item.requestId, jdbcType=VARCHAR}, #{item.requestTime, jdbcType=TIMESTAMP}, #{item.acceptLanguage, jdbcType=VARCHAR}, #{item.path, jdbcType=VARCHAR}, #{item.method, jdbcType=VARCHAR}, #{item.userAgent, jdbcType=VARCHAR}, #{item.host, jdbcType=VARCHAR}, #{item.xForwardedFor, jdbcType=VARCHAR}, #{item.xRealIp, jdbcType=VARCHAR}, #{item.referer, jdbcType=VARCHAR}, #{item.sessionType, jdbcType=VARCHAR}, #{item.passportId, jdbcType=BIGINT}, #{item.userId, jdbcType=BIGINT}, #{item.name, jdbcType=VARCHAR}, #{item.adminUser, jdbcType=TINYINT}, #{item.organId, jdbcType=BIGINT}, #{item.organName, jdbcType=VARCHAR}, #{item.organType, jdbcType=VARCHAR}, #{item.adminCompany, jdbcType=TINYINT}, #{item.targetOrganId, jdbcType=BIGINT}, #{item.applicationId, jdbcType=BIGINT}, #{item.applicationCode, jdbcType=VARCHAR}, #{item.applicationOrganId, jdbcType=BIGINT}, #{item.payload, jdbcType=LONGVARCHAR},
+            #{item.traceId, jdbcType=VARCHAR}, #{item.clientId, jdbcType=VARCHAR}, #{item.requestId, jdbcType=VARCHAR}, #{item.requestTime, jdbcType=TIMESTAMP}, #{item.acceptLanguage, jdbcType=VARCHAR}, #{item.path, jdbcType=VARCHAR}, #{item.method, jdbcType=VARCHAR}, #{item.userAgent, jdbcType=VARCHAR}, #{item.host, jdbcType=VARCHAR}, #{item.xForwardedFor, jdbcType=VARCHAR}, #{item.xRealIp, jdbcType=VARCHAR}, #{item.referer, jdbcType=VARCHAR}, #{item.sessionType, jdbcType=VARCHAR}, #{item.passportId, jdbcType=BIGINT}, #{item.userId, jdbcType=BIGINT}, #{item.name, jdbcType=VARCHAR}, #{item.adminUser, jdbcType=TINYINT}, #{item.organId, jdbcType=BIGINT}, #{item.organName, jdbcType=VARCHAR}, #{item.organType, jdbcType=VARCHAR}, #{item.adminCompany, jdbcType=TINYINT}, #{item.applicationId, jdbcType=BIGINT}, #{item.applicationCode, jdbcType=VARCHAR}, #{item.applicationOrganId, jdbcType=BIGINT}, #{item.payload, jdbcType=LONGVARCHAR},
             <!-- version字段值（如果存在，设置默认值为0） -->
             0
             )
@@ -295,9 +290,6 @@
             </if>
             <if test="adminCompany != null">
                 admin_company = #{adminCompany, jdbcType=TINYINT},
-            </if>
-            <if test="targetOrganId != null">
-                target_organ_id = #{targetOrganId, jdbcType=BIGINT},
             </if>
             <if test="applicationId != null">
                 application_id = #{applicationId, jdbcType=BIGINT},
@@ -389,9 +381,6 @@
             <if test="adminCompany != null">
                 admin_company = #{adminCompany, jdbcType=TINYINT},
             </if>
-            <if test="targetOrganId != null">
-                target_organ_id = #{targetOrganId, jdbcType=BIGINT},
-            </if>
             <if test="applicationId != null">
                 application_id = #{applicationId, jdbcType=BIGINT},
             </if>
@@ -425,7 +414,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, target_organ_id, application_id, application_code, application_organ_id, payload,
+        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, application_id, application_code, application_organ_id, payload,
         <!-- version字段（如果存在） -->
         version
         FROM audit_event
@@ -440,7 +429,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, target_organ_id, application_id, application_code, application_organ_id, payload,
+        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, application_id, application_code, application_organ_id, payload,
         <!-- version字段（如果存在） -->
         version
         FROM audit_event
@@ -543,9 +532,6 @@
             </if>
             <if test="adminCompany != null">
                 AND admin_company = #{adminCompany, jdbcType=TINYINT}
-            </if>
-            <if test="targetOrganId != null">
-                AND target_organ_id = #{targetOrganId, jdbcType=BIGINT}
             </if>
             <if test="applicationId != null">
                 AND application_id = #{applicationId, jdbcType=BIGINT}
