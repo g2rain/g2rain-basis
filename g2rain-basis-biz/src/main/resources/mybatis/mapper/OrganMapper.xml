@@ -242,11 +242,18 @@
         INNER JOIN organ_closure oc ON o.id = oc.descendant_id
 
         <where>
-            o.delete_flag = 0 AND oc.delete_flag = 0 AND oc.relation_type = 'SELF_ASSOCIATION'
-            <!-- 数据隔离标识 -->
-            <if test="organId != null">
-                AND oc.ancestor_id = #{organId, jdbcType=BIGINT}
-            </if>
+            o.delete_flag = 0 AND oc.delete_flag = 0
+
+            <choose>
+                <!-- 数据隔离标识 -->
+                <when test="organId != null">
+                    AND oc.ancestor_id = #{organId, jdbcType=BIGINT}
+                </when>
+                <otherwise>
+                    AND oc.relation_type = 'SELF_ASSOCIATION'
+                </otherwise>
+            </choose>
+
             <!-- 主键筛选 -->
             <if test="id != null">
                 AND o.id = #{id, jdbcType=BIGINT}
@@ -340,13 +347,20 @@
         INNER JOIN organ_closure oc ON o.id = oc.descendant_id
         WHERE
         o.delete_flag = 0 AND oc.delete_flag = 0
-        <if test="organId != null">
-            AND oc.ancestor_id = #{organId, jdbcType=BIGINT}
-        </if>
+
+        <choose>
+            <!-- 数据隔离标识 -->
+            <when test="organId != null">
+                AND oc.ancestor_id = #{organId, jdbcType=BIGINT}
+            </when>
+            <otherwise>
+                AND oc.relation_type = 'SELF_ASSOCIATION'
+            </otherwise>
+        </choose>
+
         <if test="organName != null and organName != ''">
             AND o.organ_name LIKE CONCAT('%', #{organName, jdbcType=VARCHAR}, '%')
         </if>
-        AND oc.relation_type = 'SELF_ASSOCIATION'
         ORDER BY CHAR_LENGTH(o.organ_name) DESC
     </select>
 </mapper>
