@@ -42,6 +42,14 @@ public interface PersonalStaticAccessTokenService {
     Long save(PersonalStaticAccessTokenDto dto);
 
     /**
+     * 根据原始 API Key 查询个人静态访问令牌（内部对 apiKey 做 SHA-256 后与 {@code token_hash} 匹配）。
+     *
+     * @param apiKey 明文 Key，{@code sk-...} 形态
+     * @return 命中记录；不存在返回 {@code null}
+     */
+    PersonalStaticAccessTokenVo selectByApiKey(String apiKey);
+
+    /**
      * 修改个人静态访问令牌状态
      *
      * @param id 个人静态访问令牌 ID

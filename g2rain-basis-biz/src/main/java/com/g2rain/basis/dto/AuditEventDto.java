@@ -128,11 +128,6 @@ public class AuditEventDto extends BaseDto {
     private Boolean adminCompany;
 
     /**
-     * 数据操作的目标组织标识
-     */
-    private Long targetOrganId;
-
-    /**
      * 请求来源应用标识
      */
     private Long applicationId;

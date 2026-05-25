@@ -152,12 +152,6 @@ public class AuditEventVo extends BaseVo {
     private Byte adminCompany;
 
     /**
-     * 数据操作的目标组织标识
-     */
-    @Schema(description = "数据操作目标组织主键")
-    private Long targetOrganId;
-
-    /**
      * 请求来源应用标识
      */
     @Schema(description = "发起调用的来源应用主键")

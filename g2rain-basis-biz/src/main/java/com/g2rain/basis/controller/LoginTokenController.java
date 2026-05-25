@@ -5,6 +5,7 @@ import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
 import com.g2rain.basis.service.LoginTokenService;
 import com.g2rain.basis.vo.LoginTokenVo;
+import com.g2rain.basis.vo.StaticAccessTokenResolveVo;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.model.Result;
@@ -49,5 +50,10 @@ public class LoginTokenController implements LoginTokenApi {
                                                      String idpApplicationCode) {
         return Result.success(loginTokenService.fetchTokenContext(passportId, userId, applicationCode,
             thirdPartyIdpLogin, idpType, idpSubject, idpApplicationCode));
+    }
+
+    @Override
+    public Result<StaticAccessTokenResolveVo> fetchStaticTokenContext(String apiKey) {
+        return Result.success(loginTokenService.fetchStaticTokenContext(apiKey));
     }
 }

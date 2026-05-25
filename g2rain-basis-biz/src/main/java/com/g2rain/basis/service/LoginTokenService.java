@@ -2,6 +2,7 @@ package com.g2rain.basis.service;
 
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
+import com.g2rain.basis.vo.StaticAccessTokenResolveVo;
 import com.g2rain.basis.vo.LoginTokenVo;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.model.PageData;
@@ -79,4 +80,12 @@ public interface LoginTokenService {
      */
     TokenJWTPayload fetchTokenContext(Long passportId, Long userId, String applicationCode, Boolean thirdPartyIdpLogin,
                                       String idpType, String idpSubject, String idpApplicationCode);
+
+    /**
+     * 根据个人静态访问令牌解析状态与会话上下文。
+     *
+     * @param apiKey 原始 API Key（明文）
+     * @return {@code null} 表示不存在；吊销态仅含 status；激活态含 {@link com.g2rain.basis.vo.StaticAccessTokenContextVo}
+     */
+    StaticAccessTokenResolveVo fetchStaticTokenContext(String apiKey);
 }

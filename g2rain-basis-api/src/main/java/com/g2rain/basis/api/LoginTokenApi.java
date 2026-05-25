@@ -3,6 +3,7 @@ package com.g2rain.basis.api;
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
 import com.g2rain.basis.vo.LoginTokenVo;
+import com.g2rain.basis.vo.StaticAccessTokenResolveVo;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.model.Result;
@@ -71,4 +72,18 @@ public interface LoginTokenApi {
         @Parameter(description = "IdP 稳定主体，如钉钉 unionId") @RequestParam(required = false) String idpSubject,
         @Parameter(description = "三方应用在 IdP 侧的应用标识，如钉钉 OAuth clientId") @RequestParam(required = false) String idpApplicationCode
     );
+
+    /**
+     * 根据个人静态访问令牌（原始 API Key）解析状态与会话上下文。
+     *
+     * <p>
+     * 网关 {@code ApiKeyFilter} 调用此接口：服务端对 apiKey 做 SHA-256 后查库，不向调用方返回哈希算法细节。
+     * </p>
+     *
+     * @param apiKey Bearer 后的明文 Key（{@code sk-...}，长度 64）
+     * @return {@code data==null} 表示不存在；非空见 {@link StaticAccessTokenResolveVo}
+     */
+    @GetMapping("/static_access_token_context")
+    @Operation(summary = "解析个人静态访问令牌", hidden = true, description = "根据原始 API Key 解析令牌状态与会话上下文")
+    Result<StaticAccessTokenResolveVo> fetchStaticTokenContext(@Parameter(description = "原始 API Key") @RequestParam String apiKey);
 }

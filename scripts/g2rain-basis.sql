@@ -37,6 +37,7 @@ CREATE TABLE `passport` (
 -- 2. 身份源绑定：passport <-> 钉钉等 IdP（不自动建 passport）
 -- =============================================
 DROP TABLE IF EXISTS `passport_idp_binding`;
+
 CREATE TABLE `passport_idp_binding` (
     `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
     `passport_id` BIGINT NOT NULL COMMENT                                                               '账号标识，关联 passport.id',
@@ -63,6 +64,7 @@ CREATE TABLE `passport_idp_binding` (
 -- 通行证与 IdP 的关系见 passport_idp_binding（含 idp_application_code）
 -- =============================================
 DROP TABLE IF EXISTS `application_idp_provision`;
+
 CREATE TABLE `application_idp_provision` (
     `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
     `application_id` BIGINT NOT NULL COMMENT                                                            '平台应用标识，关联 application.id',
@@ -127,6 +129,7 @@ CREATE TABLE `organ` (
 -- 同一 (idp_type, enterprise_id) 可对应多个 organ_id（多租户）
 -- =============================================
 DROP TABLE IF EXISTS `idp_enterprise_organ`;
+
 CREATE TABLE `idp_enterprise_organ` (
     `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
     `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[DINGTALK, WECHAT_WORK, FEISHU, ...]',
@@ -194,17 +197,17 @@ CREATE TABLE `resource_menu` (
 DROP TABLE IF EXISTS `resource_page`;
 
 CREATE TABLE `resource_page` (
-     `id` BIGINT NOT NULL COMMENT 													                    '页面标识',
-     `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
-     `page_name` VARCHAR(128) NOT NULL COMMENT												            '页面名称',
-     `page_code` VARCHAR(128) NOT NULL COMMENT												            '页面编码',
-     `link_path` VARCHAR(128) NOT NULL COMMENT 													        '链接路径',
-     `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
-     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
-     `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
-     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
-     PRIMARY KEY (`id`),
-     INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
+    `id` BIGINT NOT NULL COMMENT 													                    '页面标识',
+    `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `page_name` VARCHAR(128) NOT NULL COMMENT												            '页面名称',
+    `page_code` VARCHAR(128) NOT NULL COMMENT												            '页面编码',
+    `link_path` VARCHAR(128) NOT NULL COMMENT 													        '链接路径',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用资源页面表';
 
 -- =============================================
@@ -232,18 +235,18 @@ CREATE TABLE `resource_page_element` (
 DROP TABLE IF EXISTS `service_registry`;
 
 CREATE TABLE `service_registry` (
-   `id` BIGINT NOT NULL COMMENT 													                   '后端服务标识',
-   `service_code` VARCHAR(64) NOT NULL COMMENT                                                         '服务逻辑编码',
-   `name` VARCHAR(128) NOT NULL COMMENT                                                                '服务显示名称',
-   `endpoint` VARCHAR(256) NOT NULL COMMENT                                                            '服务目标地址',
-   `route_prefix` VARCHAR(128) NOT NULL COMMENT                                                        '网关路由前缀',
-   `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '后端服务说明',
-   `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-   `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-   `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-   `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-   PRIMARY KEY (`id`),
-   UNIQUE KEY `uk_service_code` (`service_code`)
+    `id` BIGINT NOT NULL COMMENT 													                   '后端服务标识',
+    `service_code` VARCHAR(64) NOT NULL COMMENT                                                         '服务逻辑编码',
+    `name` VARCHAR(128) NOT NULL COMMENT                                                                '服务显示名称',
+    `endpoint` VARCHAR(256) NOT NULL COMMENT                                                            '服务目标地址',
+    `route_prefix` VARCHAR(128) NOT NULL COMMENT                                                        '网关路由前缀',
+    `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '后端服务说明',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_service_code` (`service_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '服务注册表';
 
 -- =============================================
@@ -472,22 +475,22 @@ CREATE TABLE `application_authorization` (
 DROP TABLE IF EXISTS `personal_static_access_token`;
 
 CREATE TABLE `personal_static_access_token` (
-     `id` BIGINT NOT NULL COMMENT 													                    '个人静态访问令牌标识',
-     `application_authorization_id` BIGINT DEFAULT NULL COMMENT                                         '授权记录标识',
-     `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
-     `organ_id` BIGINT NOT NULL COMMENT 												                '机构标识',
-     `user_id` BIGINT DEFAULT NULL COMMENT 														        '用户标识',
-     `name` VARCHAR(128) NOT NULL COMMENT 															    '访问令牌名称',
-     `token_hash` VARCHAR(64) NOT NULL COMMENT 												            '静态访问令牌的哈希摘要',
-     `masked_token` VARCHAR(28) NOT NULL COMMENT 												        '脱敏令牌',
-     `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 											'状态[ACTIVATED:已启用, REVOKED:已吊销]',
-     `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
-     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
-     `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
-     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
-     PRIMARY KEY (`id`),
-     UNIQUE KEY `uk_token_hash` (`token_hash`),
-     INDEX `idx_authorization_org_del` (`application_authorization_id`, `organ_id`, `delete_flag`)
+    `id` BIGINT NOT NULL COMMENT 													                    '个人静态访问令牌标识',
+    `application_authorization_id` BIGINT DEFAULT NULL COMMENT                                         '授权记录标识',
+    `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `organ_id` BIGINT NOT NULL COMMENT 												                '机构标识',
+    `user_id` BIGINT DEFAULT NULL COMMENT 														        '用户标识',
+    `name` VARCHAR(128) NOT NULL COMMENT 															    '访问令牌名称',
+    `token_hash` VARCHAR(64) NOT NULL COMMENT 												            '静态访问令牌的哈希摘要',
+    `masked_token` VARCHAR(28) NOT NULL COMMENT 												        '脱敏令牌',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 											'状态[ACTIVATED:已启用, REVOKED:已吊销]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_token_hash` (`token_hash`),
+    INDEX `idx_authorization_org_del` (`application_authorization_id`, `organ_id`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '个人静态访问令牌表';
 
 -- =============================================
@@ -543,7 +546,6 @@ CREATE TABLE `audit_event` (
     `organ_name` VARCHAR(255) DEFAULT NULL COMMENT                                                      '组织名称',
     `organ_type` VARCHAR(32) DEFAULT NULL COMMENT                                                       '组织类型',
     `admin_company` TINYINT DEFAULT 0 COMMENT                                                           '平台运营组织',
-    `target_organ_id` BIGINT DEFAULT NULL COMMENT                                                       '数据操作的目标组织标识',
     `application_id` BIGINT DEFAULT NULL COMMENT                                                        '请求来源应用标识',
     `application_code` VARCHAR(64) DEFAULT NULL COMMENT                                                 '请求来源应用编码',
     `application_organ_id` BIGINT DEFAULT NULL COMMENT                                                  '请求来源应用所属机构标识',
@@ -559,7 +561,7 @@ CREATE TABLE `audit_event` (
     INDEX `idx_user_id` (`user_id`),
     INDEX `idx_organ_id` (`organ_id`),
     INDEX `idx_application_id` (`application_id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                         '审计事件表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                         '审计事件表';
 
 -- 账号
 INSERT INTO `passport`
@@ -777,7 +779,8 @@ VALUES
     (399, 'G2RAIN_BASIS', '外部企业与机构关联', '删除关联记录', 'DELETE', '/idp_enterprise_organ/{id}', '根据主键删除外部企业与机构关联记录', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
     (500, 'G2RAIN_BASIS', '外部身份源应用与平台应用的绑定', '删除绑定记录', 'DELETE', '/application_idp_provision/{id}', '删除绑定记录', '2026-05-20 09:31:01', '2026-05-20 09:31:01'),
     (501, 'G2RAIN_INFRA', '国际化信息', '查询业务标签字典集合', 'GET', '/i18n_message/tag_dict', '查询 i18n_message 表中已存在的去重业务标签，供页面选择', '2026-05-20 09:31:06', '2026-05-20 09:31:06'),
-    (502, 'G2RAIN_INFRA', '字典明细', '查询字典组件明细列表', 'GET', '/dictionary_item/localized_options', '查询字典组件明细列表', '2026-05-20 09:31:06', '2026-05-20 09:31:06');
+    (502, 'G2RAIN_INFRA', '字典明细', '查询字典组件明细列表', 'GET', '/dictionary_item/localized_options', '查询字典组件明细列表', '2026-05-20 09:31:06', '2026-05-20 09:31:06'),
+    (1065, 'G2RAIN_INFRA', '国际化信息', '根据标签获取页面国际化元素', 'GET', '/i18n_message/locale', '根据标签获取页面国际化元素', '2026-05-20 09:31:06', '2026-05-20 09:31:06');
 
 -- 应用资源菜单
 INSERT INTO `resource_menu`
@@ -842,7 +845,7 @@ VALUES
     (565,215,'organ','调整归属','organ:reassign','2026-01-31 17:12:28','2026-01-31 17:12:28'),
     (566,215,'organ','修改状态','organ:status_update','2026-01-31 17:12:28','2026-01-31 17:12:28'),
     (567,215,'organ','删除按钮','organ:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
-    (568,215,'user','新增按钮','user:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
+    (568,215,'personal_static_access_token','修改状态','personal_static_access_token:status_update','2026-01-31 17:12:28','2026-01-31 17:12:28'),
     (569,215,'user','修改按钮','user:edit','2026-01-31 17:12:28','2026-01-31 17:12:28'),
     (570,215,'user','删除按钮','user:delete','2026-01-31 17:12:28','2026-01-31 17:12:28'),
     (571,215,'role','新增按钮','role:add','2026-01-31 17:12:28','2026-01-31 17:12:28'),
@@ -1179,7 +1182,7 @@ VALUES
     (973, 221, 237, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (975, 221, 238, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (976, 221, 239, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (977, 221, 251, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (977, 221, 1065, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (978, 221, 252, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (979, 221, 253, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (980, 221, 255, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
@@ -1222,23 +1225,28 @@ VALUES
     (1021, 222, 273, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (1022, 222, 359, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (1023, 222, 365, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1025, 222, 382, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1026, 222, 383, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1027, 222, 388, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1028, 222, 389, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1029, 222, 397, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1030, 222, 385, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1031, 222, 398, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1032, 222, 390, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1033, 222, 391, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1035, 222, 386, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1036, 222, 392, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1037, 222, 393, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1038, 222, 399, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1039, 222, 387, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1050, 222, 395, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1051, 222, 396, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1052, 222, 500, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1053, 219, 251, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1055, 220, 251, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (1056, 222, 251, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28');
+    (1025, 222, 383, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1026, 222, 388, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1027, 222, 389, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1028, 222, 397, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1029, 222, 385, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1030, 222, 398, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1031, 222, 390, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1032, 222, 391, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1033, 222, 386, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1035, 222, 392, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1036, 222, 393, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1037, 222, 399, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1038, 222, 387, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1039, 222, 395, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1050, 222, 396, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1051, 222, 500, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1052, 219, 1065, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1053, 220, 1065, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1055, 222, 1065, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1056, 220, 568, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1057, 220, 569, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1058, 222, 569, 'PAGE_ELEMENT', 'ENABLED', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1059, 220, 270, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1060, 222, 270, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (1065, 222, 295, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28');

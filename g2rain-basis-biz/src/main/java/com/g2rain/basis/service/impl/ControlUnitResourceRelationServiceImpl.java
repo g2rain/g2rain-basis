@@ -22,10 +22,13 @@ import com.g2rain.basis.dto.ResourceMenuSelectDto;
 import com.g2rain.basis.dto.ResourcePageElementSelectDto;
 import com.g2rain.basis.dto.ResourcePageSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.BasisSyncerEnum;
+import com.g2rain.basis.enums.ControlUnitScope;
 import com.g2rain.basis.enums.ResourceStatus;
 import com.g2rain.basis.enums.ResourceType;
 import com.g2rain.basis.model.ControlUnitPair;
 import com.g2rain.basis.service.ControlUnitResourceRelationService;
+import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.ControlUnitResourceRelationVo;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
@@ -33,6 +36,7 @@ import com.g2rain.common.id.IdGenerator;
 import com.g2rain.common.model.BasePo;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
+import com.g2rain.common.syncer.EventPublisherHub;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Moments;
@@ -93,6 +97,9 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
 
     @Resource(name = "resourceApiDao")
     private ResourceApiDao resourceApiDao;
+
+    @Resource
+    private EventPublisherHub eventPublisherHub;
 
     private IdGenerator idGenerator;
 
@@ -200,6 +207,31 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
             result += controlUnitResourceRelationDao.deleteByResourceIds(
                 controlUnitId, resourceIds
             );
+        }
+
+        // 账号的控制单元, 需要主动通知发生的变动
+        boolean landing = Boolean.TRUE.equals(unit.getLanding());
+        boolean perpetual = ControlUnitScope.PERPETUAL.name().equals(unit.getControlUnitScope());
+        if (landing && perpetual) {
+            // 广播新增`接口权限`信息
+            createRelations.stream()
+                .filter(o -> ResourceType.API_ENDPOINT.name().equals(o.getResourceType()))
+                .map(ControlUnitResourceRelationItemDto::getResourceId)
+                .forEach(resourceId -> eventPublisherHub.sendCreate(
+                    Constants.SYNC_OUTPUT_BINDING,
+                    BasisSyncerEnum.PASSPORT_PERM.name(),
+                    resourceId
+                ));
+
+            // 广播删除`接口权限`信息
+            deleteRelations.stream()
+                .filter(o -> ResourceType.API_ENDPOINT.name().equals(o.getResourceType()))
+                .map(ControlUnitResourceRelationItemDto::getResourceId)
+                .forEach(resourceId -> eventPublisherHub.sendDelete(
+                    Constants.SYNC_OUTPUT_BINDING,
+                    BasisSyncerEnum.PASSPORT_PERM.name(),
+                    resourceId
+                ));
         }
 
         return result;

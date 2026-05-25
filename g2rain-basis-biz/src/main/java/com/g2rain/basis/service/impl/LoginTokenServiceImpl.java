@@ -1,12 +1,18 @@
 package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.converter.LoginTokenConverter;
+import com.g2rain.basis.dao.ApplicationDao;
 import com.g2rain.basis.dao.ApplicationIdpProvisionDao;
 import com.g2rain.basis.dao.LoginTokenDao;
+import com.g2rain.basis.dao.OrganDao;
 import com.g2rain.basis.dao.PassportIdpBindingDao;
 import com.g2rain.basis.dao.RoleControlUnitRelationDao;
+import com.g2rain.basis.dao.UserDao;
+import com.g2rain.basis.dao.po.ApplicationPo;
 import com.g2rain.basis.dao.po.CountRoleControlUnitPo;
 import com.g2rain.basis.dao.po.LoginTokenPo;
+import com.g2rain.basis.dao.po.OrganPo;
+import com.g2rain.basis.dao.po.UserPo;
 import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
@@ -14,14 +20,19 @@ import com.g2rain.basis.dto.OrganSelectDto;
 import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.OrganStatus;
+import com.g2rain.basis.enums.StaticTokenStatus;
 import com.g2rain.basis.service.ApplicationService;
 import com.g2rain.basis.service.LoginTokenService;
 import com.g2rain.basis.service.OrganService;
+import com.g2rain.basis.service.PersonalStaticAccessTokenService;
 import com.g2rain.basis.service.UserService;
 import com.g2rain.basis.vo.ApplicationScopeVo;
 import com.g2rain.basis.vo.ApplicationVo;
 import com.g2rain.basis.vo.LoginTokenVo;
 import com.g2rain.basis.vo.OrganVo;
+import com.g2rain.basis.vo.PersonalStaticAccessTokenVo;
+import com.g2rain.basis.vo.StaticAccessTokenContextVo;
+import com.g2rain.basis.vo.StaticAccessTokenResolveVo;
 import com.g2rain.basis.vo.UserVo;
 import com.g2rain.common.enums.OrganType;
 import com.g2rain.common.enums.SessionType;
@@ -76,11 +87,23 @@ public class LoginTokenServiceImpl implements LoginTokenService {
     @Resource(name = "roleControlUnitRelationDao")
     private RoleControlUnitRelationDao roleControlUnitRelationDao;
 
+    @Resource(name = "applicationDao")
+    private ApplicationDao applicationDao;
+
+    @Resource(name = "organDao")
+    private OrganDao organDao;
+
+    @Resource(name = "userDao")
+    private UserDao userDao;
+
     @Resource
     private UserService userService;
 
     @Resource
     private OrganService organService;
+
+    @Resource(name = "personalStaticAccessTokenServiceImpl")
+    private PersonalStaticAccessTokenService personalStaticAccessTokenService;
 
     @Resource
     private ApplicationIdpProvisionDao applicationIdpProvisionDao;
@@ -184,14 +207,14 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      *     <li>查询应用信息及应用作用域，并封装到 {@link ApplicationScope} 列表中。</li>
      * </ol>
      *
-     * @param passportId           发码侧通行证 ID；三方换票且 {@code userId} 非空时必传，且须与用户的 {@code passport_id} 一致
-     * @param userId               用户 ID，可为 null（表示 Passport 会话）
-     * @param applicationCode      应用编码
-     * @param thirdPartyIdpLogin   是否外部身份源授权链路发码；为 {@link Boolean#TRUE} 且 {@code userId} 非空时校验
-     *                             {@code application_idp_provision} 与 {@code passport_idp_binding}
-     * @param idpType              身份源类型
-     * @param idpSubject           IdP 稳定主体
-     * @param idpApplicationCode   三方应用在 IdP 侧的标识
+     * @param passportId         发码侧通行证 ID；三方换票且 {@code userId} 非空时必传，且须与用户的 {@code passport_id} 一致
+     * @param userId             用户 ID，可为 null（表示 Passport 会话）
+     * @param applicationCode    应用编码
+     * @param thirdPartyIdpLogin 是否外部身份源授权链路发码；为 {@link Boolean#TRUE} 且 {@code userId} 非空时校验
+     *                           {@code application_idp_provision} 与 {@code passport_idp_binding}
+     * @param idpType            身份源类型
+     * @param idpSubject         IdP 稳定主体
+     * @param idpApplicationCode 三方应用在 IdP 侧的标识
      * @return 构建完成的 {@link TokenJWTPayload}，包含用户、机构、应用及应用作用域信息
      * @throws BusinessException 当用户、机构或应用不存在，或机构不可用时抛出
      */
@@ -331,5 +354,60 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         )));
         payload.setApplicationScopes(scopes);
         return payload;
+    }
+
+    /**
+     * 解析静态 API Key：查库 → 组装 status；激活态再查用户/机构/应用拼 {@link StaticAccessTokenContextVo}。
+     */
+    @Override
+    public StaticAccessTokenResolveVo fetchStaticTokenContext(String apiKey) {
+        PersonalStaticAccessTokenVo sat = personalStaticAccessTokenService.selectByApiKey(apiKey);
+        if (Objects.isNull(sat)) {
+            return null;
+        }
+
+        StaticAccessTokenResolveVo resolve = new StaticAccessTokenResolveVo();
+        resolve.setStatus(StaticTokenStatus.fromName(sat.getStatus()));
+        if (StaticTokenStatus.REVOKED.equals(resolve.getStatus())) {
+            return resolve;
+        }
+
+        resolve.setContext(buildStaticAccessTokenContext(sat));
+        return resolve;
+    }
+
+    /**
+     * 由令牌记录关联的用户、机构、应用 PO 构建网关可用的会话 VO；任一主数据缺失则返回 null。
+     */
+    private StaticAccessTokenContextVo buildStaticAccessTokenContext(PersonalStaticAccessTokenVo sat) {
+        UserPo user = userDao.selectByIdWithoutIsolation(sat.getUserId());
+        if (Objects.isNull(user)) {
+            return null;
+        }
+
+        OrganPo organ = organDao.selectById(sat.getOrganId());
+        if (Objects.isNull(organ)) {
+            return null;
+        }
+
+        ApplicationPo application = applicationDao.selectById(sat.getApplicationId());
+        if (Objects.isNull(application)) {
+            return null;
+        }
+
+        StaticAccessTokenContextVo context = new StaticAccessTokenContextVo();
+        context.setSessionType(SessionType.USER);
+        context.setPassportId(user.getPassportId());
+        context.setUserId(user.getId());
+        context.setName(user.getRealName());
+        context.setAdminUser(Boolean.TRUE.equals(user.getAdmin()));
+        context.setOrganId(organ.getId());
+        context.setOrganName(organ.getOrganName());
+        context.setOrganType(OrganType.fromName(organ.getOrganType()));
+        context.setAdminCompany(Boolean.TRUE.equals(organ.getAdmin()));
+        context.setApplicationId(application.getId());
+        context.setApplicationCode(application.getApplicationCode());
+        context.setApplicationOrganId(application.getOrganId());
+        return context;
     }
 }

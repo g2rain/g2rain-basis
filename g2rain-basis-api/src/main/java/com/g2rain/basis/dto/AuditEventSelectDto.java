@@ -150,12 +150,6 @@ public class AuditEventSelectDto extends BaseSelectListDto {
     private Byte adminCompany;
 
     /**
-     * 数据操作的目标组织标识
-     */
-    @Schema(description = "按数据操作目标组织主键筛选")
-    private Long targetOrganId;
-
-    /**
      * 请求来源应用标识
      */
     @Schema(description = "按来源应用主键筛选")

@@ -5,6 +5,7 @@ import com.g2rain.basis.dto.PersonalStaticAccessTokenSelectDto;
 import com.g2rain.data.isolation.annotations.DataIsolation;
 import com.g2rain.data.isolation.annotations.IgnoreIsolation;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -66,6 +67,15 @@ public interface PersonalStaticAccessTokenDao {
      */
     @IgnoreIsolation
     PersonalStaticAccessTokenPo selectById(Long id);
+
+    /**
+     * 根据 tokenHash 查询个人静态访问令牌。
+     *
+     * @param tokenHash 静态访问令牌的哈希摘要
+     * @return 个人静态访问令牌
+     */
+    @IgnoreIsolation
+    PersonalStaticAccessTokenPo selectByTokenHash(@Param("tokenHash") String tokenHash);
 
     /**
      * 根据查询入参 DTO 筛选列表

@@ -173,7 +173,9 @@
         <!-- 基础字段值 -->
         #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
         <!-- 业务字段值 -->
-        #{applicationAuthorizationId, jdbcType=BIGINT}, #{applicationId, jdbcType=BIGINT}, #{organId, jdbcType=BIGINT}, #{userId, jdbcType=BIGINT}, #{name, jdbcType=VARCHAR}, #{tokenHash, jdbcType=VARCHAR}, #{maskedToken, jdbcType=VARCHAR}, #{status, jdbcType=VARCHAR},
+        #{applicationAuthorizationId, jdbcType=BIGINT}, #{applicationId, jdbcType=BIGINT}, #{organId, jdbcType=BIGINT},
+        #{userId, jdbcType=BIGINT}, #{name, jdbcType=VARCHAR}, #{tokenHash, jdbcType=VARCHAR},
+        #{maskedToken, jdbcType=VARCHAR}, #{status, jdbcType=VARCHAR},
         <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
         0,
         <!-- version字段值（如果存在，设置默认值为0） -->
@@ -202,7 +204,10 @@
             <!-- 基础字段值 -->
             #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
             <!-- 业务字段值 -->
-            #{item.applicationAuthorizationId, jdbcType=BIGINT}, #{item.applicationId, jdbcType=BIGINT}, #{item.organId, jdbcType=BIGINT}, #{item.userId, jdbcType=BIGINT}, #{item.name, jdbcType=VARCHAR}, #{item.tokenHash, jdbcType=VARCHAR}, #{item.maskedToken, jdbcType=VARCHAR}, #{item.status, jdbcType=VARCHAR},
+            #{item.applicationAuthorizationId, jdbcType=BIGINT}, #{item.applicationId, jdbcType=BIGINT},
+            #{item.organId, jdbcType=BIGINT}, #{item.userId, jdbcType=BIGINT}, #{item.name, jdbcType=VARCHAR},
+            #{item.tokenHash, jdbcType=VARCHAR}, #{item.maskedToken, jdbcType=VARCHAR},
+            #{item.status, jdbcType=VARCHAR},
             <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
             0,
             <!-- version字段值（如果存在，设置默认值为0） -->
@@ -318,6 +323,13 @@
         WHERE id = #{id, jdbcType=BIGINT}
         <!-- 过滤已删除的记录 -->
         AND (delete_flag = 0 OR delete_flag IS NULL)
+    </select>
+
+    <!-- 根据 tokenHash 查询记录 -->
+    <select id="selectByTokenHash" parameterType="String" resultMap="BaseResultMap">
+        SELECT id, application_authorization_id, application_id, organ_id, user_id, status
+        FROM personal_static_access_token
+        WHERE delete_flag = 0 AND token_hash = #{tokenHash, jdbcType=VARCHAR}
     </select>
 
     <!-- 根据 SelectDto 条件查询列表 -->
