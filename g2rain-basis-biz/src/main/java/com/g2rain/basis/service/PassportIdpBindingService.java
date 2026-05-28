@@ -2,6 +2,7 @@ package com.g2rain.basis.service;
 
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
+import com.g2rain.basis.dto.PassportIdpBindingBindDto;
 import com.g2rain.basis.dto.PassportIdpBindingDto;
 import com.g2rain.basis.dto.PassportIdpBindingSelectDto;
 import com.g2rain.basis.vo.PassportIdpBindingVo;
@@ -39,6 +40,14 @@ public interface PassportIdpBindingService {
      * @return 操作结果（影响行数）
      */
     Long save(PassportIdpBindingDto dto);
+
+    /**
+     * 已登录通行证绑定外部身份源（幂等）
+     *
+     * @param dto 绑定请求
+     * @return 绑定记录主键 ID
+     */
+    Long bind(PassportIdpBindingBindDto dto);
 
     /**
      * 根据ID删除数据

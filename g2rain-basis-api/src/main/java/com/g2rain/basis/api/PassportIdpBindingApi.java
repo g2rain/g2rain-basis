@@ -1,5 +1,6 @@
 package com.g2rain.basis.api;
 
+import com.g2rain.basis.dto.PassportIdpBindingBindDto;
 import com.g2rain.basis.dto.PassportIdpBindingDto;
 import com.g2rain.basis.dto.PassportIdpBindingSelectDto;
 import com.g2rain.basis.vo.PassportIdpBindingVo;
@@ -65,4 +66,15 @@ public interface PassportIdpBindingApi {
     @PostMapping("/save")
     @Operation(summary = "新增或更新绑定", description = "新增或更新账号与外部身份源绑定信息")
     Result<Long> save(@RequestBody @Validated PassportIdpBindingDto dto);
+
+    /**
+     * 已登录通行证绑定外部身份源（幂等）
+     *
+     * @param dto 绑定请求（已校验）
+     * @return 绑定记录主键 ID
+     */
+    @PostMapping("/bind")
+    @Operation(summary = "绑定外部身份源", description = "已登录用户扫码绑定钉钉；USER 会话且机构管理员可自动建立 idp_enterprise_organ，"
+        + "普通用户须已有企业-机构绑定；校验主体冲突")
+    Result<Long> bind(@RequestBody @Validated PassportIdpBindingBindDto dto);
 }
