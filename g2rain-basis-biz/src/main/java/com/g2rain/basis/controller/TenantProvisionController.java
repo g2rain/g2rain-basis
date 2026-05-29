@@ -1,6 +1,7 @@
 package com.g2rain.basis.controller;
 
 
+import com.g2rain.basis.dto.PassportJoinOrganDto;
 import com.g2rain.basis.dto.TenantProvisionDto;
 import com.g2rain.basis.service.TenantProvisionService;
 import com.g2rain.basis.vo.UserVo;
@@ -8,6 +9,7 @@ import com.g2rain.common.model.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -61,5 +63,14 @@ public class TenantProvisionController {
     @Operation(summary = "开通租户账号", description = "为指定租户开通账号并初始化最小可用功能")
     public Result<UserVo> provisionAccount(@RequestBody TenantProvisionDto dto) {
         return Result.success(tenantProvisionService.provisionAccount(dto));
+    }
+
+    /**
+     * 通过邀请码加入已有机构
+     */
+    @PostMapping("/join_organ")
+    @Operation(summary = "加入机构", description = "使用机构邀请码加入已有机构并分配邀请码绑定的角色")
+    public Result<UserVo> joinOrgan(@RequestBody @Validated PassportJoinOrganDto dto) {
+        return Result.success(tenantProvisionService.joinOrganByInvite(dto));
     }
 }

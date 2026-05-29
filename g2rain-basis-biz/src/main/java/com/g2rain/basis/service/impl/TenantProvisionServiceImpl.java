@@ -1,13 +1,24 @@
 package com.g2rain.basis.service.impl;
 
 
+import com.g2rain.basis.dao.OrganDao;
+import com.g2rain.basis.dao.RoleDao;
+import com.g2rain.basis.dao.UserDao;
+import com.g2rain.basis.dao.po.OrganPo;
+import com.g2rain.basis.dao.po.RolePo;
+import com.g2rain.basis.dao.po.UserPo;
 import com.g2rain.basis.dto.OrganDto;
+import com.g2rain.basis.dto.OrganInviteRedisDto;
 import com.g2rain.basis.dto.RoleSelectDto;
+import com.g2rain.basis.dto.PassportJoinOrganDto;
 import com.g2rain.basis.dto.TenantProvisionDto;
 import com.g2rain.basis.dto.UserDto;
 import com.g2rain.basis.dto.UserRoleRelationDto;
+import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.OrganStatus;
 import com.g2rain.basis.enums.RoleType;
+import com.g2rain.basis.service.OrganInviteRedisService;
 import com.g2rain.basis.service.OrganProvisionService;
 import com.g2rain.basis.service.RoleService;
 import com.g2rain.basis.service.TenantProvisionService;
@@ -16,6 +27,7 @@ import com.g2rain.basis.service.UserService;
 import com.g2rain.basis.vo.RoleVo;
 import com.g2rain.basis.vo.UserVo;
 import com.g2rain.common.enums.OrganType;
+import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Collections;
@@ -63,6 +75,18 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
 
     @Resource(name = "userRoleRelationServiceImpl")
     private UserRoleRelationService userRoleRelationService;
+
+    @Resource(name = "organDao")
+    private OrganDao organDao;
+
+    @Resource(name = "roleDao")
+    private RoleDao roleDao;
+
+    @Resource(name = "userDao")
+    private UserDao userDao;
+
+    @Resource
+    private OrganInviteRedisService organInviteRedisService;
 
     /**
      * 为账号在租户下开通最小可用功能。
@@ -128,6 +152,68 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         userRoleRelationService.save(userRole);
 
         // 返回 user 信息给调用者
+        return userService.selectByIdWithoutIsolation(userId);
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public UserVo joinOrganByInvite(PassportJoinOrganDto dto) {
+        Asserts.isTrue(Strings.isNotBlank(dto.getInviteCode()),
+            SystemErrorCode.PARAM_VAL_INVALID, "inviteCode"
+        );
+
+        Long passportId = PrincipalContextHolder.getPassportId();
+        Asserts.isTrue(passportId != null && passportId > 0,
+            SystemErrorCode.PARAM_VAL_INVALID, "passportId"
+        );
+
+        OrganInviteRedisDto invite = organInviteRedisService.peekInvite(dto.getInviteCode());
+        if (invite == null || invite.getOrganId() == null) {
+            throw new BusinessException(BasisErrorCode.ORGAN_INVITE_INVALID);
+        }
+
+        Long organId = invite.getOrganId();
+        UserSelectDto existingQuery = new UserSelectDto();
+        existingQuery.setPassportId(passportId);
+        existingQuery.setOrganId(organId);
+        List<UserPo> existingUsers = userDao.selectListWithoutIsolation(existingQuery);
+        if (!existingUsers.isEmpty()) {
+            return userService.selectByIdWithoutIsolation(existingUsers.getFirst().getId());
+        }
+
+        OrganPo organ = organDao.selectById(organId);
+        Asserts.isTrue(organ != null, BasisErrorCode.ORGAN_INVITE_TARGET_UNAVAILABLE);
+        Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
+            BasisErrorCode.ORGAN_INVITE_TARGET_UNAVAILABLE
+        );
+        Asserts.isTrue(!Boolean.TRUE.equals(organ.getAdmin()),
+            BasisErrorCode.ORGAN_INVITE_TARGET_UNAVAILABLE
+        );
+
+        Long roleId = invite.getRoleId();
+        Asserts.isTrue(roleId != null && roleId > 0, BasisErrorCode.ORGAN_INVITE_ROLE_INVALID);
+        RolePo role = roleDao.selectById(roleId);
+        Asserts.isTrue(role != null, BasisErrorCode.ORGAN_INVITE_ROLE_INVALID);
+        Asserts.isTrue(Objects.equals(role.getOrganId(), organId),
+            BasisErrorCode.ORGAN_INVITE_ROLE_INVALID
+        );
+
+        invite = organInviteRedisService.consumeInvite(dto.getInviteCode());
+
+        UserDto userDto = new UserDto();
+        userDto.setOrganId(organId);
+        userDto.setPassportId(passportId);
+        userDto.setRealName(Objects.toString(
+            PrincipalContextHolder.getName(),
+            ""
+        ));
+        long userId = userService.saveWithoutIsolation(userDto);
+
+        UserRoleRelationDto userRole = new UserRoleRelationDto();
+        userRole.setUserId(userId);
+        userRole.setRoleId(roleId);
+        userRoleRelationService.save(userRole);
+
         return userService.selectByIdWithoutIsolation(userId);
     }
 }
