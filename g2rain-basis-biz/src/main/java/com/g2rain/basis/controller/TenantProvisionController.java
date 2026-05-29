@@ -1,6 +1,7 @@
 package com.g2rain.basis.controller;
 
 
+import com.g2rain.basis.api.TenantProvisionApi;
 import com.g2rain.basis.dto.PassportJoinOrganDto;
 import com.g2rain.basis.dto.TenantProvisionDto;
 import com.g2rain.basis.service.TenantProvisionService;
@@ -36,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/tenant_provision")
 @Tag(name = "租户初始化", description = "租户初始化相关接口")
-public class TenantProvisionController {
+public class TenantProvisionController implements TenantProvisionApi {
 
     @Resource(name = "tenantProvisionServiceImpl")
     private TenantProvisionService tenantProvisionService;
@@ -68,8 +69,7 @@ public class TenantProvisionController {
     /**
      * 通过邀请码加入已有机构
      */
-    @PostMapping("/join_organ")
-    @Operation(summary = "加入机构", description = "使用机构邀请码加入已有机构并分配邀请码绑定的角色")
+    @Override
     public Result<UserVo> joinOrgan(@RequestBody @Validated PassportJoinOrganDto dto) {
         return Result.success(tenantProvisionService.joinOrganByInvite(dto));
     }
