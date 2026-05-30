@@ -16,9 +16,9 @@ public enum BasisRedisKeyRule {
     ORGAN_INVITE("basis:organ:invite:%s"),
 
     /**
-     * 机构当前有效邀请码索引，格式 basis:organ:invite:active:{organId}
+     * 邀请码消费分布式锁，格式 basis:organ:invite:consume:lock:{inviteCode}
      */
-    ORGAN_INVITE_ACTIVE("basis:organ:invite:active:%s");
+    ORGAN_INVITE_CONSUME_LOCK("basis:organ:invite:consume:lock:%s");
 
     private final String key;
 

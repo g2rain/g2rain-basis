@@ -22,26 +22,20 @@ public class OrganInviteRedisService {
 
     private static final int DEFAULT_MAX_USES = 1;
 
+    private static final Duration CONSUME_LOCK_TTL = Duration.ofSeconds(30);
+
     private final GenericRedisHelper genericRedisHelper;
 
     /**
-     * 写入邀请码并维护机构当前有效码索引
+     * 写入邀请码（同机构可同时存在多个有效码）
      */
     public void saveInvite(String inviteCode, OrganInviteRedisDto payload, Duration ttl) {
         String inviteKey = BasisRedisKeyRule.ORGAN_INVITE.format(inviteCode);
-        String activeKey = BasisRedisKeyRule.ORGAN_INVITE_ACTIVE.format(String.valueOf(payload.getOrganId()));
-
-        String previousCode = genericRedisHelper.get(activeKey, String.class);
-        if (Strings.isNotBlank(previousCode)) {
-            genericRedisHelper.delete(BasisRedisKeyRule.ORGAN_INVITE.format(previousCode.trim()));
-        }
-
         genericRedisHelper.set(inviteKey, payload, ttl);
-        genericRedisHelper.set(activeKey, inviteCode, ttl);
     }
 
     /**
-     * 读取并一次性消费邀请码（默认单次使用）
+     * 读取并一次性消费邀请码（按邀请码加锁，并发下仅一次成功）
      */
     public OrganInviteRedisDto consumeInvite(String inviteCode) {
         String normalized = normalizeInviteCode(inviteCode);
@@ -49,6 +43,23 @@ public class OrganInviteRedisService {
             throw new BusinessException(BasisErrorCode.ORGAN_INVITE_INVALID);
         }
 
+        String lockKey = BasisRedisKeyRule.ORGAN_INVITE_CONSUME_LOCK.format(normalized);
+        String lockToken = UUID.randomUUID().toString();
+        Boolean locked = genericRedisHelper.genericRedisTemplate()
+            .opsForValue()
+            .setIfAbsent(lockKey, lockToken, CONSUME_LOCK_TTL);
+        if (!Boolean.TRUE.equals(locked)) {
+            throw new BusinessException(BasisErrorCode.ORGAN_INVITE_INVALID);
+        }
+
+        try {
+            return consumeInviteUnderLock(normalized);
+        } finally {
+            genericRedisHelper.delete(lockKey);
+        }
+    }
+
+    private OrganInviteRedisDto consumeInviteUnderLock(String normalized) {
         String inviteKey = BasisRedisKeyRule.ORGAN_INVITE.format(normalized);
         OrganInviteRedisDto payload = genericRedisHelper.get(inviteKey, OrganInviteRedisDto.class);
         if (payload == null) {
@@ -61,27 +72,7 @@ public class OrganInviteRedisService {
             throw new BusinessException(BasisErrorCode.ORGAN_INVITE_INVALID);
         }
 
-        if (maxUses <= 1) {
-            genericRedisHelper.delete(inviteKey);
-            if (payload.getOrganId() != null) {
-                genericRedisHelper.delete(
-                    BasisRedisKeyRule.ORGAN_INVITE_ACTIVE.format(String.valueOf(payload.getOrganId()))
-                );
-            }
-            return payload;
-        }
-
-        payload.setUsedCount(usedCount + 1);
-        if (payload.getUsedCount() >= maxUses) {
-            genericRedisHelper.delete(inviteKey);
-            if (payload.getOrganId() != null) {
-                genericRedisHelper.delete(
-                    BasisRedisKeyRule.ORGAN_INVITE_ACTIVE.format(String.valueOf(payload.getOrganId()))
-                );
-            }
-        } else {
-            genericRedisHelper.set(inviteKey, payload, null);
-        }
+        genericRedisHelper.delete(inviteKey);
         return payload;
     }
 
