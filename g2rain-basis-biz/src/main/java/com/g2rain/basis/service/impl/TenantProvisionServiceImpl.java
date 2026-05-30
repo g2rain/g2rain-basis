@@ -192,8 +192,12 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
 
         Long roleId = invite.getRoleId();
         Asserts.isTrue(roleId != null && roleId > 0, BasisErrorCode.ORGAN_INVITE_ROLE_INVALID);
-        RolePo role = roleDao.selectById(roleId);
-        Asserts.isTrue(role != null, BasisErrorCode.ORGAN_INVITE_ROLE_INVALID);
+        RoleSelectDto roleSelect = new RoleSelectDto();
+        roleSelect.setId(roleId);
+        roleSelect.setOrganId(organId);
+        List<RolePo> roles = roleDao.selectListWithoutIsolation(roleSelect);
+        Asserts.isTrue(Collections.isNotEmpty(roles), BasisErrorCode.ORGAN_INVITE_ROLE_INVALID);
+        RolePo role = roles.getFirst();
         Asserts.isTrue(Objects.equals(role.getOrganId(), organId),
             BasisErrorCode.ORGAN_INVITE_ROLE_INVALID
         );
