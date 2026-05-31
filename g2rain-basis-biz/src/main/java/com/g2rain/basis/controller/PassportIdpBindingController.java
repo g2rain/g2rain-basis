@@ -1,6 +1,7 @@
 package com.g2rain.basis.controller;
 
 import com.g2rain.basis.api.PassportIdpBindingApi;
+import com.g2rain.basis.dto.PassportIdpBindingBindDto;
 import com.g2rain.basis.dto.PassportIdpBindingDto;
 import com.g2rain.basis.dto.PassportIdpBindingSelectDto;
 import com.g2rain.basis.service.PassportIdpBindingService;
@@ -44,6 +45,11 @@ public class PassportIdpBindingController implements PassportIdpBindingApi {
     @Override
     public Result<Long> save(PassportIdpBindingDto dto) {
         return Result.success(passportIdpBindingService.save(dto));
+    }
+
+    @Override
+    public Result<Long> bind(PassportIdpBindingBindDto dto) {
+        return Result.success(passportIdpBindingService.bind(dto));
     }
 
     @DeleteMapping("/{id}")
