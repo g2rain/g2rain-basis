@@ -47,6 +47,7 @@
         <g2rain.data.redis.version>1.0.1</g2rain.data.redis.version>
         <g2rain.starter.mybatis.extensions.version>1.0.1</g2rain.starter.mybatis.extensions.version>
         <g2rain.starter.spring.doc.version>1.0.1</g2rain.starter.spring.doc.version>
+        <g2rain.starter.department.principal.version>1.0.1</g2rain.starter.department.principal.version>
         <g2rain.crafter.version>1.0.5</g2rain.crafter.version>
         <flatten.maven.plugin.version>1.7.3</flatten.maven.plugin.version>
         <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
@@ -134,6 +135,11 @@
                 <groupId>com.g2rain</groupId>
                 <artifactId>g2rain-starter-spring-doc</artifactId>
                 <version>${g2rain.starter.spring.doc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.g2rain</groupId>
+                <artifactId>g2rain-starter-department-principal</artifactId>
+                <version>${g2rain.starter.department.principal.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

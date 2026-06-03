@@ -4,7 +4,7 @@
 -- =============================================
 
 -- 创建数据库
-CREATE DATABASE IF NOT EXISTS `g2rain_basis` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `g2rain_basis` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE `g2rain_basis`;
 
 -- =============================================
@@ -31,7 +31,7 @@ CREATE TABLE `passport` (
     PRIMARY KEY (`id`),
     INDEX `idx_username` (`username`),
     INDEX `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '账号表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '账号表';
 
 -- =============================================
 -- 2. 身份源绑定：passport <-> 钉钉等 IdP（不自动建 passport）
@@ -57,7 +57,7 @@ CREATE TABLE `passport_idp_binding` (
     KEY `idx_passport_id` (`passport_id`),
     KEY `idx_corp_idp` (`corp_id`, `idp_type`),
     KEY `idx_delete_flag` (`delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '账号与外部身份源绑定表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '账号与外部身份源绑定表';
 
 -- =============================================
 -- 3. 外部身份源应用 ↔ 平台应用（换票后 access 的 g2rain application）
@@ -79,7 +79,7 @@ CREATE TABLE `application_idp_provision` (
     UNIQUE KEY `uk_idp_application` (`idp_type`, `idp_application_code`),
     KEY `idx_application_id` (`application_id`),
     KEY `idx_delete_flag` (`delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '外部身份源应用与平台应用的绑定';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '外部身份源应用与平台应用的绑定';
 
 -- =============================================
 -- 4. 用户表 (user)
@@ -101,7 +101,7 @@ CREATE TABLE `user` (
     PRIMARY KEY (`id`),
     INDEX `idx_passport_id` (`passport_id`),
     INDEX `idx_organ_id` (`organ_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '用户表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '用户表';
 
 -- =============================================
 -- 5. 机构表 (organ)
@@ -122,7 +122,7 @@ CREATE TABLE `organ` (
     INDEX `idx_organ_name` (`organ_name`),
     INDEX `idx_organ_type` (`organ_type`),
     INDEX `idx_organ_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '机构表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '机构表';
 
 -- =============================================
 -- 6. 外部企业/租户 ↔ 平台机构（organ）多对多
@@ -146,7 +146,7 @@ CREATE TABLE `idp_enterprise_organ` (
     KEY `idx_organ_id` (`organ_id`),
     KEY `idx_idp_enterprise` (`idp_type`, `enterprise_id`),
     KEY `idx_delete_flag` (`delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '外部企业/租户与平台机构关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '外部企业/租户与平台机构关联表';
 
 -- =============================================
 -- 7. 机构路径关系表 (organ_closure)
@@ -167,10 +167,51 @@ CREATE TABLE `organ_closure` (
     PRIMARY KEY (`id`),
     INDEX idx_ancestor_id (ancestor_id),
     INDEX idx_descendant_id (descendant_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '机构路径关系表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '机构路径关系表';
 
 -- =============================================
--- 8. 应用资源菜单表 (resource_menu)
+-- 8. 服务注册表 (service_registry)
+-- =============================================
+DROP TABLE IF EXISTS `service_registry`;
+
+CREATE TABLE `service_registry` (
+    `id` BIGINT NOT NULL COMMENT 													                   '后端服务标识',
+    `service_code` VARCHAR(64) NOT NULL COMMENT                                                         '服务逻辑编码',
+    `name` VARCHAR(128) NOT NULL COMMENT                                                                '服务显示名称',
+    `endpoint` VARCHAR(256) NOT NULL COMMENT                                                            '服务目标地址',
+    `route_prefix` VARCHAR(128) NOT NULL COMMENT                                                        '网关路由前缀',
+    `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '后端服务说明',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_service_code` (`service_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '服务注册表';
+
+-- =============================================
+-- 9. 资源接口表 (resource_api)
+-- =============================================
+DROP TABLE IF EXISTS `resource_api`;
+
+CREATE TABLE `resource_api` (
+    `id` BIGINT NOT NULL COMMENT                                                                        '资源接口标识',
+    `service_code` VARCHAR(64) NOT NULL COMMENT                                                         '服务逻辑编码',
+    `api_tags` VARCHAR(128) NOT NULL COMMENT                                                            '资源接口标签',
+    `name` VARCHAR(128) NOT NULL COMMENT                                                                '资源接口名称',
+    `method` VARCHAR(32) NOT NULL COMMENT                                                               '接口请求方法',
+    `path` VARCHAR(512) NOT NULL COMMENT                                                                '接口请求路径',
+    `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '资源接口说明',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_service_method_path` (`service_code`,`method`,`path`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '资源接口表';
+
+-- =============================================
+-- 10. 应用资源菜单表 (resource_menu)
 -- =============================================
 DROP TABLE IF EXISTS `resource_menu`;
 
@@ -189,10 +230,10 @@ CREATE TABLE `resource_menu` (
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用资源菜单表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '应用资源菜单表';
 
 -- =============================================
--- 9. 应用资源页面表 (resource_page)
+-- 11. 应用资源页面表 (resource_page)
 -- =============================================
 DROP TABLE IF EXISTS `resource_page`;
 
@@ -202,16 +243,16 @@ CREATE TABLE `resource_page` (
     `page_name` VARCHAR(128) NOT NULL COMMENT												            '页面名称',
     `page_code` VARCHAR(128) NOT NULL COMMENT												            '页面编码',
     `link_path` VARCHAR(128) NOT NULL COMMENT 													        '链接路径',
-    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
-    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
-    `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
-    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用资源页面表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '应用资源页面表';
 
 -- =============================================
--- 10. 应用资源页面元素表 (resource_page_element)
+-- 12. 应用资源页面元素表 (resource_page_element)
 -- =============================================
 DROP TABLE IF EXISTS `resource_page_element`;
 
@@ -227,48 +268,7 @@ CREATE TABLE `resource_page_element` (
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     INDEX `idx_app_del_id` (`application_id`, `delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用资源页面元素表';
-
--- =============================================
--- 11. 服务注册表 (service_registry)
--- =============================================
-DROP TABLE IF EXISTS `service_registry`;
-
-CREATE TABLE `service_registry` (
-    `id` BIGINT NOT NULL COMMENT 													                   '后端服务标识',
-    `service_code` VARCHAR(64) NOT NULL COMMENT                                                         '服务逻辑编码',
-    `name` VARCHAR(128) NOT NULL COMMENT                                                                '服务显示名称',
-    `endpoint` VARCHAR(256) NOT NULL COMMENT                                                            '服务目标地址',
-    `route_prefix` VARCHAR(128) NOT NULL COMMENT                                                        '网关路由前缀',
-    `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '后端服务说明',
-    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_service_code` (`service_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '服务注册表';
-
--- =============================================
--- 12. 资源接口表 (resource_api)
--- =============================================
-DROP TABLE IF EXISTS `resource_api`;
-
-CREATE TABLE `resource_api` (
-    `id` BIGINT NOT NULL COMMENT                                                                        '资源接口标识',
-    `service_code` VARCHAR(64) NOT NULL COMMENT                                                         '服务逻辑编码',
-    `api_tags` VARCHAR(128) NOT NULL COMMENT                                                            '资源接口标签',
-    `name` VARCHAR(128) NOT NULL COMMENT                                                                '资源接口名称',
-    `method` VARCHAR(32) NOT NULL COMMENT                                                               '接口请求方法',
-    `path` VARCHAR(512) NOT NULL COMMENT                                                                '接口请求路径',
-    `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '资源接口说明',
-    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
-    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
-    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
-    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_service_method_path` (`service_code`,`method`,`path`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '资源接口表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '应用资源页面元素表';
 
 -- =============================================
 -- 13. 控制单元表 (control_unit)
@@ -288,7 +288,7 @@ CREATE TABLE `control_unit` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制单元表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '控制单元表';
 
 -- =============================================
 -- 14. 控制单元资源关联表 (control_unit_resource_relation)
@@ -307,7 +307,7 @@ CREATE TABLE `control_unit_resource_relation` (
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     INDEX `idx_cu_type_del_res` (`control_unit_id`, `resource_type`, `delete_flag`, `resource_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制单元资源关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '控制单元资源关联表';
 
 -- =============================================
 -- 15. 角色表 (role)
@@ -325,7 +325,7 @@ CREATE TABLE `role` (
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     INDEX `idx_organ_id_id` (`organ_id`, `id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '角色表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '角色表';
 
 -- =============================================
 -- 16. 用户角色关联表 (user_role_relation)
@@ -342,7 +342,7 @@ CREATE TABLE `user_role_relation` (
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     INDEX `idx_organ_id_id` (`user_id`, `role_id`, `delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '用户角色关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '用户角色关联表';
 
 -- =============================================
 -- 17. 角色控制单元关联表 (role_control_unit_relation)
@@ -362,7 +362,7 @@ CREATE TABLE `role_control_unit_relation` (
     PRIMARY KEY (`id`),
     -- 默认索引：按角色 + 控制单元 + 状态
     INDEX `idx_role_sts_del_cu` (`role_id`, `status`, `delete_flag`, `control_unit_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '角色控制单元关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '角色控制单元关联表';
 
 -- =============================================
 -- 18. 控制域表 (control_domain)
@@ -381,7 +381,7 @@ CREATE TABLE `control_domain` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制域表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '控制域表';
 
 -- =============================================
 -- 19. 控制域控制单元关联表 (control_domain_control_unit_relation)
@@ -398,7 +398,7 @@ CREATE TABLE `control_domain_control_unit_relation` (
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     INDEX `idx_control_domain_unit` (`control_domain_id`, `control_unit_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '控制域控制单元关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '控制域控制单元关联表';
 
 -- =============================================
 -- 20. 应用表 (application)
@@ -428,7 +428,7 @@ CREATE TABLE `application` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '应用表';
 
 -- =============================================
 -- 21. 应用归类关系表 (application_suite)
@@ -445,7 +445,7 @@ CREATE TABLE `application_suite` (
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     INDEX `uk_application_id` (`application_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用归类关系表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '应用归类关系表';
 
 -- =============================================
 -- 22. 应用授权记录表 (application_authorization)
@@ -467,7 +467,7 @@ CREATE TABLE `application_authorization` (
     INDEX `idx_application_id` (`application_id`),
     INDEX `idx_control_domain_id` (`control_domain_id`),
     INDEX `idx_organ_st_del_app` (`organ_id`, `status`, `delete_flag`, `application_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '应用授权记录表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '应用授权记录表';
 
 -- =============================================
 -- 23. 个人静态访问令牌表 (personal_static_access_token)
@@ -476,22 +476,22 @@ DROP TABLE IF EXISTS `personal_static_access_token`;
 
 CREATE TABLE `personal_static_access_token` (
     `id` BIGINT NOT NULL COMMENT 													                    '个人静态访问令牌标识',
-    `application_authorization_id` BIGINT DEFAULT NULL COMMENT                                         '授权记录标识',
+    `application_authorization_id` BIGINT DEFAULT NULL COMMENT                                          '授权记录标识',
     `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
-    `organ_id` BIGINT NOT NULL COMMENT 												                '机构标识',
+    `organ_id` BIGINT NOT NULL COMMENT 												                    '机构标识',
     `user_id` BIGINT DEFAULT NULL COMMENT 														        '用户标识',
     `name` VARCHAR(128) NOT NULL COMMENT 															    '访问令牌名称',
-    `token_hash` VARCHAR(64) NOT NULL COMMENT 												            '静态访问令牌的哈希摘要',
+    `token_hash` VARCHAR(64) NOT NULL COLLATE utf8mb4_bin COMMENT 										'静态访问令牌的哈希摘要',
     `masked_token` VARCHAR(28) NOT NULL COMMENT 												        '脱敏令牌',
-    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 											'状态[ACTIVATED:已启用, REVOKED:已吊销]',
-    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                     '创建时间',
-    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT         '更新时间',
-    `version` INT NOT NULL DEFAULT 0 COMMENT                                                           '记录版本',
-    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                   '删除标识[0:未删除, 1:已删除]',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVATED' COMMENT 										    '状态[ACTIVATED:已启用, REVOKED:已吊销]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_token_hash` (`token_hash`),
     INDEX `idx_authorization_org_del` (`application_authorization_id`, `organ_id`, `delete_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                             '个人静态访问令牌表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '个人静态访问令牌表';
 
 -- =============================================
 -- 24. 登录信息表 (login_token)
@@ -516,7 +516,7 @@ CREATE TABLE `login_token` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci COMMENT=								'登录信息表, 记录了当前登录状态的相关信息';
+) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4 COLLATE=utf8mb4_0900_ai_ci COMMENT=								'登录信息表, 记录了当前登录状态的相关信息';
 
 -- =============================================
 -- 25. 审计事件表 (audit_event)
@@ -561,7 +561,7 @@ CREATE TABLE `audit_event` (
     INDEX `idx_user_id` (`user_id`),
     INDEX `idx_organ_id` (`organ_id`),
     INDEX `idx_application_id` (`application_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=                         '审计事件表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '审计事件表';
 
 -- 账号
 INSERT INTO `passport`
