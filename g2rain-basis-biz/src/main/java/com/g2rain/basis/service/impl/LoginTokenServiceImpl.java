@@ -39,8 +39,6 @@ import com.g2rain.common.enums.SessionType;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
-import com.g2rain.common.json.JsonCodec;
-import com.g2rain.common.json.JsonCodecFactory;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.utils.Asserts;
@@ -324,10 +322,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         payload.setAdminCompany(Boolean.TRUE.equals(organ.getAdmin()));
 
         // 需要外部的Starter 提供能力, 没有实现也没关系
-        principalEnrichers.forEach(enricher -> {
-            enricher.enrich(payload);
-            log.info("enrich payload:{}", JsonCodecFactory.instance().obj2str(payload));
-        });
+        principalEnrichers.forEach(enricher -> enricher.enrich(payload));
 
         // 如果入口应用不是 `默认应用`, 需要校验应用是否做过授权
         if (!isDefaultMain) {
