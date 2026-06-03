@@ -39,6 +39,8 @@ import com.g2rain.common.enums.SessionType;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
+import com.g2rain.common.json.JsonCodec;
+import com.g2rain.common.json.JsonCodecFactory;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.utils.Asserts;
@@ -51,6 +53,7 @@ import com.g2rain.common.web.TokenJWTPayload;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -76,6 +79,7 @@ import java.util.Objects;
  * @author Alpha
  * @since 2026/1/19
  */
+@Slf4j
 @Service(value = "loginTokenServiceImpl")
 public class LoginTokenServiceImpl implements LoginTokenService {
 
@@ -320,7 +324,10 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         payload.setAdminCompany(Boolean.TRUE.equals(organ.getAdmin()));
 
         // 需要外部的Starter 提供能力, 没有实现也没关系
-        principalEnrichers.forEach(enricher -> enricher.enrich(payload));
+        principalEnrichers.forEach(enricher -> {
+            enricher.enrich(payload);
+            log.info("enrich payload:{}", JsonCodecFactory.instance().obj2str(payload));
+        });
 
         // 如果入口应用不是 `默认应用`, 需要校验应用是否做过授权
         if (!isDefaultMain) {
