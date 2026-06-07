@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.g2rain.basis.dao.AuditEventDao">
+    <!-- 通用结果集映射（包含所有字段：主键+基础字段+业务字段） -->
+    <resultMap id="BaseResultMap" type="com.g2rain.basis.dao.po.AuditEventPo">
+        <!-- 主键字段 -->
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <!-- 基础字段（createTime、updateTime） -->
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <!-- 业务字段（其他自定义字段） -->
+        <result column="trace_id" property="traceId" jdbcType="VARCHAR"/>
+        <result column="client_id" property="clientId" jdbcType="VARCHAR"/>
+        <result column="request_id" property="requestId" jdbcType="VARCHAR"/>
+        <result column="request_time" property="requestTime" jdbcType="TIMESTAMP"/>
+        <result column="accept_language" property="acceptLanguage" jdbcType="VARCHAR"/>
+        <result column="path" property="path" jdbcType="VARCHAR"/>
+        <result column="method" property="method" jdbcType="VARCHAR"/>
+        <result column="user_agent" property="userAgent" jdbcType="VARCHAR"/>
+        <result column="host" property="host" jdbcType="VARCHAR"/>
+        <result column="x_forwarded_for" property="xForwardedFor" jdbcType="VARCHAR"/>
+        <result column="x_real_ip" property="xRealIp" jdbcType="VARCHAR"/>
+        <result column="referer" property="referer" jdbcType="VARCHAR"/>
+        <result column="session_type" property="sessionType" jdbcType="VARCHAR"/>
+        <result column="passport_id" property="passportId" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="admin_user" property="adminUser" jdbcType="TINYINT"/>
+        <result column="organ_id" property="organId" jdbcType="BIGINT"/>
+        <result column="organ_name" property="organName" jdbcType="VARCHAR"/>
+        <result column="organ_type" property="organType" jdbcType="VARCHAR"/>
+        <result column="admin_company" property="adminCompany" jdbcType="TINYINT"/>
+        <result column="application_id" property="applicationId" jdbcType="BIGINT"/>
+        <result column="application_code" property="applicationCode" jdbcType="VARCHAR"/>
+        <result column="application_organ_id" property="applicationOrganId" jdbcType="BIGINT"/>
+        <result column="payload" property="payload" jdbcType="LONGVARCHAR"/>
+        <!-- version字段（如果存在） -->
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 定义可复用排序方向片段 -->
+    <sql id="directionClause">
+        <choose>
+            <when test="item.direction == 'DESC'">DESC</when>
+            <otherwise>ASC</otherwise>
+        </choose>
+    </sql>
+
+    <!-- 可复用的动态排序 SQL 片段 -->
+    <sql id="dynamicOrderBy">
+        <trim prefix="ORDER BY" suffixOverrides=",">
+            <foreach collection="safeSorts" item="item" separator=",">
+                <choose>
+                    <when test="item.column == 'id'">
+                        id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'createTime'">
+                        create_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'updateTime'">
+                        update_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'traceId'">
+                        trace_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'clientId'">
+                        client_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'requestId'">
+                        request_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'requestTime'">
+                        request_time
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'acceptLanguage'">
+                        accept_language
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'path'">
+                        path
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'method'">
+                        method
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'userAgent'">
+                        user_agent
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'host'">
+                        host
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'xForwardedFor'">
+                        x_forwarded_for
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'xRealIp'">
+                        x_real_ip
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'referer'">
+                        referer
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'sessionType'">
+                        session_type
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'passportId'">
+                        passport_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'userId'">
+                        user_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'name'">
+                        name
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'adminUser'">
+                        admin_user
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'organId'">
+                        organ_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'organName'">
+                        organ_name
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'organType'">
+                        organ_type
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'adminCompany'">
+                        admin_company
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'applicationId'">
+                        application_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'applicationCode'">
+                        application_code
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'applicationOrganId'">
+                        application_organ_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'payload'">
+                        payload
+                        <include refid="directionClause"/>
+                    </when>
+                </choose>
+            </foreach>
+        </trim>
+    </sql>
+
+    <!-- 插入单条记录 -->
+    <insert id="insert" parameterType="com.g2rain.basis.dao.po.AuditEventPo">
+        INSERT INTO audit_event (
+        <!-- 主键字段（自增主键不包含在插入语句中） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, application_id, application_code, application_organ_id, payload,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES (
+        <!-- 主键值（自增主键不包含） -->
+        #{id, jdbcType=BIGINT},
+        <!-- 基础字段值 -->
+        #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
+        <!-- 业务字段值 -->
+        #{traceId, jdbcType=VARCHAR}, #{clientId, jdbcType=VARCHAR}, #{requestId, jdbcType=VARCHAR}, #{requestTime, jdbcType=TIMESTAMP}, #{acceptLanguage, jdbcType=VARCHAR}, #{path, jdbcType=VARCHAR}, #{method, jdbcType=VARCHAR}, #{userAgent, jdbcType=VARCHAR}, #{host, jdbcType=VARCHAR}, #{xForwardedFor, jdbcType=VARCHAR}, #{xRealIp, jdbcType=VARCHAR}, #{referer, jdbcType=VARCHAR}, #{sessionType, jdbcType=VARCHAR}, #{passportId, jdbcType=BIGINT}, #{userId, jdbcType=BIGINT}, #{name, jdbcType=VARCHAR}, #{adminUser, jdbcType=TINYINT}, #{organId, jdbcType=BIGINT}, #{organName, jdbcType=VARCHAR}, #{organType, jdbcType=VARCHAR}, #{adminCompany, jdbcType=TINYINT}, #{applicationId, jdbcType=BIGINT}, #{applicationCode, jdbcType=VARCHAR}, #{applicationOrganId, jdbcType=BIGINT}, #{payload, jdbcType=LONGVARCHAR},
+        <!-- version字段值（如果存在，设置默认值为0） -->
+        0
+        )
+    </insert>
+
+    <!-- 批量插入记录 -->
+    <insert id="insertMultiple" parameterType="java.util.List">
+        INSERT INTO audit_event (
+        <!-- 主键字段（自增主键不包含） -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, application_id, application_code, application_organ_id, payload,
+        <!-- version字段（如果存在） -->
+        version
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            <!-- 主键值（自增主键不包含） -->
+            #{item.id, jdbcType=BIGINT},
+            <!-- 基础字段值 -->
+            #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
+            <!-- 业务字段值 -->
+            #{item.traceId, jdbcType=VARCHAR}, #{item.clientId, jdbcType=VARCHAR}, #{item.requestId, jdbcType=VARCHAR}, #{item.requestTime, jdbcType=TIMESTAMP}, #{item.acceptLanguage, jdbcType=VARCHAR}, #{item.path, jdbcType=VARCHAR}, #{item.method, jdbcType=VARCHAR}, #{item.userAgent, jdbcType=VARCHAR}, #{item.host, jdbcType=VARCHAR}, #{item.xForwardedFor, jdbcType=VARCHAR}, #{item.xRealIp, jdbcType=VARCHAR}, #{item.referer, jdbcType=VARCHAR}, #{item.sessionType, jdbcType=VARCHAR}, #{item.passportId, jdbcType=BIGINT}, #{item.userId, jdbcType=BIGINT}, #{item.name, jdbcType=VARCHAR}, #{item.adminUser, jdbcType=TINYINT}, #{item.organId, jdbcType=BIGINT}, #{item.organName, jdbcType=VARCHAR}, #{item.organType, jdbcType=VARCHAR}, #{item.adminCompany, jdbcType=TINYINT}, #{item.applicationId, jdbcType=BIGINT}, #{item.applicationCode, jdbcType=VARCHAR}, #{item.applicationOrganId, jdbcType=BIGINT}, #{item.payload, jdbcType=LONGVARCHAR},
+            <!-- version字段值（如果存在，设置默认值为0） -->
+            0
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据ID更新记录（包含基础字段和业务字段） -->
+    <update id="update" parameterType="com.g2rain.basis.dao.po.AuditEventPo">
+        UPDATE audit_event
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="traceId != null">
+                trace_id = #{traceId, jdbcType=VARCHAR},
+            </if>
+            <if test="clientId != null">
+                client_id = #{clientId, jdbcType=VARCHAR},
+            </if>
+            <if test="requestId != null">
+                request_id = #{requestId, jdbcType=VARCHAR},
+            </if>
+            <if test="requestTime != null">
+                request_time = #{requestTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="acceptLanguage != null">
+                accept_language = #{acceptLanguage, jdbcType=VARCHAR},
+            </if>
+            <if test="path != null">
+                path = #{path, jdbcType=VARCHAR},
+            </if>
+            <if test="method != null">
+                method = #{method, jdbcType=VARCHAR},
+            </if>
+            <if test="userAgent != null">
+                user_agent = #{userAgent, jdbcType=VARCHAR},
+            </if>
+            <if test="host != null">
+                host = #{host, jdbcType=VARCHAR},
+            </if>
+            <if test="xForwardedFor != null">
+                x_forwarded_for = #{xForwardedFor, jdbcType=VARCHAR},
+            </if>
+            <if test="xRealIp != null">
+                x_real_ip = #{xRealIp, jdbcType=VARCHAR},
+            </if>
+            <if test="referer != null">
+                referer = #{referer, jdbcType=VARCHAR},
+            </if>
+            <if test="sessionType != null">
+                session_type = #{sessionType, jdbcType=VARCHAR},
+            </if>
+            <if test="passportId != null">
+                passport_id = #{passportId, jdbcType=BIGINT},
+            </if>
+            <if test="userId != null">
+                user_id = #{userId, jdbcType=BIGINT},
+            </if>
+            <if test="name != null">
+                name = #{name, jdbcType=VARCHAR},
+            </if>
+            <if test="adminUser != null">
+                admin_user = #{adminUser, jdbcType=TINYINT},
+            </if>
+            <if test="organId != null">
+                organ_id = #{organId, jdbcType=BIGINT},
+            </if>
+            <if test="organName != null">
+                organ_name = #{organName, jdbcType=VARCHAR},
+            </if>
+            <if test="organType != null">
+                organ_type = #{organType, jdbcType=VARCHAR},
+            </if>
+            <if test="adminCompany != null">
+                admin_company = #{adminCompany, jdbcType=TINYINT},
+            </if>
+            <if test="applicationId != null">
+                application_id = #{applicationId, jdbcType=BIGINT},
+            </if>
+            <if test="applicationCode != null">
+                application_code = #{applicationCode, jdbcType=VARCHAR},
+            </if>
+            <if test="applicationOrganId != null">
+                application_organ_id = #{applicationOrganId, jdbcType=BIGINT},
+            </if>
+            <if test="payload != null">
+                payload = #{payload, jdbcType=LONGVARCHAR},
+            </if>
+            <!-- version字段更新（如果存在，版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+    </update>
+
+    <!-- 根据ID和Version更新记录（乐观锁更新，包含基础字段和业务字段） -->
+    <update id="updateByVersion" parameterType="com.g2rain.basis.dao.po.AuditEventPo">
+        UPDATE audit_event
+        <set>
+            <!-- 基础字段更新（排除version，version单独处理） -->
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+            <!-- 业务字段更新 -->
+            <if test="traceId != null">
+                trace_id = #{traceId, jdbcType=VARCHAR},
+            </if>
+            <if test="clientId != null">
+                client_id = #{clientId, jdbcType=VARCHAR},
+            </if>
+            <if test="requestId != null">
+                request_id = #{requestId, jdbcType=VARCHAR},
+            </if>
+            <if test="requestTime != null">
+                request_time = #{requestTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="acceptLanguage != null">
+                accept_language = #{acceptLanguage, jdbcType=VARCHAR},
+            </if>
+            <if test="path != null">
+                path = #{path, jdbcType=VARCHAR},
+            </if>
+            <if test="method != null">
+                method = #{method, jdbcType=VARCHAR},
+            </if>
+            <if test="userAgent != null">
+                user_agent = #{userAgent, jdbcType=VARCHAR},
+            </if>
+            <if test="host != null">
+                host = #{host, jdbcType=VARCHAR},
+            </if>
+            <if test="xForwardedFor != null">
+                x_forwarded_for = #{xForwardedFor, jdbcType=VARCHAR},
+            </if>
+            <if test="xRealIp != null">
+                x_real_ip = #{xRealIp, jdbcType=VARCHAR},
+            </if>
+            <if test="referer != null">
+                referer = #{referer, jdbcType=VARCHAR},
+            </if>
+            <if test="sessionType != null">
+                session_type = #{sessionType, jdbcType=VARCHAR},
+            </if>
+            <if test="passportId != null">
+                passport_id = #{passportId, jdbcType=BIGINT},
+            </if>
+            <if test="userId != null">
+                user_id = #{userId, jdbcType=BIGINT},
+            </if>
+            <if test="name != null">
+                name = #{name, jdbcType=VARCHAR},
+            </if>
+            <if test="adminUser != null">
+                admin_user = #{adminUser, jdbcType=TINYINT},
+            </if>
+            <if test="organId != null">
+                organ_id = #{organId, jdbcType=BIGINT},
+            </if>
+            <if test="organName != null">
+                organ_name = #{organName, jdbcType=VARCHAR},
+            </if>
+            <if test="organType != null">
+                organ_type = #{organType, jdbcType=VARCHAR},
+            </if>
+            <if test="adminCompany != null">
+                admin_company = #{adminCompany, jdbcType=TINYINT},
+            </if>
+            <if test="applicationId != null">
+                application_id = #{applicationId, jdbcType=BIGINT},
+            </if>
+            <if test="applicationCode != null">
+                application_code = #{applicationCode, jdbcType=VARCHAR},
+            </if>
+            <if test="applicationOrganId != null">
+                application_organ_id = #{applicationOrganId, jdbcType=BIGINT},
+            </if>
+            <if test="payload != null">
+                payload = #{payload, jdbcType=LONGVARCHAR},
+            </if>
+            <!-- version字段更新（乐观锁版本号自增） -->
+            version = version + 1
+        </set>
+        WHERE id = #{id, jdbcType=BIGINT}
+        AND version = #{version, jdbcType=INTEGER}
+    </update>
+
+    <!-- 根据ID删除记录（物理删除记录） -->
+    <delete id="delete" parameterType="Long">
+        DELETE FROM audit_event
+        WHERE id = #{id, jdbcType=BIGINT}
+    </delete>
+
+    <!-- 根据ID查询记录（查询所有字段） -->
+    <select id="selectById" parameterType="Long" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, application_id, application_code, application_organ_id, payload,
+        <!-- version字段（如果存在） -->
+        version
+        FROM audit_event
+        WHERE id = #{id, jdbcType=BIGINT}
+    </select>
+
+    <!-- 根据 SelectDto 条件查询列表 -->
+    <select id="selectList" parameterType="com.g2rain.basis.dto.AuditEventSelectDto" resultMap="BaseResultMap">
+        SELECT
+        <!-- 主键字段 -->
+        id,
+        <!-- 基础字段 -->
+        create_time, update_time,
+        <!-- 业务字段 -->
+        trace_id, client_id, request_id, request_time, accept_language, path, method, user_agent, host, x_forwarded_for, x_real_ip, referer, session_type, passport_id, user_id, name, admin_user, organ_id, organ_name, organ_type, admin_company, application_id, application_code, application_organ_id, payload,
+        <!-- version字段（如果存在） -->
+        version
+        FROM audit_event
+        <where>
+            <!-- 主键筛选 -->
+            <if test="id != null">
+                AND id = #{id, jdbcType=BIGINT}
+            </if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
+            <!-- 基础字段筛选（createTime和updateTime时间筛选） -->
+            <if test="createTime != null">
+                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
+                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
+                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
+                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
+                    AND #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="updateTime != null">
+                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
+                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
+                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
+                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
+                    AND #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <!-- 业务字段筛选 -->
+            <if test="traceId != null">
+                AND trace_id = #{traceId, jdbcType=VARCHAR}
+            </if>
+            <if test="clientId != null">
+                AND client_id = #{clientId, jdbcType=VARCHAR}
+            </if>
+            <if test="requestId != null">
+                AND request_id = #{requestId, jdbcType=VARCHAR}
+            </if>
+            <if test="requestTime != null">
+                AND request_time = #{requestTime, jdbcType=TIMESTAMP}
+            </if>
+            <if test="acceptLanguage != null">
+                AND accept_language = #{acceptLanguage, jdbcType=VARCHAR}
+            </if>
+            <if test="path != null">
+                AND path = #{path, jdbcType=VARCHAR}
+            </if>
+            <if test="method != null">
+                AND method = #{method, jdbcType=VARCHAR}
+            </if>
+            <if test="userAgent != null">
+                AND user_agent = #{userAgent, jdbcType=VARCHAR}
+            </if>
+            <if test="host != null">
+                AND host = #{host, jdbcType=VARCHAR}
+            </if>
+            <if test="xForwardedFor != null">
+                AND x_forwarded_for = #{xForwardedFor, jdbcType=VARCHAR}
+            </if>
+            <if test="xRealIp != null">
+                AND x_real_ip = #{xRealIp, jdbcType=VARCHAR}
+            </if>
+            <if test="referer != null">
+                AND referer = #{referer, jdbcType=VARCHAR}
+            </if>
+            <if test="sessionType != null">
+                AND session_type = #{sessionType, jdbcType=VARCHAR}
+            </if>
+            <if test="passportId != null">
+                AND passport_id = #{passportId, jdbcType=BIGINT}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId, jdbcType=BIGINT}
+            </if>
+            <if test="name != null">
+                AND name = #{name, jdbcType=VARCHAR}
+            </if>
+            <if test="adminUser != null">
+                AND admin_user = #{adminUser, jdbcType=TINYINT}
+            </if>
+            <if test="organId != null">
+                AND organ_id = #{organId, jdbcType=BIGINT}
+            </if>
+            <if test="organName != null">
+                AND organ_name = #{organName, jdbcType=VARCHAR}
+            </if>
+            <if test="organType != null">
+                AND organ_type = #{organType, jdbcType=VARCHAR}
+            </if>
+            <if test="adminCompany != null">
+                AND admin_company = #{adminCompany, jdbcType=TINYINT}
+            </if>
+            <if test="applicationId != null">
+                AND application_id = #{applicationId, jdbcType=BIGINT}
+            </if>
+            <if test="applicationCode != null">
+                AND application_code = #{applicationCode, jdbcType=VARCHAR}
+            </if>
+            <if test="applicationOrganId != null">
+                AND application_organ_id = #{applicationOrganId, jdbcType=BIGINT}
+            </if>
+            <if test="payload != null">
+                AND payload = #{payload, jdbcType=LONGVARCHAR}
+            </if>
+        </where>
+        <include refid="dynamicOrderBy"/>
+    </select>
+</mapper>

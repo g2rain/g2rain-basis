@@ -22,7 +22,6 @@
         <result column="application_id" property="applicationId" jdbcType="BIGINT"/>
         <result column="application_organ_id" property="applicationOrganId" jdbcType="BIGINT"/>
         <result column="client_id" property="clientId" jdbcType="VARCHAR"/>
-        <result column="lastest_refresh_time" property="lastestRefreshTime" jdbcType="TIMESTAMP"/>
         <!-- deleteFlag字段（如果存在） -->
         <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
         <!-- version字段（如果存在） -->
@@ -98,10 +97,6 @@
                         client_id
                         <include refid="directionClause"/>
                     </when>
-                    <when test="item.column == 'lastestRefreshTime'">
-                        lastest_refresh_time
-                        <include refid="directionClause"/>
-                    </when>
                 </choose>
             </foreach>
         </trim>
@@ -115,7 +110,8 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id, application_organ_id, client_id, lastest_refresh_time,
+        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id,
+        application_organ_id, client_id,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -126,7 +122,10 @@
         <!-- 基础字段值 -->
         #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
         <!-- 业务字段值 -->
-        #{sessionType, jdbcType=VARCHAR}, #{organId, jdbcType=BIGINT}, #{organType, jdbcType=VARCHAR}, #{adminCompany, jdbcType=TINYINT}, #{passportId, jdbcType=BIGINT}, #{userId, jdbcType=BIGINT}, #{realName, jdbcType=VARCHAR}, #{adminUser, jdbcType=TINYINT}, #{applicationId, jdbcType=BIGINT}, #{applicationOrganId, jdbcType=BIGINT}, #{clientId, jdbcType=VARCHAR}, #{lastestRefreshTime, jdbcType=TIMESTAMP},
+        #{sessionType, jdbcType=VARCHAR}, #{organId, jdbcType=BIGINT}, #{organType, jdbcType=VARCHAR},
+        #{adminCompany, jdbcType=TINYINT}, #{passportId, jdbcType=BIGINT}, #{userId, jdbcType=BIGINT},
+        #{realName, jdbcType=VARCHAR}, #{adminUser, jdbcType=TINYINT}, #{applicationId, jdbcType=BIGINT},
+        #{applicationOrganId, jdbcType=BIGINT}, #{clientId, jdbcType=VARCHAR},
         <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
         0,
         <!-- version字段值（如果存在，设置默认值为0） -->
@@ -142,7 +141,8 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id, application_organ_id, client_id, lastest_refresh_time,
+        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id,
+        application_organ_id, client_id,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -155,7 +155,11 @@
             <!-- 基础字段值 -->
             #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
             <!-- 业务字段值 -->
-            #{item.sessionType, jdbcType=VARCHAR}, #{item.organId, jdbcType=BIGINT}, #{item.organType, jdbcType=VARCHAR}, #{item.adminCompany, jdbcType=TINYINT}, #{item.passportId, jdbcType=BIGINT}, #{item.userId, jdbcType=BIGINT}, #{item.realName, jdbcType=VARCHAR}, #{item.adminUser, jdbcType=TINYINT}, #{item.applicationId, jdbcType=BIGINT}, #{item.applicationOrganId, jdbcType=BIGINT}, #{item.clientId, jdbcType=VARCHAR}, #{item.lastestRefreshTime, jdbcType=TIMESTAMP},
+            #{item.sessionType, jdbcType=VARCHAR}, #{item.organId, jdbcType=BIGINT},
+            #{item.organType, jdbcType=VARCHAR}, #{item.adminCompany, jdbcType=TINYINT},
+            #{item.passportId, jdbcType=BIGINT}, #{item.userId, jdbcType=BIGINT}, #{item.realName, jdbcType=VARCHAR},
+            #{item.adminUser, jdbcType=TINYINT}, #{item.applicationId, jdbcType=BIGINT},
+            #{item.applicationOrganId, jdbcType=BIGINT}, #{item.clientId, jdbcType=VARCHAR},
             <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
             0,
             <!-- version字段值（如果存在，设置默认值为0） -->
@@ -206,9 +210,6 @@
             <if test="clientId != null">
                 client_id = #{clientId, jdbcType=VARCHAR},
             </if>
-            <if test="lastestRefreshTime != null">
-                lastest_refresh_time = #{lastestRefreshTime, jdbcType=TIMESTAMP},
-            </if>
             <!-- version字段更新（如果存在，版本号自增） -->
             version = version + 1
         </set>
@@ -257,9 +258,6 @@
             <if test="clientId != null">
                 client_id = #{clientId, jdbcType=VARCHAR},
             </if>
-            <if test="lastestRefreshTime != null">
-                lastest_refresh_time = #{lastestRefreshTime, jdbcType=TIMESTAMP},
-            </if>
             <!-- version字段更新（乐观锁版本号自增） -->
             version = version + 1
         </set>
@@ -286,7 +284,8 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id, application_organ_id, client_id, lastest_refresh_time,
+        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id,
+        application_organ_id, client_id,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -297,7 +296,7 @@
         AND (delete_flag = 0 OR delete_flag IS NULL)
     </select>
 
-    <!-- 根据SelectDto条件查询列表 -->
+    <!-- 根据 SelectDto 条件查询列表 -->
     <select id="selectList" parameterType="com.g2rain.basis.dto.LoginTokenSelectDto" resultMap="BaseResultMap">
         SELECT
         <!-- 主键字段 -->
@@ -305,7 +304,8 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id, application_organ_id, client_id, lastest_refresh_time,
+        session_type, organ_id, organ_type, admin_company, passport_id, user_id, real_name, admin_user, application_id,
+        application_organ_id, client_id,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -380,9 +380,6 @@
             </if>
             <if test="clientId != null">
                 AND client_id = #{clientId, jdbcType=VARCHAR}
-            </if>
-            <if test="lastestRefreshTime != null">
-                AND lastest_refresh_time = #{lastestRefreshTime, jdbcType=TIMESTAMP}
             </if>
             <!-- 过滤已删除的记录 -->
             AND (delete_flag = 0 OR delete_flag IS NULL)

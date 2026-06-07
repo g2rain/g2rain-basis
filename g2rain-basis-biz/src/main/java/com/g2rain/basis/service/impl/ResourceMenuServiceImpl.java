@@ -152,6 +152,8 @@ public class ResourceMenuServiceImpl implements ResourceMenuService {
         }
 
         Optional.ofNullable(dto.getParentId()).ifPresent(parentId -> {
+            Asserts.isTrue(!parentId.equals(id), BasisErrorCode.MENU_SELF_RELATION_ILLEGAL);
+
             ResourceMenuPo rm = resourceMenuDao.selectById(id);
             Asserts.isTrue(Objects.nonNull(rm), SystemErrorCode.PARAM_VAL_INVALID, id);
 
@@ -159,8 +161,6 @@ public class ResourceMenuServiceImpl implements ResourceMenuService {
             if (parentId.equals(rm.getParentId())) {
                 return;
             }
-
-            Asserts.isTrue(!parentId.equals(dto.getId()), BasisErrorCode.MENU_SELF_RELATION_ILLEGAL);
 
             Long cursor = parentId;
             while (Objects.nonNull(cursor)) {

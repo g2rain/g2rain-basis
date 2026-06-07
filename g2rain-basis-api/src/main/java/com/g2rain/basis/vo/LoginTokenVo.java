@@ -9,8 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 /**
  * 登录信息表, 记录了当前登录状态的相关信息返回VO
  * 关联表名: login_token
@@ -90,12 +88,6 @@ public class LoginTokenVo extends BaseVo {
      */
     @Schema(description = "客户端标识")
     private String clientId;
-
-    /**
-     * 最近一次刷新时间
-     */
-    @Schema(description = "最近一次刷新时间")
-    private LocalDateTime lastestRefreshTime;
 
     /**
      * 删除标识[0:未删除, 1:已删除]

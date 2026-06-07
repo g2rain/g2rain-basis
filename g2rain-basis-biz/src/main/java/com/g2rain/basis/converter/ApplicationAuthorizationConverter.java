@@ -31,6 +31,7 @@ public interface ApplicationAuthorizationConverter {
      */
     @Mapping(target = "controlDomainDesc", ignore = true)
     @Mapping(target = "controlDomainName", ignore = true)
+    @Mapping(target = "apiKeySupported", ignore = true)
     @Mapping(target = "createTime", source = "createTime", qualifiedByName = "localDateTimeToString")
     @Mapping(target = "updateTime", source = "updateTime", qualifiedByName = "localDateTimeToString")
     ApplicationAuthorizationVo po2vo(ApplicationAuthorizationPo po);

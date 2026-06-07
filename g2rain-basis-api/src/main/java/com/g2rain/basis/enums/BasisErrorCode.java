@@ -122,7 +122,7 @@ public enum BasisErrorCode implements ErrorCode {
     DEL_RESOURCE_EXIST_ELEMENT_UNDELETABLE("basis.40037", "已关联页面元素, 不允许删除资源"),
 
     @Schema(description = "DEL_API_EXIST_RESOURCE_API_UNDELETABLE")
-    DEL_API_EXIST_RESOURCE_API_UNDELETABLE("basis.400378", "已关联资源接口, 不允许删除后端接口"),
+    DEL_API_EXIST_RESOURCE_API_UNDELETABLE("basis.40038", "已关联资源接口, 不允许删除后端接口"),
 
     @Schema(description = "RESOURCE_UPLOAD_FAIL")
     RESOURCE_UPLOAD_FAIL("basis.40039", "资源文件解析失败"),
@@ -161,7 +161,40 @@ public enum BasisErrorCode implements ErrorCode {
     PUB_KEY_INVALID_KEY("basis.40050", "无效公钥"),
 
     @Schema(description = "USER_NOT_EXISTS_ILLEGAL")
-    USER_NOT_EXISTS_ILLEGAL("basis.40051", "用户不存在");
+    USER_NOT_EXISTS_ILLEGAL("basis.40051", "用户不存在"),
+
+    @Schema(description = "RESOURCE_API_EXISTS_ILLEGAL")
+    RESOURCE_API_EXISTS_ILLEGAL("basis.40052", "已关联资源接口, 不允许删除服务注册信息"),
+
+    @Schema(description = "APPLICATION_IDP_PROVISION_MISSING")
+    APPLICATION_IDP_PROVISION_MISSING("basis.40053", "当前外部身份源应用未与该平台应用建立绑定"),
+
+    @Schema(description = "PASSPORT_IDP_BINDING_MISMATCH")
+    PASSPORT_IDP_BINDING_MISMATCH("basis.40054", "当前通行证与此外部身份源主体或应用绑定不一致"),
+
+    @Schema(description = "PASSWORD_NOT_TRUSTED")
+    PASSWORD_NOT_TRUSTED("basis.40055", "账号尚未设置可信密码，请使用第三方登录或修改密码后再试"),
+
+    @Schema(description = "ONLY_OWN_ORG_APIKEY_ALLOWED")
+    ONLY_OWN_ORG_APIKEY_ALLOWED("basis.40056", "只能创建本机构的 API Key"),
+
+    @Schema(description = "IDP_ENTERPRISE_ORGAN_NOT_BOUND")
+    IDP_ENTERPRISE_ORGAN_NOT_BOUND("basis.40057", "当前租户尚未绑定该钉钉企业，请联系管理员完成三方企业绑定"),
+
+    @Schema(description = "PASSPORT_IDP_SUBJECT_ALREADY_BOUND")
+    PASSPORT_IDP_SUBJECT_ALREADY_BOUND("basis.40058", "该钉钉账号已绑定其他通行证，无法重复绑定"),
+
+    @Schema(description = "ORGAN_INVITE_INVALID")
+    ORGAN_INVITE_INVALID("basis.40059", "邀请码无效或已过期"),
+
+    @Schema(description = "ORGAN_INVITE_TARGET_UNAVAILABLE")
+    ORGAN_INVITE_TARGET_UNAVAILABLE("basis.40060", "目标机构不可用，无法加入"),
+
+    @Schema(description = "ORGAN_INVITE_ROLE_INVALID")
+    ORGAN_INVITE_ROLE_INVALID("basis.40061", "邀请码关联的角色无效，请重新生成邀请码"),
+
+    @Schema(description = "ORGAN_INVITE_GENERATE_FORBIDDEN")
+    ORGAN_INVITE_GENERATE_FORBIDDEN("basis.40062", "无权为该机构生成邀请码");
 
     private final String code;
 

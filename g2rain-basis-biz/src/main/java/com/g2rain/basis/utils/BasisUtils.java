@@ -6,6 +6,7 @@ import com.g2rain.basis.enums.KeyAlgorithm;
 import com.g2rain.basis.enums.PublicKeyFormat;
 import com.g2rain.basis.vo.PublicKeyDescriptorVo;
 import com.g2rain.common.exception.BusinessException;
+import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Strings;
@@ -22,6 +23,7 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.HexFormat;
 import java.util.regex.Pattern;
 
 /**
@@ -131,6 +133,23 @@ public final class BasisUtils {
      * Base64 MIME 编码器：每 64 字符换行，符合 PEM 规范
      */
     private static final Base64.Encoder BASE64_MIME_ENCODER = Base64.getMimeEncoder(64, new byte[]{'\n'});
+
+    /**
+     * 对 UTF-8 字符串计算 SHA-256，返回小写十六进制字符串。
+     *
+     * @param input 明文输入，通常为原始 API Key
+     * @return 64 字符 hex 串
+     * @throws IllegalStateException JVM 不支持 SHA-256 时（理论上不应发生）
+     */
+    public static String sha256Hex(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new BusinessException(SystemErrorCode.SYSTEM_INTERNAL_ERROR, ex.getMessage());
+        }
+    }
 
     /**
      * 校验客户端上传的公钥，并统一规范化为 PEM 格式返回。

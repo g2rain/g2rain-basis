@@ -22,7 +22,7 @@ import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Moments;
-import com.g2rain.common.utils.Strings;
+import com.g2rain.common.web.PrincipalContextHolder;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
@@ -142,6 +142,12 @@ public class PassportServiceImpl implements PassportService {
             Asserts.lessThanOrEqual(total, 0, BasisErrorCode.PARAM_ALREADY_EXISTS,
                 "username", dto.getUsername()
             );
+        } else {
+            // 需要验证当前登录的账号是否修改本人的账号信息(运营公司除外)
+            boolean adminCompany = PrincipalContextHolder.isAdminCompany();
+            Long passportId = PrincipalContextHolder.getPassportId();
+            boolean hasPermission = adminCompany || dto.getId().equals(passportId);
+            Asserts.isTrue(hasPermission, SystemErrorCode.PARAM_REQUIRED, "passport");
         }
 
         // 校验性别
@@ -157,6 +163,8 @@ public class PassportServiceImpl implements PassportService {
             entity.setUsername(null);
             // 不允许修改密码
             entity.setPassword(null);
+            // 不允许通过资料更新接口修改可信标记（仅改密接口置 1）
+            entity.setPasswordTrusted(null);
             int success = passportDao.update(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
             return entity.getId();
@@ -171,6 +179,7 @@ public class PassportServiceImpl implements PassportService {
         entity.setUpdateTime(now);
         entity.setCreateTime(now);
         entity.setStatus(PassportStatus.NORMAL.name());
+        entity.setPasswordTrusted(resolvePasswordTrustedForInsert(dto));
         // 设置密码 hash 值
         entity.setPassword(BasisUtils.hashPassword(entity.getPassword()));
         int success = passportDao.insert(entity);
@@ -212,15 +221,25 @@ public class PassportServiceImpl implements PassportService {
     public int updatePassword(Long id, PassportUpdatePasswordDto dto) {
         PassportPo passport = passportDao.selectById(id);
         Asserts.isTrue(Objects.nonNull(passport), SystemErrorCode.PARAM_VAL_INVALID, id);
-        String password = passport.getPassword();
-        String oldPassword = BasisUtils.hashPassword(dto.getOldPassword());
-        Asserts.isTrue(Strings.equals(password, oldPassword), BasisErrorCode.OLD_PASSWORD_ILLEGAL);
+        boolean isSame = BasisUtils.verifyPassword(dto.getOldPassword(), passport.getPassword());
+        Asserts.isTrue(isSame, BasisErrorCode.OLD_PASSWORD_ILLEGAL);
 
         passport = new PassportPo();
         passport.setId(id);
         passport.setUpdateTime(Moments.now());
         passport.setPassword(BasisUtils.hashPassword(dto.getNewPassword()));
+        passport.setPasswordTrusted(true);
         return passportDao.updateSelective(passport);
+    }
+
+    /**
+     * 新增账号时解析 {@code password_trusted}：显式传入优先；否则默认 {@code true}（IAM 自助注册）。
+     */
+    private static Boolean resolvePasswordTrustedForInsert(PassportDto dto) {
+        if (dto.getPasswordTrusted() != null) {
+            return dto.getPasswordTrusted();
+        }
+        return true;
     }
 
     /**

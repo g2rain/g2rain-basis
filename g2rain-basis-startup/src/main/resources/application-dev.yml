@@ -6,4 +6,9 @@ spring:
     database: g2rain_basis
     username: root
     password: 1qaZXsw2
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      # password: ${REDIS_PASSWORD:}
 

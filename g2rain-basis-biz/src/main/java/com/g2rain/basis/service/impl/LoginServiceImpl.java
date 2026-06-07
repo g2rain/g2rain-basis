@@ -70,9 +70,16 @@ public class LoginServiceImpl implements LoginService {
         Asserts.isTrue(PassportStatus.NORMAL.name().equals(passport.getStatus()),
             BasisErrorCode.ACCOUNT_FROZEN
         );
+        Asserts.isTrue(isPasswordTrusted(passport), BasisErrorCode.PASSWORD_NOT_TRUSTED);
         String password = passport.getPassword();
         boolean success = BasisUtils.verifyPassword(dto.getPassword(), password);
         Asserts.isTrue(success, BasisErrorCode.USERNAME_OR_PASSWORD_INCORRECT);
         return PassportConverter.INSTANCE.po2vo(passport);
+    }
+
+    /** {@code password_trusted} 为 null 时按可信处理，兼容历史数据。 */
+    private static boolean isPasswordTrusted(PassportPo passport) {
+        Boolean trusted = passport.getPasswordTrusted();
+        return trusted == null || trusted;
     }
 }

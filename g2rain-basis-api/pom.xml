@@ -12,7 +12,6 @@
     </parent>
 
     <artifactId>g2rain-basis-api</artifactId>
-    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>g2rain-basis-api</name>

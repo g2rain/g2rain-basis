@@ -33,10 +33,4 @@ public class UploadResourceDto {
      */
     @Schema(description = "页面元素资源列表")
     private List<UploadResourcePageElementDto> pageElements;
-
-    /**
-     * <p>API 接口端点资源列表</p>
-     */
-    @Schema(description = "API 接口端点资源列表")
-    private List<UploadResourceApiEndpointDto> apiEndpoints;
 }

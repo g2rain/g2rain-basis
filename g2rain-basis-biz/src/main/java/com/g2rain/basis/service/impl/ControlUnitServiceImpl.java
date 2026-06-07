@@ -182,7 +182,7 @@ public class ControlUnitServiceImpl implements ControlUnitService {
         Asserts.isTrue(Objects.nonNull(unit), SystemErrorCode.PARAM_VAL_INVALID, id);
         // 已发布的控制单元禁止关联控制单元
         ControlUnitStatus status = ControlUnitStatus.fromName(unit.getStatus());
-        Asserts.isTrue(ControlUnitStatus.PUBLISHED.equals(status),
+        Asserts.isTrue(ControlUnitStatus.UNPUBLISHED.equals(status),
             BasisErrorCode.PUB_CONTROL_UNIT_LOCKED, id
         );
 

@@ -8,11 +8,11 @@ import lombok.Setter;
 
 
 /**
- * 应用资源接口地址表返回Po
- * 关联表名: resource_api_endpoint
+ * 资源接口表返回Po
+ * 关联表名: resource_api
  * 功能：封装实体数据，继承BasePo复用基础字段逻辑
  *
- * @author Alpha
+ * @author G2rain Generator
  */
 @Setter
 @Getter
@@ -21,32 +21,37 @@ import lombok.Setter;
 public class ResourceApiPo extends BasePo {
 
     /**
-     * 应用标识
+     * 服务逻辑编码
      */
-    private Long applicationId;
+    private String serviceCode;
 
     /**
-     * 接口地址标识
+     * 资源接口标签
      */
-    private Long apiEndpointId;
+    private String apiTags;
 
     /**
-     * 接口标签, 接口分类
+     * 资源接口名称
      */
-    private String apiTag;
+    private String name;
 
     /**
-     * 接口名称
+     * 接口请求方法
      */
-    private String apiName;
+    private String method;
 
     /**
-     * 请求方法
+     * 接口请求路径
      */
-    private String requestMethod;
+    private String path;
 
     /**
-     * 接口路径
+     * 资源接口说明
      */
-    private String apiUrl;
+    private String description;
+
+    /**
+     * 删除标识[0:未删除, 1:已删除]
+     */
+    private Boolean deleteFlag;
 }

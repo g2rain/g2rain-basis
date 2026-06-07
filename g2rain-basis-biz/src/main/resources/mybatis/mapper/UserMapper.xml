@@ -131,6 +131,13 @@
             <if test="realName != null">
                 AND real_name = #{realName, jdbcType=VARCHAR}
             </if>
+            <if test="searchName != null and searchName != ''">
+                AND (
+                    real_name LIKE CONCAT('%', #{searchName, jdbcType=VARCHAR}, '%')
+                    OR mobile LIKE CONCAT('%', #{searchName, jdbcType=VARCHAR}, '%')
+                    OR CAST(id AS CHAR) LIKE CONCAT('%', #{searchName, jdbcType=VARCHAR}, '%')
+                )
+            </if>
             <if test="admin != null">
                 AND admin = #{admin, jdbcType=TINYINT}
             </if>

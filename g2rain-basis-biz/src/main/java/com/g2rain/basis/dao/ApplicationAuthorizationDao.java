@@ -64,6 +64,7 @@ public interface ApplicationAuthorizationDao {
      * @param id 主键 ID
      * @return 实体对象
      */
+    @IgnoreIsolation
     ApplicationAuthorizationPo selectById(Long id);
 
     /**

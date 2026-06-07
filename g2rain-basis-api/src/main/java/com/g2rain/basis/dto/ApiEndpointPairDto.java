@@ -15,18 +15,18 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "接口路径与请求方法对")
+@Schema(hidden = true, description = "接口路径与请求方法对")
 public class ApiEndpointPairDto {
+    /**
+     * 请求方法
+     */
+    @Schema(description = "请求方法", example = "GET")
+    private String method;
 
     /**
      * 接口路径
      */
     @Schema(description = "接口路径", example = "/user/list")
-    private String apiUrl;
+    private String path;
 
-    /**
-     * 请求方法
-     */
-    @Schema(description = "请求方法", example = "GET")
-    private String requestMethod;
 }

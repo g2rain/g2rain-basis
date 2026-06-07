@@ -36,6 +36,12 @@ public class ApplicationAuthorizationVo extends BaseVo {
     private Long applicationId;
 
     /**
+     * 支持API密钥[0:否, 1:是]
+     */
+    @Schema(description = "支持API密钥[0:否, 1:是]")
+    private Boolean apiKeySupported;
+
+    /**
      * 控制域标识
      */
     @Schema(description = "控制域标识")
@@ -68,7 +74,7 @@ public class ApplicationAuthorizationVo extends BaseVo {
     /**
      * 删除标识[0:未删除, 1:已删除]
      */
-    @ConditionalJsonIgnore(adminCompany = AdminCompanyCondition.TRUE)
     @Schema(description = "删除标识[0:未删除, 1:已删除]")
+    @ConditionalJsonIgnore(adminCompany = AdminCompanyCondition.TRUE)
     private Boolean deleteFlag;
 }

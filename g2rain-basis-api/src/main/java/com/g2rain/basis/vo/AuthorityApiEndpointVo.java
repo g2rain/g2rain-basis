@@ -20,13 +20,24 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @Schema(description = "接口权限 VO")
-public class AuthorityApiEndpointVo {
+public class AuthorityApiEndpointVo extends BaseAuthorityApiVo {
+    /**
+     * 服务名称
+     */
+    @Schema(description = "服务名称")
+    private String serviceName;
 
     /**
-     * 接口标识
+     * 目标地址
      */
-    @Schema(description = "接口标识")
-    private Long id;
+    @Schema(description = "目标地址")
+    private String endpoint;
+
+    /**
+     * 路由前缀
+     */
+    @Schema(description = "路由前缀")
+    private String routePrefix;
 
     /**
      * 接口名称
@@ -35,26 +46,14 @@ public class AuthorityApiEndpointVo {
     private String apiName;
 
     /**
-     * 接口路径
-     */
-    @Schema(description = "接口路径")
-    private String apiUrl;
-
-    /**
      * 请求方法
      */
     @Schema(description = "请求方法")
-    private String requestMethod;
+    private String method;
 
     /**
-     * 接口标签, 接口分类
+     * 请求路径
      */
-    @Schema(description = "接口标签, 接口分类")
-    private String apiTag;
-
-    /**
-     * 接口地址状态
-     */
-    @Schema(description = "接口地址状态")
-    private String status;
+    @Schema(description = "请求路径")
+    private String path;
 }

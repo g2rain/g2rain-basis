@@ -272,15 +272,18 @@ public class OrganServiceImpl implements OrganService {
             int success = organDao.update(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
 
-            // 广播修改机构
-            eventPublisherHub.sendUpdate(
-                Constants.SYNC_OUTPUT_BINDING,
-                BasisSyncerEnum.ORGAN_NAME.name(),
-                new OrganIdNameVo(
-                    entity.getId(),
-                    entity.getOrganName()
-                )
-            );
+            // 机构名称发生了变化, 需要推送消息同步广播
+            if (organs.isEmpty()) {
+                // 广播修改机构
+                eventPublisherHub.sendUpdate(
+                    Constants.SYNC_OUTPUT_BINDING,
+                    BasisSyncerEnum.ORGAN_NAME.name(),
+                    new OrganIdNameVo(
+                        entity.getId(),
+                        entity.getOrganName()
+                    )
+                );
+            }
 
             return entity.getId();
         }

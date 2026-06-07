@@ -1,6 +1,7 @@
 package com.g2rain.basis.service;
 
 
+import com.g2rain.basis.dto.PassportJoinOrganDto;
 import com.g2rain.basis.dto.TenantProvisionDto;
 import com.g2rain.basis.vo.UserVo;
 
@@ -35,5 +36,13 @@ public interface TenantProvisionService {
      * @return 成功标记 1:成功; 0:失败
      */
     UserVo provisionAccount(TenantProvisionDto dto);
+
+    /**
+     * 通过邀请码加入已有机构
+     *
+     * @param dto 邀请码信息
+     * @return 加入后的用户信息
+     */
+    UserVo joinOrganByInvite(PassportJoinOrganDto dto);
 
 }

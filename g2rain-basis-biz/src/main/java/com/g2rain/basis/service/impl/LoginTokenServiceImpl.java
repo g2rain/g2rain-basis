@@ -1,10 +1,18 @@
 package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.converter.LoginTokenConverter;
+import com.g2rain.basis.dao.ApplicationDao;
+import com.g2rain.basis.dao.ApplicationIdpProvisionDao;
 import com.g2rain.basis.dao.LoginTokenDao;
+import com.g2rain.basis.dao.OrganDao;
+import com.g2rain.basis.dao.PassportIdpBindingDao;
 import com.g2rain.basis.dao.RoleControlUnitRelationDao;
+import com.g2rain.basis.dao.UserDao;
+import com.g2rain.basis.dao.po.ApplicationPo;
 import com.g2rain.basis.dao.po.CountRoleControlUnitPo;
 import com.g2rain.basis.dao.po.LoginTokenPo;
+import com.g2rain.basis.dao.po.OrganPo;
+import com.g2rain.basis.dao.po.UserPo;
 import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
@@ -12,14 +20,19 @@ import com.g2rain.basis.dto.OrganSelectDto;
 import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.OrganStatus;
+import com.g2rain.basis.enums.StaticTokenStatus;
 import com.g2rain.basis.service.ApplicationService;
 import com.g2rain.basis.service.LoginTokenService;
 import com.g2rain.basis.service.OrganService;
+import com.g2rain.basis.service.PersonalStaticAccessTokenService;
 import com.g2rain.basis.service.UserService;
 import com.g2rain.basis.vo.ApplicationScopeVo;
 import com.g2rain.basis.vo.ApplicationVo;
 import com.g2rain.basis.vo.LoginTokenVo;
 import com.g2rain.basis.vo.OrganVo;
+import com.g2rain.basis.vo.PersonalStaticAccessTokenVo;
+import com.g2rain.basis.vo.StaticAccessTokenContextVo;
+import com.g2rain.basis.vo.StaticAccessTokenResolveVo;
 import com.g2rain.basis.vo.UserVo;
 import com.g2rain.common.enums.OrganType;
 import com.g2rain.common.enums.SessionType;
@@ -31,11 +44,14 @@ import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Moments;
+import com.g2rain.common.utils.Strings;
 import com.g2rain.common.web.ApplicationScope;
+import com.g2rain.common.web.PrincipalEnricher;
 import com.g2rain.common.web.TokenJWTPayload;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -61,6 +77,7 @@ import java.util.Objects;
  * @author Alpha
  * @since 2026/1/19
  */
+@Slf4j
 @Service(value = "loginTokenServiceImpl")
 public class LoginTokenServiceImpl implements LoginTokenService {
 
@@ -73,11 +90,31 @@ public class LoginTokenServiceImpl implements LoginTokenService {
     @Resource(name = "roleControlUnitRelationDao")
     private RoleControlUnitRelationDao roleControlUnitRelationDao;
 
+    @Resource(name = "applicationDao")
+    private ApplicationDao applicationDao;
+
+    @Resource(name = "organDao")
+    private OrganDao organDao;
+
+    @Resource(name = "userDao")
+    private UserDao userDao;
+
     @Resource
     private UserService userService;
 
     @Resource
     private OrganService organService;
+
+    @Resource(name = "personalStaticAccessTokenServiceImpl")
+    private PersonalStaticAccessTokenService personalStaticAccessTokenService;
+
+    private List<PrincipalEnricher> principalEnrichers = List.of();
+
+    @Resource
+    private ApplicationIdpProvisionDao applicationIdpProvisionDao;
+
+    @Resource
+    private PassportIdpBindingDao passportIdpBindingDao;
 
     private IdGenerator idGenerator;
 
@@ -85,6 +122,11 @@ public class LoginTokenServiceImpl implements LoginTokenService {
     @Autowired(required = false)
     public void setIdGenerator(IdGenerator idGenerator) {
         this.idGenerator = idGenerator;
+    }
+
+    @Autowired(required = false)
+    public void setPrincipalEnrichers(List<PrincipalEnricher> principalEnrichers) {
+        this.principalEnrichers = Objects.requireNonNullElse(principalEnrichers, List.of());
     }
 
     /**
@@ -130,32 +172,29 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      *     <li>否则执行更新，更新修改时间</li>
      * </ol>
      *
-     * @param dto 登录信息 DTO
+     * @param applicationCode 应用编码
+     * @param dto             登录信息 DTO
      * @return 保存或更新后的登录信息 ID
      * @throws BusinessException 新增或更新失败时抛出
      */
     @Override
-    public Long save(LoginTokenDto dto) {
-        // 转换 DTO 为 PO
-        LoginTokenPo entity = LoginTokenConverter.INSTANCE.dto2po(dto);
-
-        // 判断是新增还是更新
-        Long id = entity.getId();
-        if (Objects.isNull(id) || id == 0) {
-            // 新增：使用IdGenerator生成主键
-            entity.setId(idGenerator.generateId());
-            LocalDateTime now = Moments.now();
-            entity.setUpdateTime(now);
-            entity.setCreateTime(now);
-            int success = loginTokenDao.insert(entity);
-            Asserts.greaterThan(success, 0, SystemErrorCode.CREATE_DATA_ERROR);
-            return entity.getId();
+    public Long save(String applicationCode, LoginTokenDto dto) {
+        ApplicationSelectDto selectDto = new ApplicationSelectDto();
+        selectDto.setApplicationCode(applicationCode);
+        List<ApplicationVo> applications = applicationService.selectList(selectDto);
+        if (Collections.isEmpty(applications)) {
+            return 0L;
         }
 
-        // 更新：直接更新
-        entity.setUpdateTime(Moments.now());
-        int success = loginTokenDao.update(entity);
-        Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
+        ApplicationVo application = applications.getFirst();
+        LoginTokenPo entity = LoginTokenConverter.INSTANCE.dto2po(dto);
+        entity.setId(idGenerator.generateId());
+        entity.setApplicationId(application.getId());
+        entity.setApplicationOrganId(application.getOrganId());
+        LocalDateTime now = Moments.now();
+        entity.setUpdateTime(now);
+        entity.setCreateTime(now);
+        loginTokenDao.insert(entity);
         return entity.getId();
     }
 
@@ -178,12 +217,20 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      *     <li>查询应用信息及应用作用域，并封装到 {@link ApplicationScope} 列表中。</li>
      * </ol>
      *
-     * @param userId          用户 ID，可为 null（表示 Passport 会话）
-     * @param applicationCode 应用编码
+     * @param passportId         发码侧通行证 ID；三方换票且 {@code userId} 非空时必传，且须与用户的 {@code passport_id} 一致
+     * @param userId             用户 ID，可为 null（表示 Passport 会话）
+     * @param applicationCode    应用编码
+     * @param thirdPartyIdpLogin 是否外部身份源授权链路发码；为 {@link Boolean#TRUE} 且 {@code userId} 非空时校验
+     *                           {@code application_idp_provision} 与 {@code passport_idp_binding}
+     * @param idpType            身份源类型
+     * @param idpSubject         IdP 稳定主体
+     * @param idpApplicationCode 三方应用在 IdP 侧的标识
      * @return 构建完成的 {@link TokenJWTPayload}，包含用户、机构、应用及应用作用域信息
      * @throws BusinessException 当用户、机构或应用不存在，或机构不可用时抛出
      */
-    public TokenJWTPayload fetchTokenContext(Long userId, String applicationCode) {
+    public TokenJWTPayload fetchTokenContext(Long passportId, Long userId, String applicationCode,
+                                             Boolean thirdPartyIdpLogin, String idpType, String idpSubject,
+                                             String idpApplicationCode) {
         ApplicationSelectDto appSelect = new ApplicationSelectDto();
         appSelect.setApplicationCode(applicationCode);
         List<ApplicationVo> applications = applicationService.selectList(appSelect);
@@ -193,7 +240,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         ApplicationVo application = applications.getFirst();
         Boolean canIntegrate = application.getCanIntegrate();
         Boolean landing = application.getLanding();
-        boolean isDefaultMain = Boolean.TRUE.equals(landing) && Boolean.TRUE.equals(canIntegrate);
+        boolean isDefaultMain = Boolean.TRUE.equals(landing) && Boolean.FALSE.equals(canIntegrate);
 
         TokenJWTPayload payload = new TokenJWTPayload();
         if (Objects.isNull(userId)) {
@@ -230,6 +277,28 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         );
 
         UserVo user = users.getFirst();
+
+        if (Boolean.TRUE.equals(thirdPartyIdpLogin)) {
+            Asserts.isTrue(Strings.isNotBlank(idpType) && Strings.isNotBlank(idpSubject)
+                    && Strings.isNotBlank(idpApplicationCode),
+                SystemErrorCode.PARAM_VAL_INVALID, "idpType,idpSubject,idpApplicationCode");
+            Asserts.isTrue(passportId != null && passportId > 0L,
+                SystemErrorCode.PARAM_VAL_INVALID, "passportId");
+            Asserts.isTrue(Objects.equals(passportId, user.getPassportId()),
+                SystemErrorCode.PARAM_VAL_INVALID, userId);
+            String idpTypeTrim = idpType.trim();
+            String idpSubjectTrim = idpSubject.trim();
+            String idpAppTrim = idpApplicationCode.trim();
+            int provisionCount = applicationIdpProvisionDao.countByApplicationIdAndIdp(
+                application.getId(), idpTypeTrim, idpAppTrim);
+            Asserts.isTrue(provisionCount > 0,
+                BasisErrorCode.APPLICATION_IDP_PROVISION_MISSING, applicationCode);
+            int bindingCount = passportIdpBindingDao.countByPassportIdAndIdpKeys(
+                passportId, idpTypeTrim, idpSubjectTrim, idpAppTrim);
+            Asserts.isTrue(bindingCount > 0,
+                BasisErrorCode.PASSPORT_IDP_BINDING_MISMATCH, applicationCode);
+        }
+
         payload.setSessionType(SessionType.USER);
         payload.setUserId(user.getId());
         payload.setName(user.getRealName());
@@ -251,6 +320,9 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         payload.setOrganId(organ.getId());
         payload.setOrganName(organ.getOrganName());
         payload.setAdminCompany(Boolean.TRUE.equals(organ.getAdmin()));
+
+        // 需要外部的Starter 提供能力, 没有实现也没关系
+        principalEnrichers.forEach(enricher -> enricher.enrich(payload));
 
         // 如果入口应用不是 `默认应用`, 需要校验应用是否做过授权
         if (!isDefaultMain) {
@@ -295,5 +367,60 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         )));
         payload.setApplicationScopes(scopes);
         return payload;
+    }
+
+    /**
+     * 解析静态 API Key：查库 → 组装 status；激活态再查用户/机构/应用拼 {@link StaticAccessTokenContextVo}。
+     */
+    @Override
+    public StaticAccessTokenResolveVo fetchStaticTokenContext(String apiKey) {
+        PersonalStaticAccessTokenVo sat = personalStaticAccessTokenService.selectByApiKey(apiKey);
+        if (Objects.isNull(sat)) {
+            return null;
+        }
+
+        StaticAccessTokenResolveVo resolve = new StaticAccessTokenResolveVo();
+        resolve.setStatus(StaticTokenStatus.fromName(sat.getStatus()));
+        if (StaticTokenStatus.REVOKED.equals(resolve.getStatus())) {
+            return resolve;
+        }
+
+        resolve.setContext(buildStaticAccessTokenContext(sat));
+        return resolve;
+    }
+
+    /**
+     * 由令牌记录关联的用户、机构、应用 PO 构建网关可用的会话 VO；任一主数据缺失则返回 null。
+     */
+    private StaticAccessTokenContextVo buildStaticAccessTokenContext(PersonalStaticAccessTokenVo sat) {
+        UserPo user = userDao.selectByIdWithoutIsolation(sat.getUserId());
+        if (Objects.isNull(user)) {
+            return null;
+        }
+
+        OrganPo organ = organDao.selectById(sat.getOrganId());
+        if (Objects.isNull(organ)) {
+            return null;
+        }
+
+        ApplicationPo application = applicationDao.selectById(sat.getApplicationId());
+        if (Objects.isNull(application)) {
+            return null;
+        }
+
+        StaticAccessTokenContextVo context = new StaticAccessTokenContextVo();
+        context.setSessionType(SessionType.USER);
+        context.setPassportId(user.getPassportId());
+        context.setUserId(user.getId());
+        context.setName(user.getRealName());
+        context.setAdminUser(Boolean.TRUE.equals(user.getAdmin()));
+        context.setOrganId(organ.getId());
+        context.setOrganName(organ.getOrganName());
+        context.setOrganType(OrganType.fromName(organ.getOrganType()));
+        context.setAdminCompany(Boolean.TRUE.equals(organ.getAdmin()));
+        context.setApplicationId(application.getId());
+        context.setApplicationCode(application.getApplicationCode());
+        context.setApplicationOrganId(application.getOrganId());
+        return context;
     }
 }

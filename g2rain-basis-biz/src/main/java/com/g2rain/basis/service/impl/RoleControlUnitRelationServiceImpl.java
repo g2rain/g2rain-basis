@@ -14,14 +14,17 @@ import com.g2rain.basis.dto.RoleControlUnitRelationSelectDto;
 import com.g2rain.basis.dto.RoleSelectDto;
 import com.g2rain.basis.enums.AuthorizationStatus;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.enums.RoleType;
 import com.g2rain.basis.model.RoleControlUnitRelation;
 import com.g2rain.basis.service.RoleControlUnitRelationService;
+import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.RoleControlUnitRelationVo;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
+import com.g2rain.common.syncer.EventPublisherHub;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Moments;
@@ -61,6 +64,9 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
     private ControlUnitDao controlUnitDao;
 
     private IdGenerator idGenerator;
+
+    @Resource
+    private EventPublisherHub eventPublisherHub;
 
     @Qualifier("idGenerator")
     @Autowired(required = false)
@@ -273,6 +279,8 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
     @Override
     public Integer internalSave(RoleControlUnitRelation dto) {
         if (Collections.isEmpty(dto.getControlUnitIds())) {
+            // 推送消息, 可能存在的场景, 控制域删除控制单元, 防止遗漏, 需要推送
+            sendPermissionChange(dto.getRoleId());
             return 0;
         }
 
@@ -299,6 +307,8 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
 
         // 如果没有新控制单元需要插入，返回 0
         if (Collections.isEmpty(newControlUnitIds)) {
+            // 推送消息, 可能存在的场景, 控制单元调整接口资源, 防止遗漏, 需要推送
+            sendPermissionChange(dto.getRoleId());
             return 0;
         }
 
@@ -317,8 +327,37 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
             return entity;
         }).toList();
 
-        return roleControlUnitRelationDao.insertMultiple(records);
+        // 批量保存数据
+        int result = roleControlUnitRelationDao.insertMultiple(records);
+
+        // 推送消息
+        sendPermissionChange(dto.getRoleId());
+
+        return result;
     }
+
+    /**
+     * 推送当前机构的权限失效
+     *
+     * @param roleId 角色标识
+     */
+    private void sendPermissionChange(Long roleId) {
+        // 找到对应的机构, 对当前的机构的接口权限置为失效
+        RoleSelectDto roleSelectDto = new RoleSelectDto();
+        roleSelectDto.setId(roleId);
+        List<RolePo> roles = roleDao.selectListWithoutIsolation(roleSelectDto);
+        if (Collections.isEmpty(roles)) {
+            return;
+        }
+
+        // 广播删除`接口权限`信息
+        eventPublisherHub.sendDelete(
+            Constants.SYNC_OUTPUT_BINDING,
+            BasisSyncerEnum.USER_PERM.name(),
+            roles.getFirst().getOrganId()
+        );
+    }
+
 
     /**
      * 根据机构 ID 和应用授权 ID，批量修改该机构控制单元的状态（激活或关停）。
@@ -363,7 +402,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
         RoleSelectDto roleSelect = new RoleSelectDto();
         roleSelect.setOrganId(organId);
         roleSelect.setRoleType(RoleType.ADMIN.name());
-        List<RolePo> roles = roleDao.selectList(roleSelect);
+        List<RolePo> roles = roleDao.selectListWithoutIsolation(roleSelect);
         if (Collections.isEmpty(roles)) {
             return 0;
         }
@@ -421,6 +460,13 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
                 organId, appAuthorizationId, cntLe1Ids, status
             );
         }
+
+        // 广播删除`接口权限`信息
+        eventPublisherHub.sendDelete(
+            Constants.SYNC_OUTPUT_BINDING,
+            BasisSyncerEnum.USER_PERM.name(),
+            organId
+        );
 
         return affected;
     }

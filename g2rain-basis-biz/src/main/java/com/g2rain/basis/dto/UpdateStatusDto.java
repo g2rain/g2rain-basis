@@ -20,15 +20,13 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-@Schema(description = "用户状态修改 DTO")
+@Schema(description = "状态修改 DTO")
 public class UpdateStatusDto {
 
     /**
-     * <p>用户状态</p>
-     *
-     * <p>不能为空或空白，应为合法状态值，例如 "ACTIVE" 或 "DISABLED"。</p>
+     * <p>业务状态</p>
      */
     @NotBlank
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "用户状态")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "业务状态")
     private String status;
 }

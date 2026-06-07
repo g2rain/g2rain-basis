@@ -7,8 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 /**
  * 登录信息表, 记录了当前登录状态的相关信息查询入参DTO
  * 用于LoginTokenDao.selectList方法的条件筛选
@@ -88,10 +86,4 @@ public class LoginTokenSelectDto extends BaseSelectListDto {
      */
     @Schema(description = "客户端 ID")
     private String clientId;
-
-    /**
-     * 最近一次刷新时间
-     */
-    @Schema(description = "最近一次刷新时间")
-    private LocalDateTime lastestRefreshTime;
 }
