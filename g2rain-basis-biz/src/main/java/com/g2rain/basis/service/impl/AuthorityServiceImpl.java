@@ -337,16 +337,20 @@ public class AuthorityServiceImpl implements AuthorityService {
 
         // 遍历扁平列表，组装树
         for (AuthorityMenuVo menu : flatMenus) {
-            // 根节点
-            if (Objects.isNull(menu.getParentId())) {
+            Long parentId = menu.getParentId();
+            if (Objects.isNull(parentId)) {
                 roots.add(menu);
                 continue;
             }
 
-            AuthorityMenuVo parent = id2menu.get(menu.getParentId());
-            if (Objects.nonNull(parent)) {
-                parent.getSubMenus().add(menu);
+            AuthorityMenuVo parent = id2menu.get(parentId);
+            if (Objects.isNull(parent)) {
+                // 父节点不在当前结果集（已删或数据不一致）：提升为根节点，避免节点丢失
+                roots.add(menu);
+                continue;
             }
+
+            parent.getSubMenus().add(menu);
         }
 
         // 非递归排序每一层

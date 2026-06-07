@@ -46,10 +46,12 @@ import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Moments;
 import com.g2rain.common.utils.Strings;
 import com.g2rain.common.web.ApplicationScope;
+import com.g2rain.common.web.PrincipalEnricher;
 import com.g2rain.common.web.TokenJWTPayload;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -75,6 +77,7 @@ import java.util.Objects;
  * @author Alpha
  * @since 2026/1/19
  */
+@Slf4j
 @Service(value = "loginTokenServiceImpl")
 public class LoginTokenServiceImpl implements LoginTokenService {
 
@@ -105,6 +108,8 @@ public class LoginTokenServiceImpl implements LoginTokenService {
     @Resource(name = "personalStaticAccessTokenServiceImpl")
     private PersonalStaticAccessTokenService personalStaticAccessTokenService;
 
+    private List<PrincipalEnricher> principalEnrichers = List.of();
+
     @Resource
     private ApplicationIdpProvisionDao applicationIdpProvisionDao;
 
@@ -117,6 +122,11 @@ public class LoginTokenServiceImpl implements LoginTokenService {
     @Autowired(required = false)
     public void setIdGenerator(IdGenerator idGenerator) {
         this.idGenerator = idGenerator;
+    }
+
+    @Autowired(required = false)
+    public void setPrincipalEnrichers(List<PrincipalEnricher> principalEnrichers) {
+        this.principalEnrichers = Objects.requireNonNullElse(principalEnrichers, List.of());
     }
 
     /**
@@ -310,6 +320,9 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         payload.setOrganId(organ.getId());
         payload.setOrganName(organ.getOrganName());
         payload.setAdminCompany(Boolean.TRUE.equals(organ.getAdmin()));
+
+        // 需要外部的Starter 提供能力, 没有实现也没关系
+        principalEnrichers.forEach(enricher -> enricher.enrich(payload));
 
         // 如果入口应用不是 `默认应用`, 需要校验应用是否做过授权
         if (!isDefaultMain) {

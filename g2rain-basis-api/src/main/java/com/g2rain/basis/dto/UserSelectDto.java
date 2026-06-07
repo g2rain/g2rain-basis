@@ -53,6 +53,12 @@ public class UserSelectDto extends BaseSelectListDto {
     private String realName;
 
     /**
+     * 用户名称关键字（模糊匹配姓名、手机号、用户标识）
+     */
+    @Schema(description = "用户名称关键字（模糊匹配姓名、手机号、用户标识）")
+    private String searchName;
+
+    /**
      * 管理员标记
      */
     @Schema(description = "管理员标记")
