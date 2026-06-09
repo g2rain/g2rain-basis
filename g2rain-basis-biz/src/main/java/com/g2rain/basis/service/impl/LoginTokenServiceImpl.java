@@ -17,20 +17,24 @@ import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
 import com.g2rain.basis.dto.OrganSelectDto;
+import com.g2rain.basis.dto.RoleSelectDto;
 import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.OrganStatus;
+import com.g2rain.basis.enums.RoleType;
 import com.g2rain.basis.enums.StaticTokenStatus;
 import com.g2rain.basis.service.ApplicationService;
 import com.g2rain.basis.service.LoginTokenService;
 import com.g2rain.basis.service.OrganService;
 import com.g2rain.basis.service.PersonalStaticAccessTokenService;
+import com.g2rain.basis.service.RoleService;
 import com.g2rain.basis.service.UserService;
 import com.g2rain.basis.vo.ApplicationScopeVo;
 import com.g2rain.basis.vo.ApplicationVo;
 import com.g2rain.basis.vo.LoginTokenVo;
 import com.g2rain.basis.vo.OrganVo;
 import com.g2rain.basis.vo.PersonalStaticAccessTokenVo;
+import com.g2rain.basis.vo.RoleVo;
 import com.g2rain.basis.vo.StaticAccessTokenContextVo;
 import com.g2rain.basis.vo.StaticAccessTokenResolveVo;
 import com.g2rain.basis.vo.UserVo;
@@ -104,6 +108,9 @@ public class LoginTokenServiceImpl implements LoginTokenService {
 
     @Resource
     private OrganService organService;
+
+    @Resource
+    private RoleService roleService;
 
     @Resource(name = "personalStaticAccessTokenServiceImpl")
     private PersonalStaticAccessTokenService personalStaticAccessTokenService;
@@ -362,6 +369,97 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         scopes.add(new ApplicationScope(application.getId(), applicationCode,
             application.getOrganId())
         );
+        applicationScopes.forEach(obj -> scopes.add(new ApplicationScope(
+            obj.getId(), obj.getApplicationCode(), obj.getOrganId()
+        )));
+        payload.setApplicationScopes(scopes);
+        return payload;
+    }
+
+    /**
+     * 构建匿名会话的 Token JWT 载荷信息。
+     *
+     * <p>查询机构、应用及机构超管角色，不查询账号或用户；{@code sessionType} 为 {@link SessionType#ANONYMOUS}。</p>
+     *
+     * @param organId         机构 ID
+     * @param applicationCode 应用编码
+     * @return 匿名会话的 {@link TokenJWTPayload}
+     * @throws BusinessException 当机构或应用不存在，或机构不可用时抛出
+     */
+    @Override
+    public TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode) {
+        ApplicationSelectDto appSelect = new ApplicationSelectDto();
+        appSelect.setApplicationCode(applicationCode);
+        List<ApplicationVo> applications = applicationService.selectList(appSelect);
+        Asserts.isTrue(Collections.isNotEmpty(applications),
+            SystemErrorCode.UNAUTHORIZED, applicationCode
+        );
+        ApplicationVo application = applications.getFirst();
+        Boolean canIntegrate = application.getCanIntegrate();
+        Boolean landing = application.getLanding();
+        boolean isDefaultMain = Boolean.TRUE.equals(landing) && Boolean.FALSE.equals(canIntegrate);
+        Asserts.isTrue(Objects.equals(organId, application.getOrganId()),
+            SystemErrorCode.PARAM_VAL_INVALID, organId
+        );
+
+        OrganSelectDto organSelect = new OrganSelectDto();
+        organSelect.setId(organId);
+        List<OrganVo> organs = organService.selectList(organSelect);
+        Asserts.isTrue(Collections.isNotEmpty(organs),
+            SystemErrorCode.PARAM_VAL_INVALID, organId
+        );
+
+        OrganVo organ = organs.getFirst();
+        Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
+            BasisErrorCode.ORGAN_UNAVAILABLE
+        );
+
+        RoleSelectDto roleSelect = new RoleSelectDto();
+        roleSelect.setOrganId(organId);
+        roleSelect.setRoleType(RoleType.ADMIN.name());
+        List<RoleVo> roles = roleService.selectListWithoutIsolation(roleSelect);
+        Asserts.isTrue(Collections.isNotEmpty(roles),
+            BasisErrorCode.ADMIN_ROLE_NOT_EXISTS_ILLEGAL
+        );
+        List<Long> roleIds = roles.stream().map(RoleVo::getId).toList();
+
+        TokenJWTPayload payload = new TokenJWTPayload();
+        payload.setSessionType(SessionType.ANONYMOUS);
+        payload.setOrganType(OrganType.fromName(organ.getOrganType()));
+        payload.setOrganId(organ.getId());
+        payload.setOrganName(organ.getOrganName());
+        payload.setAdminCompany(Boolean.TRUE.equals(organ.getAdmin()));
+        payload.setRoleIds(roleIds);
+
+        if (!isDefaultMain) {
+            CountRoleControlUnitPo countRoleControlUnit = roleControlUnitRelationDao
+                .countRoleControlUnitsByRoleIds(roleIds);
+
+            Asserts.greaterThan(Objects.isNull(countRoleControlUnit.getTotalControlUnitCount()) ? -1 :
+                    countRoleControlUnit.getTotalControlUnitCount(), 0,
+                SystemErrorCode.UNAUTHORIZED, organ.getOrganName()
+            );
+
+            Asserts.greaterThan(Objects.isNull(countRoleControlUnit.getActiveControlUnitCount()) ? -1 :
+                    countRoleControlUnit.getActiveControlUnitCount(), 0,
+                BasisErrorCode.BUSINESS_CAPABILITY_DISABLED, organ.getOrganName()
+            );
+        }
+
+        Instant issuedAt = Instant.now();
+        payload.setIssuedAt(issuedAt.getEpochSecond());
+        payload.setExpireAt(issuedAt.plus(Duration.ofSeconds(
+            application.getAccessTokenExpiresIn()
+        )).getEpochSecond());
+        payload.setRefreshExpireAt(issuedAt.plus(Duration.ofSeconds(
+            application.getRefreshTokenExpiresIn()
+        )).getEpochSecond());
+
+        List<ApplicationScopeVo> applicationScopes = applicationService.selectApplicationScopeByRoleIds(
+            roleIds, application.getId()
+        );
+        List<ApplicationScope> scopes = new ArrayList<>(applicationScopes.size() + 1);
+        scopes.add(new ApplicationScope(application.getId(), applicationCode, application.getOrganId()));
         applicationScopes.forEach(obj -> scopes.add(new ApplicationScope(
             obj.getId(), obj.getApplicationCode(), obj.getOrganId()
         )));

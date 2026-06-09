@@ -127,4 +127,12 @@ public interface RoleControlUnitRelationDao {
      * @return 控制单元数量
      */
     CountRoleControlUnitPo countRoleControlUnits(@Param("userId") Long userId);
+
+    /**
+     * 按角色 ID 集合统计控制单元数量
+     *
+     * @param roleIds 角色 ID 集合
+     * @return 控制单元数量
+     */
+    CountRoleControlUnitPo countRoleControlUnitsByRoleIds(@Param("roleIds") List<Long> roleIds);
 }

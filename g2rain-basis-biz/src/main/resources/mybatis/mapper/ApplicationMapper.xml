@@ -539,4 +539,17 @@
         JOIN application_suite aps ON aps.application_id = a.id AND aps.delete_flag = 0 AND aps.master_application_id = #{applicationId}
         WHERE urr.delete_flag = 0 AND urr.user_id = #{userId}
     </select>
+
+    <select id="selectApplicationScopeByRoleIds" resultMap="BaseResultMap">
+        SELECT DISTINCT a.id, a.application_code, a.organ_id
+        FROM role_control_unit_relation rcur
+        JOIN control_unit cu ON cu.id = rcur.control_unit_id AND cu.delete_flag = 0
+        JOIN application a ON a.id = cu.application_id AND a.delete_flag = 0
+        JOIN application_suite aps ON aps.application_id = a.id AND aps.delete_flag = 0 AND aps.master_application_id = #{applicationId}
+        WHERE rcur.delete_flag = 0 AND rcur.status = 'ACTIVATED'
+        AND rcur.role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId, jdbcType=BIGINT}
+        </foreach>
+    </select>
 </mapper>

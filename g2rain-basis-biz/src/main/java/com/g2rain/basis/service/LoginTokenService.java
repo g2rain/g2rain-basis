@@ -82,6 +82,16 @@ public interface LoginTokenService {
                                       String idpType, String idpSubject, String idpApplicationCode);
 
     /**
+     * 构建匿名会话的 Token JWT 载荷信息。
+     *
+     * @param organId         机构 ID
+     * @param applicationCode 应用编码
+     * @return 匿名会话的 {@link TokenJWTPayload}
+     * @throws BusinessException 当机构或应用不存在，或机构不可用时抛出
+     */
+    TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode);
+
+    /**
      * 根据个人静态访问令牌解析状态与会话上下文。
      *
      * @param apiKey 原始 API Key（明文）

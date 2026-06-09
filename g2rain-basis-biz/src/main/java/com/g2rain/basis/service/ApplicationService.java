@@ -112,6 +112,20 @@ public interface ApplicationService {
     List<ApplicationScopeVo> selectApplicationScope(Long userId, Long applicationId);
 
     /**
+     * 按角色 ID 集合查询入口应用可见的应用作用域。
+     * <p>
+     * 核心逻辑：
+     * 1. 如果 roleIds 为空，返回空列表。
+     * 2. 如果 applicationId 为 null，则返回默认登录应用（landing=true）。
+     * 3. 否则根据角色 ID 集合和入口应用 ID 查询可见应用集合，并转换为 ApplicationScopeVo。
+     *
+     * @param roleIds         角色 ID 集合
+     * @param applicationId   入口应用标识
+     * @return 可见的应用作用域列表
+     */
+    List<ApplicationScopeVo> selectApplicationScopeByRoleIds(List<Long> roleIds, Long applicationId);
+
+    /**
      * 判断指定应用是否为默认登录应用（landing=true）。
      *
      * <p>逻辑说明：
