@@ -64,6 +64,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -383,11 +384,12 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      *
      * @param organId         机构 ID
      * @param applicationCode 应用编码
+     * @param roleIds         可选；非空时使用指定角色，为空时回退机构 ADMIN 角色
      * @return 匿名会话的 {@link TokenJWTPayload}
      * @throws BusinessException 当机构或应用不存在，或机构不可用时抛出
      */
     @Override
-    public TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode) {
+    public TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode, List<Long> roleIds) {
         ApplicationSelectDto appSelect = new ApplicationSelectDto();
         appSelect.setApplicationCode(applicationCode);
         List<ApplicationVo> applications = applicationService.selectList(appSelect);
@@ -414,14 +416,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
             BasisErrorCode.ORGAN_UNAVAILABLE
         );
 
-        RoleSelectDto roleSelect = new RoleSelectDto();
-        roleSelect.setOrganId(organId);
-        roleSelect.setRoleType(RoleType.ADMIN.name());
-        List<RoleVo> roles = roleService.selectListWithoutIsolation(roleSelect);
-        Asserts.isTrue(Collections.isNotEmpty(roles),
-            BasisErrorCode.ADMIN_ROLE_NOT_EXISTS_ILLEGAL
-        );
-        List<Long> roleIds = roles.stream().map(RoleVo::getId).toList();
+        List<Long> resolvedRoleIds = resolveAnonymousRoleIds(organId, roleIds);
 
         TokenJWTPayload payload = new TokenJWTPayload();
         payload.setSessionType(SessionType.ANONYMOUS);
@@ -429,11 +424,11 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         payload.setOrganId(organ.getId());
         payload.setOrganName(organ.getOrganName());
         payload.setAdminCompany(Boolean.TRUE.equals(organ.getAdmin()));
-        payload.setRoleIds(roleIds);
+        payload.setRoleIds(resolvedRoleIds);
 
         if (!isDefaultMain) {
             CountRoleControlUnitPo countRoleControlUnit = roleControlUnitRelationDao
-                .countRoleControlUnitsByRoleIds(roleIds);
+                .countRoleControlUnitsByRoleIds(resolvedRoleIds);
 
             Asserts.greaterThan(Objects.isNull(countRoleControlUnit.getTotalControlUnitCount()) ? -1 :
                     countRoleControlUnit.getTotalControlUnitCount(), 0,
@@ -456,7 +451,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         )).getEpochSecond());
 
         List<ApplicationScopeVo> applicationScopes = applicationService.selectApplicationScopeByRoleIds(
-            roleIds, application.getId()
+            resolvedRoleIds, application.getId()
         );
         List<ApplicationScope> scopes = new ArrayList<>(applicationScopes.size() + 1);
         scopes.add(new ApplicationScope(application.getId(), applicationCode, application.getOrganId()));
@@ -465,6 +460,31 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         )));
         payload.setApplicationScopes(scopes);
         return payload;
+    }
+
+    /**
+     * 解析匿名会话角色：传入 roleIds 时校验其属于 organId；否则回退机构 ADMIN 角色。
+     */
+    private List<Long> resolveAnonymousRoleIds(Long organId, List<Long> roleIds) {
+        if (Collections.isNotEmpty(roleIds)) {
+            RoleSelectDto roleSelect = new RoleSelectDto();
+            roleSelect.setOrganId(organId);
+            roleSelect.setIds(new HashSet<>(roleIds));
+            List<RoleVo> roles = roleService.selectListWithoutIsolation(roleSelect);
+            Asserts.isTrue(roles.size() == roleIds.size(),
+                SystemErrorCode.PARAM_VAL_INVALID, "roleIds"
+            );
+            return roles.stream().map(RoleVo::getId).toList();
+        }
+
+        RoleSelectDto roleSelect = new RoleSelectDto();
+        roleSelect.setOrganId(organId);
+        roleSelect.setRoleType(RoleType.ADMIN.name());
+        List<RoleVo> roles = roleService.selectListWithoutIsolation(roleSelect);
+        Asserts.isTrue(Collections.isNotEmpty(roles),
+            BasisErrorCode.ADMIN_ROLE_NOT_EXISTS_ILLEGAL
+        );
+        return roles.stream().map(RoleVo::getId).toList();
     }
 
     /**
