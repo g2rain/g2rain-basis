@@ -396,13 +396,6 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         Asserts.isTrue(Collections.isNotEmpty(applications),
             SystemErrorCode.UNAUTHORIZED, applicationCode
         );
-        ApplicationVo application = applications.getFirst();
-        Boolean canIntegrate = application.getCanIntegrate();
-        Boolean landing = application.getLanding();
-        boolean isDefaultMain = Boolean.TRUE.equals(landing) && Boolean.FALSE.equals(canIntegrate);
-        Asserts.isTrue(Objects.equals(organId, application.getOrganId()),
-            SystemErrorCode.PARAM_VAL_INVALID, organId
-        );
 
         OrganSelectDto organSelect = new OrganSelectDto();
         organSelect.setId(organId);
@@ -426,7 +419,10 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         payload.setAdminCompany(Boolean.TRUE.equals(organ.getAdmin()));
         payload.setRoleIds(resolvedRoleIds);
 
-        if (!isDefaultMain) {
+        ApplicationVo application = applications.getFirst();
+        Boolean landing = application.getLanding();
+        Boolean canIntegrate = application.getCanIntegrate();
+        if (!(Boolean.TRUE.equals(landing) && Boolean.FALSE.equals(canIntegrate))) {
             CountRoleControlUnitPo countRoleControlUnit = roleControlUnitRelationDao
                 .countRoleControlUnitsByRoleIds(resolvedRoleIds);
 
