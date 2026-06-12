@@ -412,6 +412,10 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         List<Long> resolvedRoleIds = resolveAnonymousRoleIds(organId, roleIds);
 
         TokenJWTPayload payload = new TokenJWTPayload();
+        payload.setPassportId(idGenerator.generateSnowflakeId());
+        payload.setUserId(idGenerator.generateSnowflakeId());
+        payload.setName("匿名用户");
+        payload.setAdminUser(Boolean.FALSE);
         payload.setSessionType(SessionType.ANONYMOUS);
         payload.setOrganType(OrganType.fromName(organ.getOrganType()));
         payload.setOrganId(organ.getId());
