@@ -26,7 +26,11 @@ public interface AuthorityApi {
      */
     @GetMapping("/apis")
     @Operation(summary = "查询接口权限列表", hidden = true, description = "查询指定用户在指定应用下的接口权限列表")
-    Result<List<BaseAuthorityApiVo>> getApiPermissions(@Parameter(description = "用户标识") @RequestParam Long userId, @Parameter(description = "应用标识") @RequestParam Long applicationId);
+    Result<List<BaseAuthorityApiVo>> getApiPermissions(
+        @Parameter(description = "用户标识") @RequestParam(required = false) Long userId,
+        @Parameter(description = "角色 ID 集合；非空时优先按角色查询") @RequestParam(required = false) List<Long> roleIds,
+        @Parameter(description = "应用标识") @RequestParam Long applicationId
+    );
 
     /**
      * 查询账号的接口权限集合

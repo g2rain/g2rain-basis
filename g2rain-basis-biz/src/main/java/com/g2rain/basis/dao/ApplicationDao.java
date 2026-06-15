@@ -102,4 +102,15 @@ public interface ApplicationDao {
      */
     @IgnoreIsolation
     List<ApplicationPo> selectApplicationScope(@Param("userId") Long userId, @Param("applicationId") Long applicationId);
+
+    /**
+     * 按角色 ID 集合查询入口应用可见的机构激活应用作用域
+     *
+     * @param roleIds         角色 ID 集合
+     * @param applicationId   入口应用标识
+     * @return 实体对象列表
+     */
+    @IgnoreIsolation
+    List<ApplicationPo> selectApplicationScopeByRoleIds(@Param("roleIds") List<Long> roleIds,
+                                                        @Param("applicationId") Long applicationId);
 }

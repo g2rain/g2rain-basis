@@ -42,7 +42,7 @@ public interface AuthorityService {
      * @param applicationId 应用 ID
      * @return 接口权限视图对象列表 {@link AuthorityApiEndpointVo}
      */
-    List<BaseAuthorityApiVo> getApiPermissions(Long userId, Long applicationId);
+    List<BaseAuthorityApiVo> getApiPermissions(Long userId, List<Long> roleIds, Long applicationId);
 
     /**
      * 获取当前用户的信息。
