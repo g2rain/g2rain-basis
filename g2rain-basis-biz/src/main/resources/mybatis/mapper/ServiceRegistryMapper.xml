@@ -2,9 +2,15 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
 <mapper namespace="com.g2rain.basis.dao.ServiceRegistryDao">
     <!-- 通用结果集映射（包含所有字段：主键+基础字段+业务字段） -->
     <resultMap id="BaseResultMap" type="com.g2rain.basis.dao.po.ServiceRegistryPo">
+========
+<mapper namespace="com.g2rain.basis.dao.ResourceApiDao">
+    <!-- 通用结果集映射（包含所有字段：主键+基础字段+业务字段） -->
+    <resultMap id="BaseResultMap" type="com.g2rain.basis.dao.po.ResourceApiPo">
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <!-- 主键字段 -->
         <id column="id" property="id" jdbcType="BIGINT"/>
         <!-- 基础字段（createTime、updateTime） -->
@@ -12,9 +18,16 @@
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
         <!-- 业务字段（其他自定义字段） -->
         <result column="service_code" property="serviceCode" jdbcType="VARCHAR"/>
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
         <result column="name" property="name" jdbcType="VARCHAR"/>
         <result column="endpoint" property="endpoint" jdbcType="VARCHAR"/>
         <result column="route_prefix" property="routePrefix" jdbcType="VARCHAR"/>
+========
+        <result column="api_tags" property="apiTags" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="method" property="method" jdbcType="VARCHAR"/>
+        <result column="path" property="path" jdbcType="VARCHAR"/>
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <result column="description" property="description" jdbcType="VARCHAR"/>
         <!-- deleteFlag字段（如果存在） -->
         <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
@@ -51,6 +64,7 @@
                         service_code
                         <include refid="directionClause"/>
                     </when>
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
                     <when test="item.column == 'name'">
                         name
                         <include refid="directionClause"/>
@@ -61,6 +75,22 @@
                     </when>
                     <when test="item.column == 'routePrefix'">
                         route_prefix
+========
+                    <when test="item.column == 'apiTags'">
+                        api_tags
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'name'">
+                        name
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'method'">
+                        method
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'path'">
+                        path
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
                         <include refid="directionClause"/>
                     </when>
                     <when test="item.column == 'description'">
@@ -73,14 +103,23 @@
     </sql>
 
     <!-- 插入单条记录 -->
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
     <insert id="insert" parameterType="com.g2rain.basis.dao.po.ServiceRegistryPo">
         INSERT INTO service_registry (
+========
+    <insert id="insert" parameterType="com.g2rain.basis.dao.po.ResourceApiPo">
+        INSERT INTO resource_api (
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <!-- 主键字段（自增主键不包含在插入语句中） -->
         id,
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
         service_code, name, endpoint, route_prefix, description,
+========
+        service_code, api_tags, name, method, path, description,
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -91,7 +130,12 @@
         <!-- 基础字段值 -->
         #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
         <!-- 业务字段值 -->
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
         #{serviceCode, jdbcType=VARCHAR}, #{name, jdbcType=VARCHAR}, #{endpoint, jdbcType=VARCHAR}, #{routePrefix, jdbcType=VARCHAR}, #{description, jdbcType=VARCHAR},
+========
+        #{serviceCode, jdbcType=VARCHAR}, #{apiTags, jdbcType=VARCHAR}, #{name, jdbcType=VARCHAR},
+        #{method, jdbcType=VARCHAR}, #{path, jdbcType=VARCHAR}, #{description, jdbcType=VARCHAR},
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
         0,
         <!-- version字段值（如果存在，设置默认值为0） -->
@@ -101,13 +145,21 @@
 
     <!-- 批量插入记录 -->
     <insert id="insertMultiple" parameterType="java.util.List">
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
         INSERT INTO service_registry (
+========
+        INSERT INTO resource_api (
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <!-- 主键字段（自增主键不包含） -->
         id,
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
         service_code, name, endpoint, route_prefix, description,
+========
+        service_code, api_tags, name, method, path, description,
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -120,7 +172,12 @@
             <!-- 基础字段值 -->
             #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
             <!-- 业务字段值 -->
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
             #{item.serviceCode, jdbcType=VARCHAR}, #{item.name, jdbcType=VARCHAR}, #{item.endpoint, jdbcType=VARCHAR}, #{item.routePrefix, jdbcType=VARCHAR}, #{item.description, jdbcType=VARCHAR},
+========
+            #{item.serviceCode, jdbcType=VARCHAR}, #{item.apiTags, jdbcType=VARCHAR}, #{item.name, jdbcType=VARCHAR},
+            #{item.method, jdbcType=VARCHAR}, #{item.path, jdbcType=VARCHAR}, #{item.description, jdbcType=VARCHAR},
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
             <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
             0,
             <!-- version字段值（如果存在，设置默认值为0） -->
@@ -130,8 +187,13 @@
     </insert>
 
     <!-- 根据ID更新记录（包含基础字段和业务字段） -->
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
     <update id="update" parameterType="com.g2rain.basis.dao.po.ServiceRegistryPo">
         UPDATE service_registry
+========
+    <update id="update" parameterType="com.g2rain.basis.dao.po.ResourceApiPo">
+        UPDATE resource_api
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <set>
             <!-- 基础字段更新（排除version，version单独处理） -->
             <if test="updateTime != null">
@@ -141,6 +203,7 @@
             <if test="serviceCode != null">
                 service_code = #{serviceCode, jdbcType=VARCHAR},
             </if>
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
             <if test="name != null">
                 name = #{name, jdbcType=VARCHAR},
             </if>
@@ -149,6 +212,19 @@
             </if>
             <if test="routePrefix != null">
                 route_prefix = #{routePrefix, jdbcType=VARCHAR},
+========
+            <if test="apiTags != null">
+                api_tags = #{apiTags, jdbcType=VARCHAR},
+            </if>
+            <if test="name != null">
+                name = #{name, jdbcType=VARCHAR},
+            </if>
+            <if test="method != null">
+                method = #{method, jdbcType=VARCHAR},
+            </if>
+            <if test="path != null">
+                path = #{path, jdbcType=VARCHAR},
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
             </if>
             <if test="description != null">
                 description = #{description, jdbcType=VARCHAR},
@@ -159,9 +235,46 @@
         WHERE id = #{id, jdbcType=BIGINT}
     </update>
 
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
     <!-- 根据ID和Version更新记录（乐观锁更新，包含基础字段和业务字段） -->
     <update id="updateByVersion" parameterType="com.g2rain.basis.dao.po.ServiceRegistryPo">
         UPDATE service_registry
+========
+    <update id="updateBatchCase" parameterType="java.util.List">
+        UPDATE resource_api
+        <set>
+            api_tags = CASE id
+            <foreach collection="list" item="item">
+                WHEN #{item.id} THEN #{item.apiTags}
+            </foreach>
+            END,
+            name = CASE id
+            <foreach collection="list" item="item">
+                WHEN #{item.id} THEN #{item.name}
+            </foreach>
+            END,
+            description = CASE id
+            <foreach collection="list" item="item">
+                WHEN #{item.id} THEN #{item.description}
+            </foreach>
+            END,
+            update_time = CASE id
+            <foreach collection="list" item="item">
+                WHEN #{item.id} THEN #{item.updateTime}
+            </foreach>
+            END,
+            version = version + 1
+        </set>
+        WHERE id IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.id}
+        </foreach>
+    </update>
+
+    <!-- 根据ID和Version更新记录（乐观锁更新，包含基础字段和业务字段） -->
+    <update id="updateByVersion" parameterType="com.g2rain.basis.dao.po.ResourceApiPo">
+        UPDATE resource_api
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <set>
             <!-- 基础字段更新（排除version，version单独处理） -->
             <if test="updateTime != null">
@@ -171,6 +284,7 @@
             <if test="serviceCode != null">
                 service_code = #{serviceCode, jdbcType=VARCHAR},
             </if>
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
             <if test="name != null">
                 name = #{name, jdbcType=VARCHAR},
             </if>
@@ -179,6 +293,19 @@
             </if>
             <if test="routePrefix != null">
                 route_prefix = #{routePrefix, jdbcType=VARCHAR},
+========
+            <if test="apiTags != null">
+                api_tags = #{apiTags, jdbcType=VARCHAR},
+            </if>
+            <if test="name != null">
+                name = #{name, jdbcType=VARCHAR},
+            </if>
+            <if test="method != null">
+                method = #{method, jdbcType=VARCHAR},
+            </if>
+            <if test="path != null">
+                path = #{path, jdbcType=VARCHAR},
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
             </if>
             <if test="description != null">
                 description = #{description, jdbcType=VARCHAR},
@@ -192,7 +319,11 @@
 
     <!-- 根据ID删除记录（逻辑删除：将delete_flag设置为true） -->
     <update id="delete" parameterType="Long">
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
         UPDATE service_registry
+========
+        UPDATE resource_api
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <set>
             delete_flag = 1, version = version + 1
         </set>
@@ -209,31 +340,51 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
         service_code, name, endpoint, route_prefix, description,
+========
+        service_code, api_tags, name, method, path, description,
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
         version
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
         FROM service_registry
+========
+        FROM resource_api
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         WHERE id = #{id, jdbcType=BIGINT}
         <!-- 过滤已删除的记录 -->
         AND (delete_flag = 0 OR delete_flag IS NULL)
     </select>
 
     <!-- 根据 SelectDto 条件查询列表 -->
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
     <select id="selectList" parameterType="com.g2rain.basis.dto.ServiceRegistrySelectDto" resultMap="BaseResultMap">
+========
+    <select id="selectList" parameterType="com.g2rain.basis.dto.ResourceApiSelectDto" resultMap="BaseResultMap">
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         SELECT
         <!-- 主键字段 -->
         id,
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
         service_code, name, endpoint, route_prefix, description,
+========
+        service_code, api_tags, name, method, path, description,
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
         version
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
         FROM service_registry
+========
+        FROM resource_api
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
         <where>
             <!-- 主键筛选 -->
             <if test="id != null">
@@ -245,11 +396,20 @@
                     #{item, jdbcType=BIGINT}
                 </foreach>
             </if>
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
             <if test="serviceCodes != null and serviceCodes.size() > 0">
                 AND service_code IN
                 <foreach collection="serviceCodes" item="item" open="(" separator="," close=")">
                     #{item, jdbcType=BIGINT}
                 </foreach>
+========
+            <if test="pairs != null and pairs.size() > 0">
+                AND (
+                <foreach collection="pairs" item="item" separator=" OR ">
+                    (method = #{item.method} AND path = #{item.path})
+                </foreach>
+                )
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
             </if>
             <!-- 基础字段筛选（createTime和updateTime时间筛选） -->
             <if test="createTime != null">
@@ -280,6 +440,7 @@
             <if test="serviceCode != null">
                 AND service_code = #{serviceCode, jdbcType=VARCHAR}
             </if>
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
             <if test="name != null">
                 AND name = #{name, jdbcType=VARCHAR}
             </if>
@@ -288,6 +449,19 @@
             </if>
             <if test="routePrefix != null">
                 AND route_prefix = #{routePrefix, jdbcType=VARCHAR}
+========
+            <if test="apiTags != null">
+                AND api_tags = #{apiTags, jdbcType=VARCHAR}
+            </if>
+            <if test="name != null">
+                AND name = #{name, jdbcType=VARCHAR}
+            </if>
+            <if test="method != null">
+                AND method = #{method, jdbcType=VARCHAR}
+            </if>
+            <if test="path != null">
+                AND path = #{path, jdbcType=VARCHAR}
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
             </if>
             <if test="description != null">
                 AND description = #{description, jdbcType=VARCHAR}
@@ -297,4 +471,48 @@
         </where>
         <include refid="dynamicOrderBy"/>
     </select>
+<<<<<<<< HEAD:g2rain-basis-biz/src/main/resources/mybatis/mapper/ServiceRegistryMapper.xml
+========
+
+    <!--
+        查询指定用户的授权接口地址(通过角色分配的接口地址权限)
+        仅返回用户角色关联控制单元对应的接口地址资源
+    -->
+    <select id="selectAuthorizedApisWithUserId" parameterType="java.util.Map"
+            resultType="com.g2rain.basis.dao.po.AuthorityApiEndpointPo">
+        SELECT t.id, t.api_name, t.service_name, t.endpoint, t.route_prefix, t.method, t.path, t.status
+        FROM (
+        SELECT rae.`id`, rae.`name` AS api_name, ae.`name` AS service_name, ae.`endpoint`, ae.`route_prefix`, rae.`method`, rae.`path`, rcur.status,
+        ROW_NUMBER() OVER (PARTITION BY rae.id ORDER BY CASE rcur.status WHEN 'ACTIVATED' THEN 1 ELSE 2 END) AS rn
+        FROM user_role_relation urr
+        JOIN role_control_unit_relation rcur ON urr.`role_id` = rcur.`role_id` AND rcur.`delete_flag` = 0
+        JOIN control_unit cu ON cu.id = rcur.control_unit_id AND cu.`application_id` = #{applicationId}
+        JOIN control_unit_resource_relation curr ON rcur.`control_unit_id` = curr.`control_unit_id` AND curr.`delete_flag` = 0 AND curr.`resource_type` = 'API_ENDPOINT'
+        JOIN resource_api rae ON curr.resource_id = rae.id AND rae.delete_flag = 0
+        JOIN service_registry ae ON rae.service_code = ae.service_code AND ae.delete_flag = 0
+        WHERE urr.`delete_flag` = 0 AND urr.`user_id` = #{userId}
+        ) t
+        WHERE t.rn = 1
+    </select>
+
+    <!--
+        查询指定应用的常驻授权接口地址(landing=1 的控制单元接口地址)
+        不依赖用户角色, 常驻功能直接可用
+    -->
+    <select id="listAuthorizedApisWithLanding" parameterType="java.lang.Long"
+            resultType="com.g2rain.basis.dao.po.AuthorityApiEndpointPo">
+        SELECT DISTINCT rae.`id`, rae.`name` AS api_name, ae.`name` AS service_name, ae.`endpoint`, ae.`route_prefix`, rae.`method`, rae.`path`, 'ACTIVATED' AS status
+        FROM control_unit cu
+        JOIN control_unit_resource_relation curr
+        ON cu.`id` = curr.`control_unit_id` AND curr.`delete_flag` = 0 AND
+        curr.`resource_type` = 'API_ENDPOINT'
+        JOIN resource_api rae ON curr.resource_id = rae.id AND rae.delete_flag = 0
+        JOIN service_registry ae ON rae.service_code = ae.service_code AND ae.delete_flag = 0
+        WHERE cu.delete_flag = 0
+        AND cu.`landing` = 1
+        AND cu.`control_unit_scope` = 'PERPETUAL'
+        AND cu.`status` = 'PUBLISHED'
+        AND cu.`application_id` = #{applicationId}
+    </select>
+>>>>>>>> origin/develop:g2rain-basis-biz/src/main/resources/mybatis/mapper/ResourceApiMapper.xml
 </mapper>
