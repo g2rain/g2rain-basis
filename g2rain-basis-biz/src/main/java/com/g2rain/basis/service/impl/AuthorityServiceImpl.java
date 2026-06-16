@@ -231,9 +231,12 @@ public class AuthorityServiceImpl implements AuthorityService {
      * @return AuthorityApiEndpointVo 列表
      */
     @Override
-    public List<BaseAuthorityApiVo> getApiPermissions(Long userId, Long applicationId) {
+    public List<BaseAuthorityApiVo> getApiPermissions(Long userId, List<Long> roleIds, Long applicationId) {
         boolean isDefaultMain = applicationService.hasLandingApplication(applicationId);
-        return buildResourceApiEndpoints(isDefaultMain, userId, applicationId).stream().map(o -> {
+        List<AuthorityApiEndpointPo> apiEndpoints = Collections.isNotEmpty(roleIds)
+            ? buildResourceApiEndpointsByRoleIds(isDefaultMain, roleIds, applicationId)
+            : buildResourceApiEndpoints(isDefaultMain, userId, applicationId);
+        return apiEndpoints.stream().map(o -> {
             BaseAuthorityApiVo result = new BaseAuthorityApiVo();
             result.setId(o.getId());
             result.setStatus(o.getStatus());
@@ -436,6 +439,25 @@ public class AuthorityServiceImpl implements AuthorityService {
         if (isDefaultMain) {
             List<AuthorityApiEndpointPo> landingApiEndpoints = resourceApiDao.
                 listAuthorizedApisWithLanding(applicationId);
+            mergeWithLanding(apiEndpoints, landingApiEndpoints, AuthorityApiEndpointPo::getId);
+        }
+
+        return apiEndpoints;
+    }
+
+    /**
+     * 按角色 ID 集合构建可访问的 API 接口列表，包括默认应用接口。
+     */
+    private List<AuthorityApiEndpointPo> buildResourceApiEndpointsByRoleIds(boolean isDefaultMain, List<Long> roleIds,
+                                                                            Long applicationId) {
+        List<AuthorityApiEndpointPo> apiEndpoints = new ArrayList<>();
+        if (Collections.isNotEmpty(roleIds) && Objects.nonNull(applicationId)) {
+            apiEndpoints.addAll(resourceApiDao.selectAuthorizedApisWithRoleIds(roleIds, applicationId));
+        }
+
+        if (isDefaultMain) {
+            List<AuthorityApiEndpointPo> landingApiEndpoints = resourceApiDao
+                .listAuthorizedApisWithLanding(applicationId);
             mergeWithLanding(apiEndpoints, landingApiEndpoints, AuthorityApiEndpointPo::getId);
         }
 

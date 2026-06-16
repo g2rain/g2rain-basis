@@ -431,6 +431,31 @@ public class ApplicationServiceImpl implements ApplicationService {
         ).toList();
     }
 
+    @Override
+    public List<ApplicationScopeVo> selectApplicationScopeByRoleIds(List<Long> roleIds, Long applicationId) {
+        if (Collections.isEmpty(roleIds)) {
+            return List.of();
+        }
+
+        if (Objects.isNull(applicationId)) {
+            ApplicationSelectDto selectDto = new ApplicationSelectDto();
+            selectDto.setLanding(Boolean.TRUE);
+            selectDto.setCanIntegrate(Boolean.FALSE);
+            List<ApplicationPo> applications = applicationDao.selectList(selectDto);
+            if (Collections.isEmpty(applications)) {
+                return List.of();
+            }
+
+            return List.of(ApplicationConverter.INSTANCE.po2scopeVo(
+                applications.getFirst()
+            ));
+        }
+
+        return applicationDao.selectApplicationScopeByRoleIds(roleIds, applicationId).stream().map(
+            ApplicationConverter.INSTANCE::po2scopeVo
+        ).toList();
+    }
+
     /**
      * 判断指定应用是否为默认登录应用（landing=true）。
      *

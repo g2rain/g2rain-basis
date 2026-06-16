@@ -74,6 +74,22 @@ public interface LoginTokenApi {
     );
 
     /**
+     * 获取匿名会话的登录令牌 JWT 载荷信息。
+     *
+     * @param organId         机构 ID
+     * @param applicationCode 应用编码
+     * @param roleIds         可选；非空时使用 IAM 配置的角色 ID，为空时回退查询机构 ADMIN 角色
+     * @return 匿名会话的 JWT 载荷信息
+     */
+    @GetMapping("/anonymous_token_context")
+    @Operation(summary = "获取匿名登录令牌上下文", hidden = true, description = "根据机构与应用构建匿名会话 JWT 载荷信息")
+    Result<TokenJWTPayload> fetchAnonymousTokenContext(
+        @Parameter(description = "机构 ID") @RequestParam Long organId,
+        @Parameter(description = "应用编码") @RequestParam String applicationCode,
+        @Parameter(description = "角色 ID 列表；为空时使用机构 ADMIN 角色") @RequestParam(required = false) List<Long> roleIds
+    );
+
+    /**
      * 根据个人静态访问令牌（原始 API Key）解析状态与会话上下文。
      *
      * <p>
