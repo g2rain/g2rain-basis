@@ -28,6 +28,8 @@
 
 ## 4. 核心能力
 
+本章回答“这个仓库在平台里提供什么能力、解决什么问题”。
+
 - 应用与交付单元建模：解决“平台如何把页面、按钮、接口收敛成可治理、可交付、可授权对象”的问题，通过 `Application`、`ApplicationAuthorization`、`ApplicationSuite` 等模型，把应用定义为最小控制单元，并为后续业务能力聚合与商业化交付预留统一入口。
 - 组织、租户与用户基础治理：解决平台多租户场景下组织、租户、用户、通行证之间的基础主数据管理问题，通过 `Organ`、`TenantProvision`、`User`、`Passport`、`Login` 等服务形成统一的开通、登录、绑定与身份归属底座。
 - 资源模型与权限承载体系：解决菜单、页面、页面元素、API 等资源分散定义、难以统一授权的问题，通过 `Resource`、`ResourceMenu`、`ResourcePage`、`ResourcePageElement`、`ResourceApi` 等资源模型，把前后端能力沉淀成平台可管理对象。
@@ -90,6 +92,8 @@ java -jar g2rain-basis-startup/target/g2rain-basis-startup-*.jar
 
 ## 7. 项目结构
 
+本章回答“代码与模块是如何组织的、排查和扩展时应该先看哪里”。
+
 ```text
 g2rain-basis/
 ├── build.sh                # 一键构建并生成本地 Docker 镜像
@@ -105,7 +109,9 @@ g2rain-basis/
 - `g2rain-basis-startup/`：承载 Spring Boot 启动入口与运行时配置，包括 `Application`、参数解析器、Redis 配置、虚拟线程配置、`application.yml`、日志配置等。
 - `build.sh`：承载仓库推荐交付入口，适合本地或 CI 中快速生成 `g2rain/g2rain-basis:<tag>` 镜像。
 
-### 核心业务流程介绍
+## 8. 核心业务流程
+
+本章回答“这些能力在运行时是如何串起来工作的”。
 
 #### 1. 应用-资源-权限建模主线
 - 产品或研发先在平台侧定义 `Application`
@@ -129,7 +135,7 @@ g2rain-basis/
 - 登记后的能力才能进一步纳入资源、权限、交付和控制关系体系
 - 这一主线把外部接入与平台内部治理模型衔接起来，而不是让应用侧各自维护一套独立权限配置
 
-## 8. 常用命令
+## 9. 常用命令
 
 ```bash
 # 全量构建
@@ -151,13 +157,13 @@ mvn -pl g2rain-basis-startup -am spring-boot:run
 mvn -pl g2rain-basis-startup -am -DskipTests=true compile jib:dockerBuild
 ```
 
-## 9. 质量与测试
+## 10. 质量与测试
 
 - 当前扫描结果未发现测试文件，建议后续优先补齐应用授权、角色控制单元关系、`Authority` 聚合查询、租户开通等关键链路测试
 - 需在文档中明确 `JDK 25` 的运行与构建前提
 - 当前交付方式已较明确，但后续仍建议补充 CI、配置校验与核心接口回归测试说明
 
-## 10. 相关仓库
+## 11. 相关仓库
 
 - `g2rain-common`：平台公共基础能力仓库
 - `g2rain-iam`：统一身份认证与令牌治理能力
@@ -165,7 +171,7 @@ mvn -pl g2rain-basis-startup -am -DskipTests=true compile jib:dockerBuild
 - `g2rain-manager-app`：平台管理端应用
 - `g2rain-main-shell`：平台主壳与子应用协同入口
 
-## 11. 使用建议
+## 12. 使用建议
 
 - 适合作为平台统一组织、资源与权限治理的核心支撑服务使用
 - 适合与平台控制台、子应用和统一身份体系协同接入，而不是作为单一业务服务独立理解
@@ -173,7 +179,7 @@ mvn -pl g2rain-basis-startup -am -DskipTests=true compile jib:dockerBuild
 - 推荐优先通过 `build.sh` 或 Jib 构建镜像，保持与仓库默认构建方式一致
 - 若后续继续增强 README，应重点补充关键鉴权查询、租户开通与资源导入接口的实际示例
 
-## 12. 贡献指南
+## 13. 贡献指南
 
 欢迎以 Issue、文档改进、测试补充、代码优化、功能增强等形式参与贡献。
 
@@ -192,18 +198,18 @@ mvn -pl g2rain-basis-startup -am -DskipTests=true compile jib:dockerBuild
 - 更新相关文档
 - 确保测试通过
 
-## 13. 许可证
+## 14. 许可证
 
 本项目基于 [Apache 2.0许可证](LICENSE) 开源。
 
-## 14. 联系我们
+## 15. 联系我们
 
 - **站点**: https://www.g2rain.com/
 - **Issues**: [GitHub Issues](https://github.com/g2rain/g2rain/issues)
 - **讨论**: [GitHub Discussions](https://github.com/g2rain/g2rain/discussions)
 - **邮箱**: g2rain_developer@163.com
 
-## 15. 致谢
+## 16. 致谢
 
 感谢所有为这个项目做出贡献的开发者们。
 
