@@ -37,8 +37,8 @@ public class AuthorityController implements AuthorityApi {
      * @return 接口权限视图对象列表
      */
     @Override
-    public Result<List<BaseAuthorityApiVo>> getApiPermissions(Long userId, Long applicationId) {
-        return Result.success(authorityService.getApiPermissions(userId, applicationId));
+    public Result<List<BaseAuthorityApiVo>> getApiPermissions(Long userId, List<Long> roleIds, Long applicationId) {
+        return Result.success(authorityService.getApiPermissions(userId, roleIds, applicationId));
     }
 
     /**

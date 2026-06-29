@@ -400,4 +400,16 @@
         JOIN role_control_unit_relation rcur ON rcur.role_id = urr.role_id AND rcur.delete_flag = 0
         WHERE urr.delete_flag = 0 AND urr.user_id = #{userId, jdbcType=BIGINT}
     </select>
+
+    <select id="countRoleControlUnitsByRoleIds" resultType="com.g2rain.basis.dao.po.CountRoleControlUnitPo">
+        SELECT
+        COUNT(DISTINCT rcur.control_unit_id) AS total_control_unit_count,
+        COUNT(DISTINCT CASE WHEN rcur.status = 'ACTIVATED' THEN rcur.control_unit_id END) AS active_control_unit_count
+        FROM role_control_unit_relation rcur
+        WHERE rcur.delete_flag = 0
+        AND rcur.role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId, jdbcType=BIGINT}
+        </foreach>
+    </select>
 </mapper>

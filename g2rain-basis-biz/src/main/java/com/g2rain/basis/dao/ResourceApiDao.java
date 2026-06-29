@@ -93,6 +93,16 @@ public interface ResourceApiDao {
     List<AuthorityApiEndpointPo> selectAuthorizedApisWithUserId(@Param("userId") Long userId, @Param("applicationId") Long applicationId);
 
     /**
+     * 按角色 ID 集合查询授权接口地址（通过角色关联的控制单元）
+     *
+     * @param roleIds         角色 ID 集合
+     * @param applicationId   需要查询的应用 ID
+     * @return 可访问的接口地址列表
+     */
+    List<AuthorityApiEndpointPo> selectAuthorizedApisWithRoleIds(@Param("roleIds") List<Long> roleIds,
+                                                                 @Param("applicationId") Long applicationId);
+
+    /**
      * 查询指定应用的常驻授权接口地址(landing=1 的控制单元接口地址)
      * 不依赖用户角色, 常驻功能直接可用
      *
