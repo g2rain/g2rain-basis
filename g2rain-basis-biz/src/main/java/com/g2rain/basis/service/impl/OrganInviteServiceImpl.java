@@ -52,9 +52,7 @@ public class OrganInviteServiceImpl implements OrganInviteService {
         Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
             BasisErrorCode.ORGAN_INVITE_TARGET_UNAVAILABLE
         );
-        Asserts.isTrue(!Boolean.TRUE.equals(organ.getAdmin()),
-            BasisErrorCode.ORGAN_INVITE_TARGET_UNAVAILABLE
-        );
+
         assertCanGenerateForOrgan(organId);
 
         RolePo role = roleDao.selectById(roleId);
