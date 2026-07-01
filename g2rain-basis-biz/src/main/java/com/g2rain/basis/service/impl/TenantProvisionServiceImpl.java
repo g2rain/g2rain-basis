@@ -186,9 +186,6 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
             BasisErrorCode.ORGAN_INVITE_TARGET_UNAVAILABLE
         );
-        Asserts.isTrue(!Boolean.TRUE.equals(organ.getAdmin()),
-            BasisErrorCode.ORGAN_INVITE_TARGET_UNAVAILABLE
-        );
 
         Long roleId = invite.getRoleId();
         Asserts.isTrue(roleId != null && roleId > 0, BasisErrorCode.ORGAN_INVITE_ROLE_INVALID);
