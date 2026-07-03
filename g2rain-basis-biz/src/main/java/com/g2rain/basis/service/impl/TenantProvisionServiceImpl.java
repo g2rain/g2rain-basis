@@ -36,11 +36,14 @@ import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Strings;
 import com.g2rain.common.web.PrincipalContextHolder;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
@@ -65,6 +68,7 @@ import java.util.Objects;
  * @author alpha
  * @since 2026/1/30
  */
+@Slf4j
 @Service(value = "tenantProvisionServiceImpl")
 public class TenantProvisionServiceImpl implements TenantProvisionService {
     @Resource(name = "organProvisionServiceImpl")
@@ -216,6 +220,9 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         UserDto userDto = new UserDto();
         userDto.setOrganId(organId);
         userDto.setPassportId(passportId);
+        log.info("PrincipalContextHolder.getName():{}, decode:{}", PrincipalContextHolder.getName(), URLDecoder.decode(PrincipalContextHolder.getName(),
+            StandardCharsets.UTF_8
+        ));
         userDto.setRealName(StringUtils.isNotBlank(PrincipalContextHolder.getName()) ? PrincipalContextHolder.getName() : passport.getRealName());
         long userId = userService.saveWithoutIsolation(userDto);
 
