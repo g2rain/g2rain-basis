@@ -215,7 +215,7 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         invite = organInviteRedisService.consumeInvite(dto.getInviteCode());
 
         PassportPo passport = passportDao.selectById(passportId);
-        Asserts.isTrue(passport == null, BasisErrorCode.PASSPORT_NOT_EXISTS_ILLEGAL);
+        Asserts.isTrue(passport != null, BasisErrorCode.PASSPORT_NOT_EXISTS_ILLEGAL);
 
         UserDto userDto = new UserDto();
         userDto.setOrganId(organId);
@@ -223,7 +223,9 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         log.info("PrincipalContextHolder.getName():{}, decode:{}", PrincipalContextHolder.getName(), URLDecoder.decode(PrincipalContextHolder.getName(),
             StandardCharsets.UTF_8
         ));
-        userDto.setRealName(StringUtils.isNotBlank(PrincipalContextHolder.getName()) ? PrincipalContextHolder.getName() : passport.getRealName());
+        userDto.setRealName(StringUtils.isNotBlank(PrincipalContextHolder.getName()) ? URLDecoder.decode(PrincipalContextHolder.getName(),
+            StandardCharsets.UTF_8
+        ) : passport.getRealName());
         long userId = userService.saveWithoutIsolation(userDto);
 
         UserRoleRelationDto userRole = new UserRoleRelationDto();
