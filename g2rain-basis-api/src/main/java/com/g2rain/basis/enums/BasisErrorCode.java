@@ -194,7 +194,10 @@ public enum BasisErrorCode implements ErrorCode {
     ORGAN_INVITE_ROLE_INVALID("basis.40061", "邀请码关联的角色无效，请重新生成邀请码"),
 
     @Schema(description = "ORGAN_INVITE_GENERATE_FORBIDDEN")
-    ORGAN_INVITE_GENERATE_FORBIDDEN("basis.40062", "无权为该机构生成邀请码");
+    ORGAN_INVITE_GENERATE_FORBIDDEN("basis.40062", "无权为该机构生成邀请码"),
+
+    @Schema(description = "PASSPORT_NOT_EXISTS_ILLEGAL")
+    PASSPORT_NOT_EXISTS_ILLEGAL("basis.40063", "账号不存在");
 
     private final String code;
 

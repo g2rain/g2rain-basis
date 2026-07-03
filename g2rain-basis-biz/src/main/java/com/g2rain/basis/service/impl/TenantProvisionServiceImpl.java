@@ -2,9 +2,11 @@ package com.g2rain.basis.service.impl;
 
 
 import com.g2rain.basis.dao.OrganDao;
+import com.g2rain.basis.dao.PassportDao;
 import com.g2rain.basis.dao.RoleDao;
 import com.g2rain.basis.dao.UserDao;
 import com.g2rain.basis.dao.po.OrganPo;
+import com.g2rain.basis.dao.po.PassportPo;
 import com.g2rain.basis.dao.po.RolePo;
 import com.g2rain.basis.dao.po.UserPo;
 import com.g2rain.basis.dto.OrganDto;
@@ -34,6 +36,7 @@ import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Strings;
 import com.g2rain.common.web.PrincipalContextHolder;
 import jakarta.annotation.Resource;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,6 +87,9 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
 
     @Resource(name = "userDao")
     private UserDao userDao;
+
+    @Resource(name = "passportDao")
+    private PassportDao passportDao;
 
     @Resource
     private OrganInviteRedisService organInviteRedisService;
@@ -204,13 +210,13 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
 
         invite = organInviteRedisService.consumeInvite(dto.getInviteCode());
 
+        PassportPo passport = passportDao.selectById(passportId);
+        Asserts.isTrue(passport == null, BasisErrorCode.PASSPORT_NOT_EXISTS_ILLEGAL);
+
         UserDto userDto = new UserDto();
         userDto.setOrganId(organId);
         userDto.setPassportId(passportId);
-        userDto.setRealName(Objects.toString(
-            PrincipalContextHolder.getName(),
-            ""
-        ));
+        userDto.setRealName(StringUtils.isNotBlank(PrincipalContextHolder.getName()) ? PrincipalContextHolder.getName() : passport.getRealName());
         long userId = userService.saveWithoutIsolation(userDto);
 
         UserRoleRelationDto userRole = new UserRoleRelationDto();
