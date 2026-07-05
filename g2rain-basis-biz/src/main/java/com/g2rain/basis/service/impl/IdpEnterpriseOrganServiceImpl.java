@@ -95,7 +95,10 @@ public class IdpEnterpriseOrganServiceImpl implements IdpEnterpriseOrganService 
 
     @Override
     public Long save(IdpEnterpriseOrganDto dto) {
-        IdpType.validate(dto.getIdpType());
+        IdpType idpTypeEnum = IdpType.nameOf(dto.getIdpType());
+        if(idpTypeEnum == null) {
+            throw new BusinessException(SystemErrorCode.PARAM_VAL_INVALID, "idpType");
+        }
         String idpType = dto.getIdpType().trim();
         String enterpriseId = dto.getEnterpriseId() == null ? null : dto.getEnterpriseId().trim();
         requireEnterpriseId(enterpriseId);
