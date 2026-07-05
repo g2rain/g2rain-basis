@@ -47,4 +47,14 @@ public interface IdpEnterpriseOrganService {
      * @return 操作结果（影响行数）
      */
     int delete(Long id);
+
+    /**
+     * 校验外部企业与机构是否已绑定；未绑定时按 {@code autoProvision} 决定是否自动建立关联。
+     *
+     * @param organId        目标机构 ID
+     * @param idpType        身份源类型
+     * @param enterpriseId   外部企业/租户标识
+     * @param autoProvision  是否允许自动建立 idp_enterprise_organ 记录
+     */
+    void ensureEnterpriseOrganBound(Long organId, String idpType, String enterpriseId, boolean autoProvision);
 }
