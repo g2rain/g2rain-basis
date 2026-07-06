@@ -1,11 +1,8 @@
 package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.converter.PassportIdpBindingConverter;
-import com.g2rain.basis.dao.IdpEnterpriseOrganDao;
 import com.g2rain.basis.dao.PassportIdpBindingDao;
 import com.g2rain.basis.dao.po.PassportIdpBindingPo;
-import com.g2rain.basis.dto.IdpEnterpriseOrganDto;
-import com.g2rain.basis.dto.IdpEnterpriseOrganSelectDto;
 import com.g2rain.basis.dto.PassportIdpBindingBindDto;
 import com.g2rain.basis.dto.PassportIdpBindingDto;
 import com.g2rain.basis.dto.PassportIdpBindingSelectDto;
@@ -47,9 +44,6 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
 
     @Resource(name = "passportIdpBindingDao")
     private PassportIdpBindingDao passportIdpBindingDao;
-
-    @Resource(name = "idpEnterpriseOrganDao")
-    private IdpEnterpriseOrganDao idpEnterpriseOrganDao;
 
     @Resource(name = "idpEnterpriseOrganServiceImpl")
     private IdpEnterpriseOrganService idpEnterpriseOrganService;
@@ -112,20 +106,17 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
 
     @Override
     public Long bind(PassportIdpBindingBindDto dto) {
-        IdpType.validate(dto.getIdpType());
-        IdpBindMode.validate(dto.getBindMode());
-
         String idpType = dto.getIdpType().trim();
+        IdpType idpTypeEnum = IdpType.nameOf(idpType);
         String idpSubject = dto.getIdpSubject().trim();
+        String enterpriseId = Strings.isBlank(dto.getCorpId()) ? null : dto.getCorpId();
         String idpApplicationCode = dto.getIdpApplicationCode() == null ? "" : dto.getIdpApplicationCode().trim();
         String corpId = Strings.isBlank(dto.getCorpId()) ? null : dto.getCorpId().trim();
-
-        if (IdpType.DINGTALK.name().equals(idpType)) {
-            if (Strings.isBlank(corpId)) {
-                throw new BusinessException(SystemErrorCode.PARAM_REQUIRED, "corpId");
-            }
-            ensureIdpEnterpriseOrganBound(dto.getOrganId(), idpType, corpId, canAutoProvisionEnterpriseOrgan(dto));
+        if(idpTypeEnum != null && idpTypeEnum.requiresEnterpriseId()) {
+            idpEnterpriseOrganService.ensureEnterpriseOrganBound(
+                dto.getOrganId(), idpType, enterpriseId, canAutoProvisionEnterpriseOrgan(dto));
         }
+
 
         PassportIdpBindingSelectDto subjectQuery = new PassportIdpBindingSelectDto();
         subjectQuery.setIdpType(idpType);
@@ -184,30 +175,5 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
             return Boolean.TRUE.equals(dto.getAdminUser());
         }
         return PrincipalContextHolder.isAdminUser();
-    }
-
-    private void ensureIdpEnterpriseOrganBound(
-        Long organId,
-        String idpType,
-        String corpId,
-        boolean autoProvision
-    ) {
-        IdpEnterpriseOrganSelectDto activeQuery = new IdpEnterpriseOrganSelectDto();
-        activeQuery.setOrganId(organId);
-        activeQuery.setIdpType(idpType);
-        activeQuery.setEnterpriseId(corpId);
-        activeQuery.setStatus("ACTIVE");
-        if (!idpEnterpriseOrganDao.selectList(activeQuery).isEmpty()) {
-            return;
-        }
-        if (!autoProvision) {
-            throw new BusinessException(BasisErrorCode.IDP_ENTERPRISE_ORGAN_NOT_BOUND);
-        }
-        IdpEnterpriseOrganDto saveDto = new IdpEnterpriseOrganDto();
-        saveDto.setOrganId(organId);
-        saveDto.setIdpType(idpType);
-        saveDto.setEnterpriseId(corpId);
-        saveDto.setStatus("ACTIVE");
-        idpEnterpriseOrganService.save(saveDto);
     }
 }

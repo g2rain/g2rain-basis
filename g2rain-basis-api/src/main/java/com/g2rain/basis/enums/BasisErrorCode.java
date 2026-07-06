@@ -179,10 +179,16 @@ public enum BasisErrorCode implements ErrorCode {
     ONLY_OWN_ORG_APIKEY_ALLOWED("basis.40056", "只能创建本机构的 API Key"),
 
     @Schema(description = "IDP_ENTERPRISE_ORGAN_NOT_BOUND")
-    IDP_ENTERPRISE_ORGAN_NOT_BOUND("basis.40057", "当前租户尚未绑定该钉钉企业，请联系管理员完成三方企业绑定"),
+    IDP_ENTERPRISE_ORGAN_NOT_BOUND("basis.40057", "当前租户尚未绑定该外部企业，请联系管理员完成三方企业绑定"),
 
     @Schema(description = "PASSPORT_IDP_SUBJECT_ALREADY_BOUND")
-    PASSPORT_IDP_SUBJECT_ALREADY_BOUND("basis.40058", "该钉钉账号已绑定其他通行证，无法重复绑定"),
+    PASSPORT_IDP_SUBJECT_ALREADY_BOUND("basis.40058", "该外部身份源账号已绑定其他通行证，无法重复绑定"),
+
+    @Schema(description = "IDP_ENTERPRISE_ALREADY_BOUND_TO_OTHER_ORGAN")
+    IDP_ENTERPRISE_ALREADY_BOUND_TO_OTHER_ORGAN("basis.40063", "该外部企业已绑定其他机构，无法重复绑定"),
+
+    @Schema(description = "IDP_ENTERPRISE_BINDING_INACTIVE_EXISTS")
+    IDP_ENTERPRISE_BINDING_INACTIVE_EXISTS("basis.40064", "该外部企业存在已停用的绑定配置，请先删除后再添加"),
 
     @Schema(description = "ORGAN_INVITE_INVALID")
     ORGAN_INVITE_INVALID("basis.40059", "邀请码无效或已过期"),

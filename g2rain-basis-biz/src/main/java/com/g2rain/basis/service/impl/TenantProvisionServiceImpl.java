@@ -2,13 +2,16 @@ package com.g2rain.basis.service.impl;
 
 
 import com.g2rain.basis.dao.OrganDao;
+import com.g2rain.basis.dao.PassportIdpBindingDao;
 import com.g2rain.basis.dao.RoleDao;
 import com.g2rain.basis.dao.UserDao;
 import com.g2rain.basis.dao.po.OrganPo;
+import com.g2rain.basis.dao.po.PassportIdpBindingPo;
 import com.g2rain.basis.dao.po.RolePo;
 import com.g2rain.basis.dao.po.UserPo;
 import com.g2rain.basis.dto.OrganDto;
 import com.g2rain.basis.dto.OrganInviteRedisDto;
+import com.g2rain.basis.dto.PassportIdpBindingSelectDto;
 import com.g2rain.basis.dto.RoleSelectDto;
 import com.g2rain.basis.dto.PassportJoinOrganDto;
 import com.g2rain.basis.dto.TenantProvisionDto;
@@ -16,8 +19,10 @@ import com.g2rain.basis.dto.UserDto;
 import com.g2rain.basis.dto.UserRoleRelationDto;
 import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.IdpType;
 import com.g2rain.basis.enums.OrganStatus;
 import com.g2rain.basis.enums.RoleType;
+import com.g2rain.basis.service.IdpEnterpriseOrganService;
 import com.g2rain.basis.service.OrganInviteRedisService;
 import com.g2rain.basis.service.OrganProvisionService;
 import com.g2rain.basis.service.RoleService;
@@ -88,6 +93,12 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
     @Resource
     private OrganInviteRedisService organInviteRedisService;
 
+    @Resource(name = "passportIdpBindingDao")
+    private PassportIdpBindingDao passportIdpBindingDao;
+
+    @Resource(name = "idpEnterpriseOrganServiceImpl")
+    private IdpEnterpriseOrganService idpEnterpriseOrganService;
+
     /**
      * 为账号在租户下开通最小可用功能。
      *
@@ -119,6 +130,7 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         organDto.setOrganName(dto.getOrganName());
         organDto.setOrganType(dto.getOrganType());
         Long organId = organProvisionService.createOrganWithoutIsolation(organDto);
+        provisionEnterpriseOrganIfPresent(organId);
 
         // 2. 新增用户
         UserDto userDto = new UserDto();
@@ -153,6 +165,32 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
 
         // 返回 user 信息给调用者
         return userService.selectByIdWithoutIsolation(userId);
+    }
+
+    /**
+     * 三方登录 passport 开通租户时，按 {@code passport_idp_binding} 自动建立外部企业与 organ 的关联。
+     */
+    private void provisionEnterpriseOrganIfPresent(Long organId) {
+        Long passportId = PrincipalContextHolder.getPassportId();
+        if (passportId == null || passportId <= 0) {
+            return;
+        }
+        PassportIdpBindingSelectDto query = new PassportIdpBindingSelectDto();
+        query.setPassportId(passportId);
+        List<PassportIdpBindingPo> bindings = passportIdpBindingDao.selectList(query);
+        for (PassportIdpBindingPo binding : bindings) {
+            String idpType = binding.getIdpType();
+            String corpId = binding.getCorpId();
+            if (Strings.isBlank(idpType) || Strings.isBlank(corpId)) {
+                continue;
+            }
+            IdpType idp = IdpType.nameOf(idpType.trim());
+            if (idp == null || !idp.requiresEnterpriseId()) {
+                continue;
+            }
+            idpEnterpriseOrganService.ensureEnterpriseOrganBound(
+                organId, idpType.trim(), corpId.trim(), true);
+        }
     }
 
     @Override
