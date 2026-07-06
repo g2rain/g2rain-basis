@@ -125,8 +125,8 @@ CREATE TABLE `organ` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '机构表';
 
 -- =============================================
--- 6. 外部企业/租户 ↔ 平台机构（organ）多对多
--- 同一 (idp_type, enterprise_id) 可对应多个 organ_id（多租户）
+-- 6. 外部企业/租户 ↔ 平台机构（organ）
+-- 同一 (idp_type, enterprise_id) 在未删除记录中唯一；逻辑删除后可重新绑定
 -- =============================================
 DROP TABLE IF EXISTS `idp_enterprise_organ`;
 
@@ -142,7 +142,6 @@ CREATE TABLE `idp_enterprise_organ` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_idp_enterprise_organ` (`idp_type`, `enterprise_id`, `organ_id`),
     KEY `idx_organ_id` (`organ_id`),
     KEY `idx_idp_enterprise` (`idp_type`, `enterprise_id`),
     KEY `idx_delete_flag` (`delete_flag`)
