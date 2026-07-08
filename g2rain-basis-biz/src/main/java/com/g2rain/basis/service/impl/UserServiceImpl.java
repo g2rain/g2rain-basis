@@ -25,6 +25,8 @@ import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Moments;
+import com.g2rain.common.validation.UpdateGroup;
+import com.g2rain.common.validation.Validations;
 import com.g2rain.common.web.PrincipalContextHolder;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
@@ -181,12 +183,10 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 保存用户信息
-     * 先不考虑太多场景, 如果因为并发导致存在多个管理员, 在完善分布式锁的功能
+     * 保存用户信息（带数据隔离）
      * <p>
-     * 1. 校验账号与机构是否存在；<br>
-     * 2. 校验用户是否重复注册；<br>
-     * 3. 新增用户时，若机构第一个用户，则自动赋予管理员身份及默认角色。
+     * 新增：校验 passport/organ 存在、不重复注册；机构首个用户自动赋予管理员。<br>
+     * 更新：仅校验用户 id 存在，不校验 passportId/organId。
      * </p>
      *
      * @param dto 用户 DTO
@@ -197,14 +197,31 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @SuppressWarnings("null")
     public Long save(UserDto dto) {
-        return doSave(dto, userDao::selectList, userDao::update, userDao::insert);
+        return doSave(dto, userDao::selectList, userDao::selectById, userDao::update, userDao::insert);
     }
 
+    /**
+     * 保存用户信息（不带数据隔离）
+     * <p>
+     * 新增：校验 passport/organ 存在、不重复注册；机构首个用户自动赋予管理员。<br>
+     * 更新：仅校验用户 id 存在，不校验 passportId/organId。
+     * </p>
+     *
+     * @param dto 用户 DTO
+     * @return 保存后的用户 ID
+     * @throws BusinessException 数据库操作失败或重复注册时抛出
+     */
     @Override
     @Transactional
     @SuppressWarnings("null")
     public Long saveWithoutIsolation(UserDto dto) {
-        return doSave(dto, userDao::selectListWithoutIsolation, userDao::updateWithoutIsolation, userDao::insertWithoutIsolation);
+        return doSave(
+            dto,
+            userDao::selectListWithoutIsolation,
+            userDao::selectByIdWithoutIsolation,
+            userDao::updateWithoutIsolation,
+            userDao::insertWithoutIsolation
+        );
     }
 
     private UserVo selectById(Long id, Function<Long, UserPo> selectFn) {
@@ -216,40 +233,32 @@ public class UserServiceImpl implements UserService {
         return UserConverter.INSTANCE.po2vo(user);
     }
 
-    private Long doSave(UserDto dto, Function<UserSelectDto, List<UserPo>> selectListFn, Function<UserPo, Integer> updateFn, Function<UserPo, Integer> insertFn) {
-        // 校验参数
-        PassportPo passport = passportDao.selectById(dto.getPassportId());
-        Asserts.isTrue(Objects.nonNull(passport), SystemErrorCode.PARAM_VAL_INVALID, dto.getPassportId());
-        OrganPo organ = organDao.selectById(dto.getOrganId());
-        Asserts.isTrue(Objects.nonNull(organ), SystemErrorCode.PARAM_VAL_INVALID, dto.getOrganId());
-
-        // 校验是否重复注册用户
-        UserSelectDto selectDto = new UserSelectDto();
-        selectDto.setPassportId(dto.getPassportId());
-        selectDto.setOrganId(dto.getOrganId());
-        List<UserPo> users = selectListFn.apply(selectDto);
-        if (users.stream().anyMatch(o -> !Objects.equals(o.getId(), dto.getId()))) {
-            throw new BusinessException(SystemErrorCode.DATA_EXISTS);
+    private Long doSave(
+        UserDto dto,
+        Function<UserSelectDto, List<UserPo>> selectListFn,
+        Function<Long, UserPo> selectByIdFn,
+        Function<UserPo, Integer> updateFn,
+        Function<UserPo, Integer> insertFn
+    ) {
+        Validations.validateSave(dto);
+        boolean isCreate = dto.getId() == null || dto.getId() == 0L;
+        if (isCreate) {
+            validateForCreate(dto, selectListFn);
+        } else {
+            validateForUpdate(dto, selectByIdFn);
         }
 
-        // 转换 DTO 为 PO
         UserPo entity = UserConverter.INSTANCE.dto2po(dto);
-
-        // 判断是新增还是更新
         Long id = entity.getId();
 
-        // 判断是新增还是更新
-        if (Objects.nonNull(id) && id != 0) {
-            // 更新：直接更新
+        if (!isCreate) {
             entity.setUpdateTime(Moments.now());
             int success = updateFn.apply(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
             return entity.getId();
         }
 
-        // 新增的时候, 需要知道当前是否存在用户, 机构第一个用户通常都是管理员
         long total = checkUserExists(dto.getOrganId());
-        // 新增：使用IdGenerator生成主键
         entity.setId(idGenerator.generateId());
         LocalDateTime now = Moments.now();
         entity.setCreateTime(now);
@@ -258,6 +267,28 @@ public class UserServiceImpl implements UserService {
         int success = insertFn.apply(entity);
         Asserts.greaterThan(success, 0, SystemErrorCode.CREATE_DATA_ERROR);
         return entity.getId();
+    }
+
+    private void validateForCreate(UserDto dto, Function<UserSelectDto, List<UserPo>> selectListFn) {
+        Validations.validateCreate(dto);
+        PassportPo passport = passportDao.selectById(dto.getPassportId());
+        Asserts.isTrue(Objects.nonNull(passport), SystemErrorCode.PARAM_VAL_INVALID, dto.getPassportId());
+        OrganPo organ = organDao.selectById(dto.getOrganId());
+        Asserts.isTrue(Objects.nonNull(organ), SystemErrorCode.PARAM_VAL_INVALID, dto.getOrganId());
+
+        UserSelectDto selectDto = new UserSelectDto();
+        selectDto.setPassportId(dto.getPassportId());
+        selectDto.setOrganId(dto.getOrganId());
+        List<UserPo> users = selectListFn.apply(selectDto);
+        if (users.stream().anyMatch(o -> !Objects.equals(o.getId(), dto.getId()))) {
+            throw new BusinessException(SystemErrorCode.DATA_EXISTS);
+        }
+    }
+
+    private void validateForUpdate(UserDto dto, Function<Long, UserPo> selectByIdFn) {
+        Validations.validate(dto, UpdateGroup.class);
+        Asserts.isTrue(Objects.nonNull(selectByIdFn.apply(dto.getId())),
+            SystemErrorCode.PARAM_VAL_INVALID, dto.getId());
     }
 
     /**
