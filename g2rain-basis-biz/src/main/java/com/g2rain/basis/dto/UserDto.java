@@ -1,6 +1,7 @@
 package com.g2rain.basis.dto;
 
 import com.g2rain.common.model.BaseDto;
+import com.g2rain.common.validation.CreateGroup;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -25,15 +26,15 @@ public class UserDto extends BaseDto {
     /**
      * 账号标识
      */
-    @NotNull
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "账号标识")
+    @NotNull(groups = CreateGroup.class)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "账号标识（新增必填）")
     private Long passportId;
 
     /**
      * 机构标识
      */
-    @NotNull
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "机构标识")
+    @NotNull(groups = CreateGroup.class)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "机构标识（新增必填）")
     private Long organId;
 
     /**
