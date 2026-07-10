@@ -79,6 +79,7 @@ public interface LoginTokenApi {
      * @param organId         机构 ID
      * @param applicationCode 应用编码
      * @param roleIds         可选；非空时使用 IAM 配置的角色 ID，为空时回退查询机构 ADMIN 角色
+     * @param fingerprint     可选；客户端指纹，存在时按指纹稳定派生 passportId/userId
      * @return 匿名会话的 JWT 载荷信息
      */
     @GetMapping("/anonymous_token_context")
@@ -86,7 +87,8 @@ public interface LoginTokenApi {
     Result<TokenJWTPayload> fetchAnonymousTokenContext(
         @Parameter(description = "机构 ID") @RequestParam Long organId,
         @Parameter(description = "应用编码") @RequestParam String applicationCode,
-        @Parameter(description = "角色 ID 列表；为空时使用机构 ADMIN 角色") @RequestParam(required = false) List<Long> roleIds
+        @Parameter(description = "角色 ID 列表；为空时使用机构 ADMIN 角色") @RequestParam(required = false) List<Long> roleIds,
+        @Parameter(description = "客户端指纹；存在时按指纹稳定派生 passportId/userId") @RequestParam(required = false) String fingerprint
     );
 
     /**

@@ -29,6 +29,7 @@ import com.g2rain.basis.service.OrganService;
 import com.g2rain.basis.service.PersonalStaticAccessTokenService;
 import com.g2rain.basis.service.RoleService;
 import com.g2rain.basis.service.UserService;
+import com.g2rain.basis.utils.AnonymousFingerprintIds;
 import com.g2rain.basis.vo.ApplicationScopeVo;
 import com.g2rain.basis.vo.ApplicationVo;
 import com.g2rain.basis.vo.LoginTokenVo;
@@ -385,11 +386,13 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      * @param organId         机构 ID
      * @param applicationCode 应用编码
      * @param roleIds         可选；非空时使用指定角色，为空时回退机构 ADMIN 角色
+     * @param fingerprint     可选；客户端指纹，存在时按指纹稳定派生 passportId/userId
      * @return 匿名会话的 {@link TokenJWTPayload}
      * @throws BusinessException 当机构或应用不存在，或机构不可用时抛出
      */
     @Override
-    public TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode, List<Long> roleIds) {
+    public TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode, List<Long> roleIds,
+                                                      String fingerprint) {
         ApplicationSelectDto appSelect = new ApplicationSelectDto();
         appSelect.setApplicationCode(applicationCode);
         List<ApplicationVo> applications = applicationService.selectList(appSelect);
@@ -412,8 +415,14 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         List<Long> resolvedRoleIds = resolveAnonymousRoleIds(organId, roleIds);
 
         TokenJWTPayload payload = new TokenJWTPayload();
-        payload.setPassportId(idGenerator.generateSnowflakeId());
-        payload.setUserId(idGenerator.generateSnowflakeId());
+        if (Strings.isNotBlank(fingerprint)) {
+            String fp = fingerprint.trim();
+            payload.setPassportId(AnonymousFingerprintIds.derivePassportId(fp));
+            payload.setUserId(AnonymousFingerprintIds.deriveUserId(fp));
+        } else {
+            payload.setPassportId(idGenerator.generateSnowflakeId());
+            payload.setUserId(idGenerator.generateSnowflakeId());
+        }
         payload.setName("匿名用户");
         payload.setAdminUser(Boolean.FALSE);
         payload.setSessionType(SessionType.ANONYMOUS);

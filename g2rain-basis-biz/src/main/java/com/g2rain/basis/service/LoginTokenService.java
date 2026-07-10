@@ -87,10 +87,11 @@ public interface LoginTokenService {
      * @param organId         机构 ID
      * @param applicationCode 应用编码
      * @param roleIds         可选；非空时使用指定角色，为空时回退机构 ADMIN 角色
+     * @param fingerprint     可选；客户端指纹，存在时按指纹稳定派生 passportId/userId
      * @return 匿名会话的 {@link TokenJWTPayload}
      * @throws BusinessException 当机构或应用不存在，或机构不可用时抛出
      */
-    TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode, List<Long> roleIds);
+    TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode, List<Long> roleIds, String fingerprint);
 
     /**
      * 根据个人静态访问令牌解析状态与会话上下文。
