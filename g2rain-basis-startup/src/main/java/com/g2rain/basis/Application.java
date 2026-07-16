@@ -33,6 +33,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * }</pre>
  */
 @SpringBootApplication
+@EnableFeignClients
+@EnableDiscoveryClient
 public class Application {
 
     /**
