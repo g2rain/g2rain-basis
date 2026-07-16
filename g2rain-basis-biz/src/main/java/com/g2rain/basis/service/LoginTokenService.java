@@ -75,11 +75,12 @@ public interface LoginTokenService {
      * @param idpType              身份源类型（与授权码中快照一致）
      * @param idpSubject           IdP 稳定主体
      * @param idpApplicationCode   三方应用在 IdP 侧的标识（如钉钉 OAuth clientId）
+     * @param bindMode             IdP 接入形态，与 {@code passport_idp_binding.bind_mode} 一致
      * @return 构建完成的 {@link TokenJWTPayload}，包含用户、机构、应用及应用作用域信息
      * @throws BusinessException 当用户、机构或应用不存在，或机构不可用时抛出
      */
     TokenJWTPayload fetchTokenContext(Long passportId, Long userId, String applicationCode, Boolean thirdPartyIdpLogin,
-                                      String idpType, String idpSubject, String idpApplicationCode);
+                                      String idpType, String idpSubject, String idpApplicationCode, String bindMode);
 
     /**
      * 构建匿名会话的 Token JWT 载荷信息。

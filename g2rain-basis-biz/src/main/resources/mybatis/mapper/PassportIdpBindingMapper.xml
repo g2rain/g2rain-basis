@@ -402,6 +402,9 @@
           AND idp_type = #{idpType, jdbcType=VARCHAR}
           AND idp_subject = #{idpSubject, jdbcType=VARCHAR}
           AND idp_application_code = #{idpApplicationCode, jdbcType=VARCHAR}
+          <if test="bindMode != null">
+          AND bind_mode = #{bindMode, jdbcType=VARCHAR}
+          </if>
           AND (delete_flag = 0 OR delete_flag IS NULL)
     </select>
 </mapper>

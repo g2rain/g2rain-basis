@@ -86,6 +86,7 @@ public interface PassportIdpBindingDao {
         @Param("passportId") Long passportId,
         @Param("idpType") String idpType,
         @Param("idpSubject") String idpSubject,
-        @Param("idpApplicationCode") String idpApplicationCode
+        @Param("idpApplicationCode") String idpApplicationCode,
+        @Param("bindMode") String bindMode
     );
 }

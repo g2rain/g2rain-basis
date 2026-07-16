@@ -20,6 +20,7 @@ import com.g2rain.basis.dto.OrganSelectDto;
 import com.g2rain.basis.dto.RoleSelectDto;
 import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.IdpBindMode;
 import com.g2rain.basis.enums.OrganStatus;
 import com.g2rain.basis.enums.RoleType;
 import com.g2rain.basis.enums.StaticTokenStatus;
@@ -233,12 +234,13 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      * @param idpType            身份源类型
      * @param idpSubject         IdP 稳定主体
      * @param idpApplicationCode 三方应用在 IdP 侧的标识
+     * @param bindMode             IdP 接入形态，与 {@code passport_idp_binding.bind_mode} 一致
      * @return 构建完成的 {@link TokenJWTPayload}，包含用户、机构、应用及应用作用域信息
      * @throws BusinessException 当用户、机构或应用不存在，或机构不可用时抛出
      */
     public TokenJWTPayload fetchTokenContext(Long passportId, Long userId, String applicationCode,
                                              Boolean thirdPartyIdpLogin, String idpType, String idpSubject,
-                                             String idpApplicationCode) {
+                                             String idpApplicationCode, String bindMode) {
         ApplicationSelectDto appSelect = new ApplicationSelectDto();
         appSelect.setApplicationCode(applicationCode);
         List<ApplicationVo> applications = applicationService.selectList(appSelect);
@@ -282,7 +284,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
             SystemErrorCode.PARAM_VAL_INVALID, userId
         );
 
-        if (Boolean.TRUE.equals(thirdPartyIdpLogin)) {
+        if (isIdpLogin(thirdPartyIdpLogin, bindMode)) {
             Asserts.isTrue(Strings.isNotBlank(idpType) && Strings.isNotBlank(idpSubject)
                     && Strings.isNotBlank(idpApplicationCode),
                 SystemErrorCode.PARAM_VAL_INVALID, "idpType,idpSubject,idpApplicationCode");
@@ -293,12 +295,13 @@ public class LoginTokenServiceImpl implements LoginTokenService {
             String idpTypeTrim = idpType.trim();
             String idpSubjectTrim = idpSubject.trim();
             String idpAppTrim = idpApplicationCode.trim();
+            String bindModeTrim = normalizeBindMode(bindMode);
             int provisionCount = applicationIdpProvisionDao.countByApplicationIdAndIdp(
                 application.getId(), idpTypeTrim, idpAppTrim);
             Asserts.isTrue(provisionCount > 0,
                 BasisErrorCode.APPLICATION_IDP_PROVISION_MISSING, applicationCode);
             int bindingCount = passportIdpBindingDao.countByPassportIdAndIdpKeys(
-                passportId, idpTypeTrim, idpSubjectTrim, idpAppTrim);
+                passportId, idpTypeTrim, idpSubjectTrim, idpAppTrim, bindModeTrim);
             Asserts.isTrue(bindingCount > 0,
                 BasisErrorCode.PASSPORT_IDP_BINDING_MISMATCH, applicationCode);
         }
@@ -536,5 +539,21 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         context.setApplicationCode(application.getApplicationCode());
         context.setApplicationOrganId(application.getOrganId());
         return context;
+    }
+
+    private static boolean isIdpLogin(Boolean thirdPartyIdpLogin, String bindMode) {
+        if (Strings.isNotBlank(bindMode)) {
+            return true;
+        }
+        return Boolean.TRUE.equals(thirdPartyIdpLogin);
+    }
+
+    private static String normalizeBindMode(String bindMode) {
+        if (Strings.isBlank(bindMode)) {
+            return null;
+        }
+        String normalized = bindMode.trim();
+        IdpBindMode.validate(normalized);
+        return normalized;
     }
 }
