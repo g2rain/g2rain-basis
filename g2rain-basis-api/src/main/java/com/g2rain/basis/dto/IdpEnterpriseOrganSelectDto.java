@@ -36,6 +36,13 @@ public class IdpEnterpriseOrganSelectDto extends BaseSelectListDto {
     private String enterpriseId;
 
     /**
+     * 接入形态，与 {@link com.g2rain.basis.enums.IdpBindMode} 一致
+     */
+    @Schema(description = "接入形态（与 IdpBindMode 枚举名一致）",
+        allowableValues = {"INTERNAL", "THIRD_PARTY"})
+    private String bindMode;
+
+    /**
      * 机构标识，关联 organ.id（业务上应为租户类型机构）
      */
     @Schema(description = "机构标识，关联 organ.id（业务上应为租户类型机构）")

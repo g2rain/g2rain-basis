@@ -22,4 +22,7 @@ public class IdpOrganizationSnapshot {
 
     @Schema(description = "成员列表")
     private List<IdpMemberNode> members = new ArrayList<>();
+
+    @Schema(description = "IAM 解析后的 IdP 侧应用标识（如钉钉 OAuth clientId）")
+    private String idpApplicationCode;
 }

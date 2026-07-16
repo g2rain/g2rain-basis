@@ -1,7 +1,6 @@
 package com.g2rain.basis.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,17 +19,13 @@ public class TenantIdpSyncDto {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "机构标识")
     private Long organId;
 
-    @NotBlank
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "平台应用编码")
-    private String applicationCode;
-
     @Schema(description = "身份源类型，默认 DINGTALK",
         allowableValues = {"DINGTALK", "FEISHU", "WECHAT_WORK"})
     private String idpType = "DINGTALK";
 
-    @Schema(description = "接入形态，默认 INTERNAL",
+    @Schema(description = "接入形态；为空时从 idp_enterprise_organ 记录读取",
         allowableValues = {"INTERNAL", "THIRD_PARTY"})
-    private String bindMode = "INTERNAL";
+    private String bindMode;
 
     @Schema(description = "同步模式，默认 FULL（全量对账）",
         allowableValues = {"FULL", "INCREMENTAL"})

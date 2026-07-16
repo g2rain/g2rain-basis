@@ -24,7 +24,6 @@ public class IdpFetchSnapshotRequest {
         allowableValues = {"INTERNAL", "THIRD_PARTY"})
     private String bindMode;
 
-    @NotBlank
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "IdP 侧应用标识（钉钉 clientId）")
+    @Schema(description = "IdP 侧应用标识（钉钉 clientId）；为空时由 IAM 按 bindMode 从配置解析")
     private String idpApplicationCode;
 }

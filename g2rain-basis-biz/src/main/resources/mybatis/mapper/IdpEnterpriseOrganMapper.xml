@@ -13,6 +13,7 @@
         <!-- 业务字段（其他自定义字段） -->
         <result column="idp_type" property="idpType" jdbcType="VARCHAR"/>
         <result column="enterprise_id" property="enterpriseId" jdbcType="VARCHAR"/>
+        <result column="bind_mode" property="bindMode" jdbcType="VARCHAR"/>
         <result column="organ_id" property="organId" jdbcType="BIGINT"/>
         <result column="status" property="status" jdbcType="VARCHAR"/>
         <result column="remark" property="remark" jdbcType="VARCHAR"/>
@@ -55,6 +56,10 @@
                         enterprise_id
                         <include refid="directionClause"/>
                     </when>
+                    <when test="item.column == 'bindMode'">
+                        bind_mode
+                        <include refid="directionClause"/>
+                    </when>
                     <when test="item.column == 'organId'">
                         organ_id
                         <include refid="directionClause"/>
@@ -80,7 +85,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        idp_type, enterprise_id, organ_id, status, remark,
+        idp_type, enterprise_id, bind_mode, organ_id, status, remark,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -91,7 +96,7 @@
         <!-- 基础字段值 -->
         #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
         <!-- 业务字段值 -->
-        #{idpType, jdbcType=VARCHAR}, #{enterpriseId, jdbcType=VARCHAR}, #{organId, jdbcType=BIGINT}, #{status, jdbcType=VARCHAR}, #{remark, jdbcType=VARCHAR},
+        #{idpType, jdbcType=VARCHAR}, #{enterpriseId, jdbcType=VARCHAR}, #{bindMode, jdbcType=VARCHAR}, #{organId, jdbcType=BIGINT}, #{status, jdbcType=VARCHAR}, #{remark, jdbcType=VARCHAR},
         <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
         0,
         <!-- version字段值（如果存在，设置默认值为0） -->
@@ -107,7 +112,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        idp_type, enterprise_id, organ_id, status, remark,
+        idp_type, enterprise_id, bind_mode, organ_id, status, remark,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -120,7 +125,7 @@
             <!-- 基础字段值 -->
             #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
             <!-- 业务字段值 -->
-            #{item.idpType, jdbcType=VARCHAR}, #{item.enterpriseId, jdbcType=VARCHAR}, #{item.organId, jdbcType=BIGINT}, #{item.status, jdbcType=VARCHAR}, #{item.remark, jdbcType=VARCHAR},
+            #{item.idpType, jdbcType=VARCHAR}, #{item.enterpriseId, jdbcType=VARCHAR}, #{item.bindMode, jdbcType=VARCHAR}, #{item.organId, jdbcType=BIGINT}, #{item.status, jdbcType=VARCHAR}, #{item.remark, jdbcType=VARCHAR},
             <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
             0,
             <!-- version字段值（如果存在，设置默认值为0） -->
@@ -143,6 +148,9 @@
             </if>
             <if test="enterpriseId != null">
                 enterprise_id = #{enterpriseId, jdbcType=VARCHAR},
+            </if>
+            <if test="bindMode != null">
+                bind_mode = #{bindMode, jdbcType=VARCHAR},
             </if>
             <if test="organId != null">
                 organ_id = #{organId, jdbcType=BIGINT},
@@ -173,6 +181,9 @@
             </if>
             <if test="enterpriseId != null">
                 enterprise_id = #{enterpriseId, jdbcType=VARCHAR},
+            </if>
+            <if test="bindMode != null">
+                bind_mode = #{bindMode, jdbcType=VARCHAR},
             </if>
             <if test="organId != null">
                 organ_id = #{organId, jdbcType=BIGINT},
@@ -209,7 +220,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        idp_type, enterprise_id, organ_id, status, remark,
+        idp_type, enterprise_id, bind_mode, organ_id, status, remark,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -228,7 +239,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        idp_type, enterprise_id, organ_id, status, remark,
+        idp_type, enterprise_id, bind_mode, organ_id, status, remark,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -276,6 +287,9 @@
             </if>
             <if test="enterpriseId != null">
                 AND enterprise_id = #{enterpriseId, jdbcType=VARCHAR}
+            </if>
+            <if test="bindMode != null">
+                AND bind_mode = #{bindMode, jdbcType=VARCHAR}
             </if>
             <if test="organId != null">
                 AND organ_id = #{organId, jdbcType=BIGINT}

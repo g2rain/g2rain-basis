@@ -2,11 +2,6 @@ package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.client.DepartmentIdpSyncClient;
 import com.g2rain.basis.client.IdpSyncClient;
-import com.g2rain.basis.dao.ApplicationDao;
-import com.g2rain.basis.dao.ApplicationIdpProvisionDao;
-import com.g2rain.basis.dao.po.ApplicationPo;
-import com.g2rain.basis.dto.ApplicationIdpProvisionSelectDto;
-import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.dto.IdpEnterpriseOrganSelectDto;
 import com.g2rain.basis.dto.TenantIdpSyncDto;
 import com.g2rain.basis.enums.BasisErrorCode;
@@ -52,12 +47,6 @@ public class TenantIdpSyncServiceImpl implements TenantIdpSyncService {
     @Resource(name = "idpEnterpriseOrganServiceImpl")
     private IdpEnterpriseOrganService idpEnterpriseOrganService;
 
-    @Resource(name = "applicationDao")
-    private ApplicationDao applicationDao;
-
-    @Resource(name = "applicationIdpProvisionDao")
-    private ApplicationIdpProvisionDao applicationIdpProvisionDao;
-
     @Resource(name = "tenantIdpMemberSyncServiceImpl")
     private TenantIdpMemberSyncService tenantIdpMemberSyncService;
 
@@ -73,17 +62,19 @@ public class TenantIdpSyncServiceImpl implements TenantIdpSyncService {
         validatePermission(dto.getOrganId());
 
         String idpType = normalizeIdpType(dto.getIdpType());
-        String bindMode = normalizeBindMode(dto.getBindMode());
         String syncMode = normalizeSyncMode(dto.getSyncMode());
-        SyncContext context = resolveSyncContext(dto, idpType);
+        EnterpriseSyncContext enterpriseContext = resolveEnterpriseContext(dto, idpType);
+        String bindMode = enterpriseContext.bindMode();
 
-        IdpOrganizationSnapshot snapshot = fetchSnapshot(context, bindMode);
+        IdpOrganizationSnapshot snapshot = fetchSnapshot(enterpriseContext.corpId(), bindMode);
+        String idpApplicationCode = normalizeIdpApplicationCode(snapshot.getIdpApplicationCode());
+
         TenantIdpMemberSyncResult memberResult = tenantIdpMemberSyncService.syncMembers(
             dto.getOrganId(),
             idpType,
             bindMode,
-            context.idpApplicationCode(),
-            context.corpId(),
+            idpApplicationCode,
+            enterpriseContext.corpId(),
             syncMode,
             snapshot.getMembers()
         );
@@ -119,42 +110,34 @@ public class TenantIdpSyncServiceImpl implements TenantIdpSyncService {
             SystemErrorCode.PARAM_VAL_INVALID, "organId");
     }
 
-    private SyncContext resolveSyncContext(TenantIdpSyncDto dto, String idpType) {
-        ApplicationPo application = resolveApplication(dto.getApplicationCode());
-        ApplicationIdpProvisionSelectDto provisionQuery = new ApplicationIdpProvisionSelectDto();
-        provisionQuery.setApplicationId(application.getId());
-        provisionQuery.setIdpType(idpType);
-        var provisions = applicationIdpProvisionDao.selectList(provisionQuery);
-        Asserts.isTrue(Collections.isNotEmpty(provisions),
-            BasisErrorCode.TENANT_IDP_SYNC_NOT_BOUND, dto.getApplicationCode());
-        String idpApplicationCode = provisions.getFirst().getIdpApplicationCode();
-
+    private EnterpriseSyncContext resolveEnterpriseContext(TenantIdpSyncDto dto, String idpType) {
         IdpEnterpriseOrganSelectDto enterpriseQuery = new IdpEnterpriseOrganSelectDto();
         enterpriseQuery.setOrganId(dto.getOrganId());
         enterpriseQuery.setIdpType(idpType);
         enterpriseQuery.setStatus("ACTIVE");
+        if (Strings.isNotBlank(dto.getBindMode())) {
+            String requestedBindMode = normalizeBindMode(dto.getBindMode());
+            enterpriseQuery.setBindMode(requestedBindMode);
+        }
         List<IdpEnterpriseOrganVo> enterpriseOrgans = idpEnterpriseOrganService.selectList(enterpriseQuery);
         Asserts.isTrue(Collections.isNotEmpty(enterpriseOrgans),
             BasisErrorCode.TENANT_IDP_SYNC_NOT_BOUND, dto.getOrganId());
-        String corpId = enterpriseOrgans.getFirst().getEnterpriseId();
+        IdpEnterpriseOrganVo enterpriseOrgan = enterpriseOrgans.getFirst();
+        String corpId = enterpriseOrgan.getEnterpriseId();
         Asserts.isTrue(Strings.isNotBlank(corpId), BasisErrorCode.TENANT_IDP_SYNC_NOT_BOUND, "corpId");
-        return new SyncContext(idpApplicationCode, corpId.trim());
+        String bindMode = normalizeBindMode(enterpriseOrgan.getBindMode());
+        if (Strings.isNotBlank(dto.getBindMode())) {
+            String requestedBindMode = normalizeBindMode(dto.getBindMode());
+            Asserts.isTrue(Objects.equals(requestedBindMode, bindMode),
+                SystemErrorCode.PARAM_VAL_INVALID, "bindMode");
+        }
+        return new EnterpriseSyncContext(bindMode, corpId.trim());
     }
 
-    private ApplicationPo resolveApplication(String applicationCode) {
-        ApplicationSelectDto selectDto = new ApplicationSelectDto();
-        selectDto.setApplicationCode(applicationCode);
-        List<ApplicationPo> applications = applicationDao.selectList(selectDto);
-        Asserts.isTrue(Collections.isNotEmpty(applications),
-            SystemErrorCode.PARAM_VAL_INVALID, applicationCode);
-        return applications.getFirst();
-    }
-
-    private IdpOrganizationSnapshot fetchSnapshot(SyncContext context, String bindMode) {
+    private IdpOrganizationSnapshot fetchSnapshot(String corpId, String bindMode) {
         IdpFetchSnapshotRequest request = new IdpFetchSnapshotRequest();
-        request.setCorpId(context.corpId());
+        request.setCorpId(corpId);
         request.setBindMode(bindMode);
-        request.setIdpApplicationCode(context.idpApplicationCode());
         Result<IdpOrganizationSnapshot> result;
         try {
             result = idpSyncClient.fetchDingTalkSnapshot(request);
@@ -246,6 +229,12 @@ public class TenantIdpSyncServiceImpl implements TenantIdpSyncService {
         return IdpSyncMode.normalize(syncMode).name();
     }
 
-    private record SyncContext(String idpApplicationCode, String corpId) {
+    private static String normalizeIdpApplicationCode(String idpApplicationCode) {
+        Asserts.isTrue(Strings.isNotBlank(idpApplicationCode),
+            BasisErrorCode.TENANT_IDP_SYNC_IDP_FETCH_FAILED);
+        return idpApplicationCode.trim();
+    }
+
+    private record EnterpriseSyncContext(String bindMode, String corpId) {
     }
 }

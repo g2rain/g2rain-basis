@@ -135,6 +135,7 @@ CREATE TABLE `idp_enterprise_organ` (
     `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
     `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[DINGTALK, WECHAT_WORK, FEISHU, ...]',
     `enterprise_id` VARCHAR(64) NOT NULL COMMENT                                                        '外部企业/租户标识（与 passport_idp_binding.enterprise_id 一致）',
+    `bind_mode` VARCHAR(32) NOT NULL DEFAULT 'INTERNAL' COMMENT                                         '接入形态[IdpBindMode: INTERNAL企业内部应用|THIRD_PARTY第三方应用]',
     `organ_id` BIGINT NOT NULL COMMENT                                                                  '机构标识，关联 organ.id（业务上应为租户类型机构）',
     `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT                                              '状态[ACTIVE:有效, INACTIVE:停用]',
     `remark` VARCHAR(512) DEFAULT NULL COMMENT                                                          '备注',

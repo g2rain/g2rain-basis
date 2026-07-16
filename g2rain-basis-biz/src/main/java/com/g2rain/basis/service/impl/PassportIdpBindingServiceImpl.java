@@ -119,7 +119,7 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
         String corpId = Strings.isBlank(dto.getCorpId()) ? null : dto.getCorpId().trim();
         if (idpTypeEnum != null && idpTypeEnum.requiresEnterpriseId()) {
             idpEnterpriseOrganService.ensureEnterpriseOrganBound(
-                dto.getOrganId(), idpType, enterpriseId, canAutoProvisionEnterpriseOrgan);
+                dto.getOrganId(), idpType, enterpriseId, dto.getBindMode(), canAutoProvisionEnterpriseOrgan);
         }
 
         PassportIdpBindingSelectDto subjectQuery = new PassportIdpBindingSelectDto();

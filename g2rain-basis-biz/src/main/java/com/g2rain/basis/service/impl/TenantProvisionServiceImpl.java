@@ -189,7 +189,7 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
                 continue;
             }
             idpEnterpriseOrganService.ensureEnterpriseOrganBound(
-                organId, idpType.trim(), corpId.trim(), true);
+                organId, idpType.trim(), corpId.trim(), null, true);
         }
     }
 
