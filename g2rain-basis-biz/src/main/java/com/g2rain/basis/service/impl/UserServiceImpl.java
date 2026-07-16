@@ -110,6 +110,14 @@ public class UserServiceImpl implements UserService {
         return selectById(id, userDao::selectByIdWithoutIsolation);
     }
 
+    @Override
+    public List<UserVo> selectListWithoutIsolation(UserSelectDto selectDto) {
+        return userDao.selectListWithoutIsolation(selectDto)
+            .stream()
+            .map(UserConverter.INSTANCE::po2vo)
+            .toList();
+    }
+
     /**
      * 分页查询用户列表
      *
@@ -197,7 +205,15 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @SuppressWarnings("null")
     public Long save(UserDto dto) {
-        return doSave(dto, userDao::selectList, userDao::selectById, userDao::update, userDao::insert);
+        return doSave(
+            dto,
+            userDao::selectList,
+            userDao::selectById,
+            passportDao::selectById,
+            organDao::selectById,
+            userDao::update,
+            userDao::insert
+        );
     }
 
     /**
@@ -219,6 +235,8 @@ public class UserServiceImpl implements UserService {
             dto,
             userDao::selectListWithoutIsolation,
             userDao::selectByIdWithoutIsolation,
+            passportDao::selectByIdWithoutIsolation,
+            organDao::selectById,
             userDao::updateWithoutIsolation,
             userDao::insertWithoutIsolation
         );
@@ -237,13 +255,15 @@ public class UserServiceImpl implements UserService {
         UserDto dto,
         Function<UserSelectDto, List<UserPo>> selectListFn,
         Function<Long, UserPo> selectByIdFn,
+        Function<Long, PassportPo> selectPassportByIdFn,
+        Function<Long, OrganPo> selectOrganByIdFn,
         Function<UserPo, Integer> updateFn,
         Function<UserPo, Integer> insertFn
     ) {
         Validations.validateSave(dto);
         boolean isCreate = dto.getId() == null || dto.getId() == 0L;
         if (isCreate) {
-            validateForCreate(dto, selectListFn);
+            validateForCreate(dto, selectListFn, selectPassportByIdFn, selectOrganByIdFn);
         } else {
             validateForUpdate(dto, selectByIdFn);
         }
@@ -269,11 +289,16 @@ public class UserServiceImpl implements UserService {
         return entity.getId();
     }
 
-    private void validateForCreate(UserDto dto, Function<UserSelectDto, List<UserPo>> selectListFn) {
+    private void validateForCreate(
+        UserDto dto,
+        Function<UserSelectDto, List<UserPo>> selectListFn,
+        Function<Long, PassportPo> selectPassportByIdFn,
+        Function<Long, OrganPo> selectOrganByIdFn
+    ) {
         Validations.validateCreate(dto);
-        PassportPo passport = passportDao.selectById(dto.getPassportId());
+        PassportPo passport = selectPassportByIdFn.apply(dto.getPassportId());
         Asserts.isTrue(Objects.nonNull(passport), SystemErrorCode.PARAM_VAL_INVALID, dto.getPassportId());
-        OrganPo organ = organDao.selectById(dto.getOrganId());
+        OrganPo organ = selectOrganByIdFn.apply(dto.getOrganId());
         Asserts.isTrue(Objects.nonNull(organ), SystemErrorCode.PARAM_VAL_INVALID, dto.getOrganId());
 
         UserSelectDto selectDto = new UserSelectDto();
@@ -324,6 +349,17 @@ public class UserServiceImpl implements UserService {
         // 删除用户角色
         userRoleRelationService.deleteByUserId(id);
         // 删除用户
+        return userDao.delete(id);
+    }
+
+    @Override
+    @Transactional
+    public int deleteWithoutIsolation(Long id) {
+        UserPo user = userDao.selectByIdWithoutIsolation(id);
+        if (user == null || Boolean.TRUE.equals(user.getAdmin())) {
+            return 0;
+        }
+        userRoleRelationService.deleteByUserId(id);
         return userDao.delete(id);
     }
 }

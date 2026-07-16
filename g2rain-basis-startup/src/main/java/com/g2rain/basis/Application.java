@@ -3,6 +3,8 @@ package com.g2rain.basis;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
  * <p>{@code Application} 是 Spring Boot 启动类，用于启动整个应用程序。</p>

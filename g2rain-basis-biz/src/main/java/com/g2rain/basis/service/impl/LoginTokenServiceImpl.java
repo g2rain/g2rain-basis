@@ -277,14 +277,10 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         }
 
         // 1. 查询用户信息
-        UserSelectDto userSelect = new UserSelectDto();
-        userSelect.setId(userId);
-        List<UserVo> users = userService.selectList(userSelect);
-        Asserts.isTrue(Collections.isNotEmpty(users),
+        UserVo user = userService.selectByIdWithoutIsolation(userId);
+        Asserts.isTrue(user != null,
             SystemErrorCode.PARAM_VAL_INVALID, userId
         );
-
-        UserVo user = users.getFirst();
 
         if (Boolean.TRUE.equals(thirdPartyIdpLogin)) {
             Asserts.isTrue(Strings.isNotBlank(idpType) && Strings.isNotBlank(idpSubject)

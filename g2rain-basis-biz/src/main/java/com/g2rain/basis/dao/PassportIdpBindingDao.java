@@ -2,6 +2,7 @@ package com.g2rain.basis.dao;
 
 import com.g2rain.basis.dao.po.PassportIdpBindingPo;
 import com.g2rain.basis.dto.PassportIdpBindingSelectDto;
+import com.g2rain.data.isolation.annotations.IgnoreIsolation;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -71,6 +72,12 @@ public interface PassportIdpBindingDao {
      * @return 实体对象列表
      */
     List<PassportIdpBindingPo> selectList(PassportIdpBindingSelectDto selectDto);
+
+    /**
+     * 根据查询入参 DTO 筛选列表（非隔离语义，供 IdP 登录解析使用）。
+     */
+    @IgnoreIsolation
+    List<PassportIdpBindingPo> selectListWithoutIsolation(PassportIdpBindingSelectDto selectDto);
 
     /**
      * 统计通行证在指定身份源主体与应用下的有效绑定行数。

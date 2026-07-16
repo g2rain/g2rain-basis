@@ -88,6 +88,11 @@
             <groupId>com.g2rain</groupId>
             <artifactId>g2rain-starter-department-principal</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.g2rain</groupId>
+            <artifactId>g2rain-department-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>

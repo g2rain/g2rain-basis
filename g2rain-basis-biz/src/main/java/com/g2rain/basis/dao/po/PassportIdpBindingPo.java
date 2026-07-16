@@ -46,6 +46,11 @@ public class PassportIdpBindingPo extends BasePo {
     private String idpUserId;
 
     /**
+     * IdP 开放平台 openId，可选
+     */
+    private String idpOpenId;
+
+    /**
      * 三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId），与 {@code application_idp_provision} 对齐
      */
     private String idpApplicationCode;
