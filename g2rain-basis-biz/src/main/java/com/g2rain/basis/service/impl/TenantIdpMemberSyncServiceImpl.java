@@ -19,6 +19,7 @@ import com.g2rain.basis.service.PassportIdpBindingService;
 import com.g2rain.basis.service.PassportService;
 import com.g2rain.basis.service.TenantIdpMemberSyncService;
 import com.g2rain.basis.service.UserService;
+import com.g2rain.basis.service.idp.IdpMemberBindingSnapshotSupport;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.ExceptionConverter;
 import com.g2rain.common.model.Result;
@@ -32,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
@@ -74,7 +74,8 @@ public class TenantIdpMemberSyncServiceImpl implements TenantIdpMemberSyncServic
         String idpApplicationCode,
         String corpId,
         String syncMode,
-        List<IdpMemberNode> members
+        List<IdpMemberNode> members,
+        boolean enableDestructiveReconcile
     ) {
         TenantIdpMemberSyncResult result = new TenantIdpMemberSyncResult();
         for (IdpMemberNode member : members) {
@@ -83,7 +84,7 @@ public class TenantIdpMemberSyncServiceImpl implements TenantIdpMemberSyncServic
             }
             syncSingleMember(organId, idpType, bindMode, idpApplicationCode, corpId, member, result);
         }
-        if (IdpSyncMode.FULL == IdpSyncMode.normalize(syncMode)) {
+        if (IdpSyncMode.FULL == IdpSyncMode.normalize(syncMode) && enableDestructiveReconcile) {
             reconcileOffboardedMembers(organId, idpType, bindMode, idpApplicationCode, corpId, members, result);
         }
         return result;
@@ -104,39 +105,13 @@ public class TenantIdpMemberSyncServiceImpl implements TenantIdpMemberSyncServic
         query.setCorpId(corpId);
         query.setBindMode(bindMode);
         List<PassportIdpBindingPo> scopeBindings = passportIdpBindingDao.selectListWithoutIsolation(query);
-        Set<String> snapshotKeys = buildSnapshotBindingKeys(members);
+        Set<String> snapshotKeys = IdpMemberBindingSnapshotSupport.buildSnapshotBindingKeys(members);
         for (PassportIdpBindingPo binding : scopeBindings) {
-            if (isBindingInSnapshot(binding, snapshotKeys)) {
+            if (IdpMemberBindingSnapshotSupport.isBindingInSnapshot(binding, snapshotKeys)) {
                 continue;
             }
             offboardBindingAndUser(organId, binding, result);
         }
-    }
-
-    static Set<String> buildSnapshotBindingKeys(List<IdpMemberNode> members) {
-        Set<String> keys = new HashSet<>();
-        if (members == null) {
-            return keys;
-        }
-        for (IdpMemberNode member : members) {
-            if (Strings.isBlank(member.getUnionId()) && Strings.isBlank(member.getIdpUserId())) {
-                continue;
-            }
-            if (Strings.isNotBlank(member.getUnionId())) {
-                keys.add(subjectKey(member.getUnionId()));
-            }
-            if (Strings.isNotBlank(member.getIdpUserId())) {
-                keys.add(userIdKey(member.getIdpUserId()));
-            }
-        }
-        return keys;
-    }
-
-    static boolean isBindingInSnapshot(PassportIdpBindingPo binding, Set<String> snapshotKeys) {
-        if (Strings.isNotBlank(binding.getIdpSubject()) && snapshotKeys.contains(subjectKey(binding.getIdpSubject()))) {
-            return true;
-        }
-        return Strings.isNotBlank(binding.getIdpUserId()) && snapshotKeys.contains(userIdKey(binding.getIdpUserId()));
     }
 
     private void offboardBindingAndUser(Long organId, PassportIdpBindingPo binding, TenantIdpMemberSyncResult result) {
@@ -151,14 +126,6 @@ public class TenantIdpMemberSyncServiceImpl implements TenantIdpMemberSyncServic
                 result.setMembersDeleted(result.getMembersDeleted() + 1);
             }
         }
-    }
-
-    private static String subjectKey(String idpSubject) {
-        return "subject:" + idpSubject.trim();
-    }
-
-    private static String userIdKey(String idpUserId) {
-        return "userId:" + idpUserId.trim();
     }
 
     private void syncSingleMember(

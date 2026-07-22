@@ -17,6 +17,7 @@ public interface TenantIdpMemberSyncService {
         String idpApplicationCode,
         String corpId,
         String syncMode,
-        List<IdpMemberNode> members
+        List<IdpMemberNode> members,
+        boolean enableDestructiveReconcile
     );
 }

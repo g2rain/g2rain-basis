@@ -47,6 +47,9 @@ public class TenantIdpSyncResultVo {
     @Schema(description = "移除部门-成员关系数（FULL 模式下关系对账）")
     private int departmentRelationsRemoved;
 
+    @Schema(description = "本次新增的用户-角色关系数")
+    private int rolesAssigned;
+
     @Schema(description = "耗时毫秒")
     private long elapsedMs;
 }

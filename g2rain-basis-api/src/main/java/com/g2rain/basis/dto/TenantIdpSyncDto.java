@@ -19,7 +19,7 @@ public class TenantIdpSyncDto {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "机构标识")
     private Long organId;
 
-    @Schema(description = "身份源类型，默认 DINGTALK",
+    @Schema(description = "身份源类型，默认 DINGTALK；同步接口当前仅支持 DINGTALK",
         allowableValues = {"DINGTALK", "FEISHU", "WECHAT_WORK"})
     private String idpType = "DINGTALK";
 
@@ -30,4 +30,8 @@ public class TenantIdpSyncDto {
     @Schema(description = "同步模式，默认 FULL（全量对账）",
         allowableValues = {"FULL", "INCREMENTAL"})
     private String syncMode = "FULL";
+
+    @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "同步后为 IdP 快照内全部成员分配的角色标识")
+    private Long roleId;
 }

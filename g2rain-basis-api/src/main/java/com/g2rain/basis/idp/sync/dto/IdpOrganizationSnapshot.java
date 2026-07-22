@@ -25,4 +25,10 @@ public class IdpOrganizationSnapshot {
 
     @Schema(description = "IAM 解析后的 IdP 侧应用标识（如钉钉 OAuth clientId）")
     private String idpApplicationCode;
+
+    @Schema(description = "快照是否完整可信（不完整时不应执行 FULL 对账删除）")
+    private boolean complete = false;
+
+    @Schema(description = "拉取统计")
+    private IdpSnapshotFetchMeta fetchMeta;
 }
