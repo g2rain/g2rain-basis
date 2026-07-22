@@ -7,7 +7,6 @@ import com.g2rain.basis.dto.PassportIdpBindingBindDto;
 import com.g2rain.basis.dto.PassportIdpBindingDto;
 import com.g2rain.basis.dto.PassportIdpBindingSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
-import com.g2rain.basis.enums.IdpBindMode;
 import com.g2rain.basis.enums.IdpType;
 import com.g2rain.basis.service.IdpEnterpriseOrganService;
 import com.g2rain.basis.service.PassportIdpBindingService;
@@ -78,16 +77,13 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
 
     @Override
     public Long save(PassportIdpBindingDto dto) {
-        // 转换DTO为PO
         PassportIdpBindingPo entity = PassportIdpBindingConverter.INSTANCE.dto2po(dto);
         if (entity.getIdpApplicationCode() == null) {
             entity.setIdpApplicationCode("");
         }
 
-        // 判断是新增还是更新
         Long id = entity.getId();
         if (Objects.isNull(id) || id == 0) {
-            // 新增：使用IdGenerator生成主键
             entity.setId(idGenerator.generateId());
             LocalDateTime now = Moments.now();
             entity.setUpdateTime(now);
@@ -95,7 +91,6 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
             int success = passportIdpBindingDao.insert(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.CREATE_DATA_ERROR);
         } else {
-            // 更新：直接更新
             entity.setUpdateTime(Moments.now());
             int success = passportIdpBindingDao.update(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
@@ -106,23 +101,32 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
 
     @Override
     public Long bind(PassportIdpBindingBindDto dto) {
+        validateBindPrincipal(dto);
+        return doBind(dto, canAutoProvisionFromPrincipal());
+    }
+
+    @Override
+    public Long bindInternal(PassportIdpBindingBindDto dto) {
+        return doBind(dto, canAutoProvisionFromTrustedCaller(dto));
+    }
+
+    private Long doBind(PassportIdpBindingBindDto dto, boolean canAutoProvisionEnterpriseOrgan) {
         String idpType = dto.getIdpType().trim();
         IdpType idpTypeEnum = IdpType.nameOf(idpType);
         String idpSubject = dto.getIdpSubject().trim();
         String enterpriseId = Strings.isBlank(dto.getCorpId()) ? null : dto.getCorpId();
         String idpApplicationCode = dto.getIdpApplicationCode() == null ? "" : dto.getIdpApplicationCode().trim();
         String corpId = Strings.isBlank(dto.getCorpId()) ? null : dto.getCorpId().trim();
-        if(idpTypeEnum != null && idpTypeEnum.requiresEnterpriseId()) {
+        if (idpTypeEnum != null && idpTypeEnum.requiresEnterpriseId()) {
             idpEnterpriseOrganService.ensureEnterpriseOrganBound(
-                dto.getOrganId(), idpType, enterpriseId, canAutoProvisionEnterpriseOrgan(dto));
+                dto.getOrganId(), idpType, enterpriseId, dto.getBindMode(), canAutoProvisionEnterpriseOrgan);
         }
-
 
         PassportIdpBindingSelectDto subjectQuery = new PassportIdpBindingSelectDto();
         subjectQuery.setIdpType(idpType);
         subjectQuery.setIdpSubject(idpSubject);
         subjectQuery.setIdpApplicationCode(idpApplicationCode);
-        List<PassportIdpBindingPo> existing = passportIdpBindingDao.selectList(subjectQuery);
+        List<PassportIdpBindingPo> existing = passportIdpBindingDao.selectListWithoutIsolation(subjectQuery);
         if (!existing.isEmpty()) {
             PassportIdpBindingPo bound = existing.getFirst();
             if (!Objects.equals(bound.getPassportId(), dto.getPassportId())) {
@@ -137,32 +141,40 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
         saveDto.setIdpSubject(idpSubject);
         saveDto.setCorpId(corpId);
         saveDto.setIdpUserId(Strings.isBlank(dto.getIdpUserId()) ? null : dto.getIdpUserId().trim());
+        saveDto.setIdpOpenId(Strings.isBlank(dto.getIdpOpenId()) ? null : dto.getIdpOpenId().trim());
         saveDto.setIdpApplicationCode(idpApplicationCode);
         saveDto.setBindMode(dto.getBindMode().trim());
         saveDto.setRawProfile(Strings.isBlank(dto.getRawProfile()) ? "{}" : dto.getRawProfile());
         return save(saveDto);
     }
 
-    @Override
-    public int delete(Long id) {
-        return passportIdpBindingDao.delete(id);
-    }
+    private void validateBindPrincipal(PassportIdpBindingBindDto dto) {
+        Long principalPassportId = PrincipalContextHolder.getPassportId();
+        Asserts.isTrue(principalPassportId != null && principalPassportId > 0L,
+            SystemErrorCode.UNAUTHORIZED);
+        Asserts.isTrue(Objects.equals(dto.getPassportId(), principalPassportId),
+            SystemErrorCode.PARAM_VAL_INVALID, "passportId");
 
-    /**
-     * USER 会话且为机构管理员时，可自动建立三方企业与 organ 的绑定关系
-     */
-    private boolean canAutoProvisionEnterpriseOrgan(PassportIdpBindingBindDto dto) {
-        return SessionType.USER.equals(resolveSessionType(dto)) && resolveAdminUser(dto);
-    }
-
-    private SessionType resolveSessionType(PassportIdpBindingBindDto dto) {
-        if (Strings.isNotBlank(dto.getSessionType())) {
-            try {
-                return SessionType.valueOf(dto.getSessionType().trim());
-            } catch (IllegalArgumentException ignored) {
-                // fall through
-            }
+        if (SessionType.USER.equals(resolveSessionTypeFromPrincipal())) {
+            Long principalOrganId = PrincipalContextHolder.getOrganId();
+            Asserts.isTrue(principalOrganId != null && principalOrganId > 0L,
+                SystemErrorCode.UNAUTHORIZED);
+            Asserts.isTrue(Objects.equals(dto.getOrganId(), principalOrganId),
+                SystemErrorCode.PARAM_VAL_INVALID, "organId");
         }
+    }
+
+    private static boolean canAutoProvisionFromPrincipal() {
+        return SessionType.USER.equals(resolveSessionTypeFromPrincipal())
+            && PrincipalContextHolder.isAdminUser();
+    }
+
+    static boolean canAutoProvisionFromTrustedCaller(PassportIdpBindingBindDto dto) {
+        return SessionType.USER.equals(resolveSessionTypeFromDto(dto))
+            && Boolean.TRUE.equals(dto.getAdminUser());
+    }
+
+    static SessionType resolveSessionTypeFromPrincipal() {
         Long userId = PrincipalContextHolder.getUserId();
         if (userId != null && userId > 0L) {
             return SessionType.USER;
@@ -170,10 +182,19 @@ public class PassportIdpBindingServiceImpl implements PassportIdpBindingService 
         return SessionType.PASSPORT;
     }
 
-    private boolean resolveAdminUser(PassportIdpBindingBindDto dto) {
-        if (dto.getAdminUser() != null) {
-            return Boolean.TRUE.equals(dto.getAdminUser());
+    static SessionType resolveSessionTypeFromDto(PassportIdpBindingBindDto dto) {
+        if (Strings.isNotBlank(dto.getSessionType())) {
+            try {
+                return SessionType.valueOf(dto.getSessionType().trim());
+            } catch (IllegalArgumentException ignored) {
+                // fall through
+            }
         }
-        return PrincipalContextHolder.isAdminUser();
+        return SessionType.PASSPORT;
+    }
+
+    @Override
+    public int delete(Long id) {
+        return passportIdpBindingDao.delete(id);
     }
 }

@@ -50,6 +50,14 @@ public interface PassportIdpBindingService {
     Long bind(PassportIdpBindingBindDto dto);
 
     /**
+     * IAM 等服务间绑定外部身份源（幂等）；信任 IAM 已校验的 state 字段。
+     *
+     * @param dto 绑定请求
+     * @return 绑定记录主键 ID
+     */
+    Long bindInternal(PassportIdpBindingBindDto dto);
+
+    /**
      * 根据ID删除数据
      *
      * @param id 主键ID

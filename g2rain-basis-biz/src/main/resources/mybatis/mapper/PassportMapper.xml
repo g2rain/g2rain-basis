@@ -367,6 +367,19 @@
         AND (delete_flag = 0 OR delete_flag IS NULL)
     </select>
 
+    <!-- 根据ID查询记录（非隔离语义，供 IdP 登录解析使用） -->
+    <select id="selectByIdWithoutIsolation" parameterType="Long" resultMap="BaseResultMap">
+        SELECT
+        id,
+        create_time, update_time,
+        username, password, real_name, sex, birthday, id_no, mobile, email, status, password_trusted,
+        delete_flag,
+        version
+        FROM passport
+        WHERE id = #{id, jdbcType=BIGINT}
+        AND (delete_flag = 0 OR delete_flag IS NULL)
+    </select>
+
     <!-- 根据 SelectDto 条件查询列表 -->
     <select id="selectList" parameterType="com.g2rain.basis.dto.PassportSelectDto" resultMap="BaseResultMap">
         SELECT

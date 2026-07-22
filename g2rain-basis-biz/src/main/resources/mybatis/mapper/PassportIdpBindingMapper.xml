@@ -16,6 +16,7 @@
         <result column="idp_subject" property="idpSubject" jdbcType="VARCHAR"/>
         <result column="corp_id" property="corpId" jdbcType="VARCHAR"/>
         <result column="idp_user_id" property="idpUserId" jdbcType="VARCHAR"/>
+        <result column="idp_open_id" property="idpOpenId" jdbcType="VARCHAR"/>
         <result column="idp_application_code" property="idpApplicationCode" jdbcType="VARCHAR"/>
         <result column="bind_mode" property="bindMode" jdbcType="VARCHAR"/>
         <result column="raw_profile" property="rawProfile" jdbcType="LONGVARCHAR"/>
@@ -70,6 +71,10 @@
                         idp_user_id
                         <include refid="directionClause"/>
                     </when>
+                    <when test="item.column == 'idpOpenId'">
+                        idp_open_id
+                        <include refid="directionClause"/>
+                    </when>
                     <when test="item.column == 'idpApplicationCode'">
                         idp_application_code
                         <include refid="directionClause"/>
@@ -95,7 +100,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_application_code, bind_mode, raw_profile,
+        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_open_id, idp_application_code, bind_mode, raw_profile,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -106,7 +111,7 @@
         <!-- 基础字段值 -->
         #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
         <!-- 业务字段值 -->
-        #{passportId, jdbcType=BIGINT}, #{idpType, jdbcType=VARCHAR}, #{idpSubject, jdbcType=VARCHAR}, #{corpId, jdbcType=VARCHAR}, #{idpUserId, jdbcType=VARCHAR}, #{idpApplicationCode, jdbcType=VARCHAR}, #{bindMode, jdbcType=VARCHAR}, #{rawProfile, jdbcType=LONGVARCHAR},
+        #{passportId, jdbcType=BIGINT}, #{idpType, jdbcType=VARCHAR}, #{idpSubject, jdbcType=VARCHAR}, #{corpId, jdbcType=VARCHAR}, #{idpUserId, jdbcType=VARCHAR}, #{idpOpenId, jdbcType=VARCHAR}, #{idpApplicationCode, jdbcType=VARCHAR}, #{bindMode, jdbcType=VARCHAR}, #{rawProfile, jdbcType=LONGVARCHAR},
         <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
         0,
         <!-- version字段值（如果存在，设置默认值为0） -->
@@ -122,7 +127,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_application_code, bind_mode, raw_profile,
+        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_open_id, idp_application_code, bind_mode, raw_profile,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -135,7 +140,7 @@
             <!-- 基础字段值 -->
             #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
             <!-- 业务字段值 -->
-            #{item.passportId, jdbcType=BIGINT}, #{item.idpType, jdbcType=VARCHAR}, #{item.idpSubject, jdbcType=VARCHAR}, #{item.corpId, jdbcType=VARCHAR}, #{item.idpUserId, jdbcType=VARCHAR}, #{item.idpApplicationCode, jdbcType=VARCHAR}, #{item.bindMode, jdbcType=VARCHAR}, #{item.rawProfile, jdbcType=LONGVARCHAR},
+            #{item.passportId, jdbcType=BIGINT}, #{item.idpType, jdbcType=VARCHAR}, #{item.idpSubject, jdbcType=VARCHAR}, #{item.corpId, jdbcType=VARCHAR}, #{item.idpUserId, jdbcType=VARCHAR}, #{item.idpOpenId, jdbcType=VARCHAR}, #{item.idpApplicationCode, jdbcType=VARCHAR}, #{item.bindMode, jdbcType=VARCHAR}, #{item.rawProfile, jdbcType=LONGVARCHAR},
             <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
             0,
             <!-- version字段值（如果存在，设置默认值为0） -->
@@ -167,6 +172,9 @@
             </if>
             <if test="idpUserId != null">
                 idp_user_id = #{idpUserId, jdbcType=VARCHAR},
+            </if>
+            <if test="idpOpenId != null">
+                idp_open_id = #{idpOpenId, jdbcType=VARCHAR},
             </if>
             <if test="idpApplicationCode != null">
                 idp_application_code = #{idpApplicationCode, jdbcType=VARCHAR},
@@ -207,6 +215,9 @@
             <if test="idpUserId != null">
                 idp_user_id = #{idpUserId, jdbcType=VARCHAR},
             </if>
+            <if test="idpOpenId != null">
+                idp_open_id = #{idpOpenId, jdbcType=VARCHAR},
+            </if>
             <if test="idpApplicationCode != null">
                 idp_application_code = #{idpApplicationCode, jdbcType=VARCHAR},
             </if>
@@ -242,7 +253,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_application_code, bind_mode, raw_profile,
+        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_open_id, idp_application_code, bind_mode, raw_profile,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -261,7 +272,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_application_code, bind_mode, raw_profile,
+        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_open_id, idp_application_code, bind_mode, raw_profile,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -319,6 +330,9 @@
             <if test="idpUserId != null">
                 AND idp_user_id = #{idpUserId, jdbcType=VARCHAR}
             </if>
+            <if test="idpOpenId != null">
+                AND idp_open_id = #{idpOpenId, jdbcType=VARCHAR}
+            </if>
             <if test="idpApplicationCode != null">
                 AND idp_application_code = #{idpApplicationCode, jdbcType=VARCHAR}
             </if>
@@ -334,6 +348,53 @@
         <include refid="dynamicOrderBy"/>
     </select>
 
+    <!-- 根据SelectDto条件查询列表（非隔离语义） -->
+    <select id="selectListWithoutIsolation" parameterType="com.g2rain.basis.dto.PassportIdpBindingSelectDto" resultMap="BaseResultMap">
+        SELECT
+        id,
+        create_time, update_time,
+        passport_id, idp_type, idp_subject, corp_id, idp_user_id, idp_open_id, idp_application_code, bind_mode, raw_profile,
+        delete_flag,
+        version
+        FROM passport_idp_binding
+        <where>
+            <if test="id != null">
+                AND id = #{id, jdbcType=BIGINT}
+            </if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
+            <if test="passportId != null">
+                AND passport_id = #{passportId, jdbcType=BIGINT}
+            </if>
+            <if test="idpType != null">
+                AND idp_type = #{idpType, jdbcType=VARCHAR}
+            </if>
+            <if test="idpSubject != null">
+                AND idp_subject = #{idpSubject, jdbcType=VARCHAR}
+            </if>
+            <if test="corpId != null">
+                AND corp_id = #{corpId, jdbcType=VARCHAR}
+            </if>
+            <if test="idpUserId != null">
+                AND idp_user_id = #{idpUserId, jdbcType=VARCHAR}
+            </if>
+            <if test="idpOpenId != null">
+                AND idp_open_id = #{idpOpenId, jdbcType=VARCHAR}
+            </if>
+            <if test="idpApplicationCode != null">
+                AND idp_application_code = #{idpApplicationCode, jdbcType=VARCHAR}
+            </if>
+            <if test="bindMode != null">
+                AND bind_mode = #{bindMode, jdbcType=VARCHAR}
+            </if>
+            AND (delete_flag = 0 OR delete_flag IS NULL)
+        </where>
+    </select>
+
     <select id="countByPassportIdAndIdpKeys" resultType="int">
         SELECT COUNT(1)
         FROM passport_idp_binding
@@ -341,6 +402,9 @@
           AND idp_type = #{idpType, jdbcType=VARCHAR}
           AND idp_subject = #{idpSubject, jdbcType=VARCHAR}
           AND idp_application_code = #{idpApplicationCode, jdbcType=VARCHAR}
+          <if test="bindMode != null">
+          AND bind_mode = #{bindMode, jdbcType=VARCHAR}
+          </if>
           AND (delete_flag = 0 OR delete_flag IS NULL)
     </select>
 </mapper>
