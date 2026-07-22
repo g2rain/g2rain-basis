@@ -70,7 +70,8 @@ public interface LoginTokenApi {
         @Parameter(description = "是否由外部身份源授权链路发码换票；为 true 且 userId 非空时校验 application_idp_provision 与 passport_idp_binding") @RequestParam(required = false) Boolean thirdPartyIdpLogin,
         @Parameter(description = "身份源类型，与 IdpType 枚举名一致") @RequestParam(required = false) String idpType,
         @Parameter(description = "IdP 稳定主体，如钉钉 unionId") @RequestParam(required = false) String idpSubject,
-        @Parameter(description = "三方应用在 IdP 侧的应用标识，如钉钉 OAuth clientId") @RequestParam(required = false) String idpApplicationCode
+        @Parameter(description = "三方应用在 IdP 侧的应用标识，如钉钉 OAuth clientId") @RequestParam(required = false) String idpApplicationCode,
+        @Parameter(description = "IdP 接入形态，与 IdpBindMode 及 passport_idp_binding.bind_mode 一致") @RequestParam(required = false) String bindMode
     );
 
     /**

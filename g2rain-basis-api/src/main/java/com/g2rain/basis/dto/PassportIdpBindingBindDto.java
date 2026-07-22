@@ -38,6 +38,9 @@ public class PassportIdpBindingBindDto {
     @Schema(description = "钉钉 userid（corp 内）")
     private String idpUserId;
 
+    @Schema(description = "IdP 开放平台 openId")
+    private String idpOpenId;
+
     @NotBlank
     @Schema(description = "三方应用在 IdP 侧的应用标识")
     private String idpApplicationCode;
@@ -49,9 +52,9 @@ public class PassportIdpBindingBindDto {
     @Schema(description = "IdP 返回的原始用户信息快照")
     private String rawProfile;
 
-    @Schema(description = "发起绑定时的会话类型（与 SessionType 枚举名一致，IAM 扫码绑定时传入）")
+    @Schema(description = "发起绑定时的会话类型（与 SessionType 枚举名一致；仅 IAM 内部 bind 接口使用）")
     private String sessionType;
 
-    @Schema(description = "发起绑定时是否为机构管理员（user.admin，IAM 扫码绑定时传入）")
+    @Schema(description = "发起绑定时是否为机构管理员（user.admin；仅 IAM 内部 bind 接口使用）")
     private Boolean adminUser;
 }

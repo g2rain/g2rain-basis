@@ -53,6 +53,12 @@ public class PassportIdpBindingDto extends BaseDto {
     private String idpUserId;
 
     /**
+     * IdP 开放平台 openId，可选
+     */
+    @Schema(description = "IdP 开放平台 openId，可选")
+    private String idpOpenId;
+
+    /**
      * 三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId），须与 {@code application_idp_provision} 中配置一致
      */
     @Schema(description = "三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId）")

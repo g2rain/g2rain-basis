@@ -86,3 +86,10 @@ g2rain:
       enabled: ${G2RAIN_AUDIT_EVENT_ENABLED:false}
       topic: gateway.exchange.event
       group-id: g2rain-basis-audit
+  basis:
+    idp-sync:
+      safety:
+        max-member-delete-ratio: 0.3
+        max-department-disable-ratio: 0.3
+        block-incomplete-snapshot: true
+        block-empty-snapshot-when-existing: true

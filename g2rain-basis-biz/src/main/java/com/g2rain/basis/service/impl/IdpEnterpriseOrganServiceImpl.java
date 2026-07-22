@@ -14,6 +14,7 @@ import com.g2rain.basis.dao.po.IdpEnterpriseOrganPo;
 import com.g2rain.basis.dto.IdpEnterpriseOrganDto;
 import com.g2rain.basis.dto.IdpEnterpriseOrganSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.IdpBindMode;
 import com.g2rain.basis.enums.IdpType;
 import com.g2rain.basis.service.IdpEnterpriseOrganService;
 import com.g2rain.basis.vo.IdpEnterpriseOrganVo;
@@ -76,9 +77,11 @@ public class IdpEnterpriseOrganServiceImpl implements IdpEnterpriseOrganService 
         Long organId,
         String idpType,
         String enterpriseId,
+        String bindMode,
         boolean autoProvision
     ) {
         requireEnterpriseId(enterpriseId);
+        String normalizedBindMode = normalizeBindMode(bindMode);
         if (validateBindingAllowedOrIdempotent(organId, idpType, enterpriseId, null)) {
             return;
         }
@@ -89,6 +92,7 @@ public class IdpEnterpriseOrganServiceImpl implements IdpEnterpriseOrganService 
         saveDto.setOrganId(organId);
         saveDto.setIdpType(idpType);
         saveDto.setEnterpriseId(enterpriseId);
+        saveDto.setBindMode(normalizedBindMode);
         saveDto.setStatus(STATUS_ACTIVE);
         save(saveDto);
     }
@@ -102,11 +106,13 @@ public class IdpEnterpriseOrganServiceImpl implements IdpEnterpriseOrganService 
         String idpType = dto.getIdpType().trim();
         String enterpriseId = dto.getEnterpriseId() == null ? null : dto.getEnterpriseId().trim();
         requireEnterpriseId(enterpriseId);
+        String bindMode = normalizeBindMode(dto.getBindMode());
 
         // 转换DTO为PO
         IdpEnterpriseOrganPo entity = IdpEnterpriseOrganConverter.INSTANCE.dto2po(dto);
         entity.setIdpType(idpType);
         entity.setEnterpriseId(enterpriseId);
+        entity.setBindMode(bindMode);
         if (Strings.isBlank(entity.getStatus())) {
             entity.setStatus(STATUS_ACTIVE);
         }
@@ -220,5 +226,11 @@ public class IdpEnterpriseOrganServiceImpl implements IdpEnterpriseOrganService 
         if (rebind) {
             throw new BusinessException(BasisErrorCode.IDP_ENTERPRISE_BINDING_INACTIVE_EXISTS);
         }
+    }
+
+    private static String normalizeBindMode(String bindMode) {
+        String normalized = Strings.isBlank(bindMode) ? IdpBindMode.INTERNAL.name() : bindMode.trim();
+        IdpBindMode.validate(normalized);
+        return normalized;
     }
 }

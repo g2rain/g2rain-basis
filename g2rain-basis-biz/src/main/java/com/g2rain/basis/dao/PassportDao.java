@@ -2,6 +2,7 @@ package com.g2rain.basis.dao;
 
 import com.g2rain.basis.dao.po.PassportPo;
 import com.g2rain.basis.dto.PassportSelectDto;
+import com.g2rain.data.isolation.annotations.IgnoreIsolation;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -70,6 +71,12 @@ public interface PassportDao {
      * @return 实体对象
      */
     PassportPo selectById(Long id);
+
+    /**
+     * 根据 ID 查询记录（非隔离语义，供 IdP 登录解析使用）。
+     */
+    @IgnoreIsolation
+    PassportPo selectByIdWithoutIsolation(Long id);
 
     /**
      * 根据查询入参 DTO 筛选列表

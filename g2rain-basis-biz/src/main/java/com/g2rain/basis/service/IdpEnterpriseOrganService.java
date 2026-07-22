@@ -56,5 +56,6 @@ public interface IdpEnterpriseOrganService {
      * @param enterpriseId   外部企业/租户标识
      * @param autoProvision  是否允许自动建立 idp_enterprise_organ 记录
      */
-    void ensureEnterpriseOrganBound(Long organId, String idpType, String enterpriseId, boolean autoProvision);
+    void ensureEnterpriseOrganBound(Long organId, String idpType, String enterpriseId, String bindMode,
+                                    boolean autoProvision);
 }

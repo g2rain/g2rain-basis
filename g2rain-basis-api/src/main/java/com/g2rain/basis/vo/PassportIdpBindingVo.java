@@ -54,6 +54,9 @@ public class PassportIdpBindingVo extends BaseVo {
     @Schema(description = "钉钉 userid（corp 内），可选，便于审计与运营排查")
     private String idpUserId;
 
+    @Schema(description = "IdP 开放平台 openId，可选")
+    private String idpOpenId;
+
     /**
      * 三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId）
      */
