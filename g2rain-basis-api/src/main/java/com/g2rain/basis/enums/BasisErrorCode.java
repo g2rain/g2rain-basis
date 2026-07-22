@@ -200,7 +200,31 @@ public enum BasisErrorCode implements ErrorCode {
     ORGAN_INVITE_ROLE_INVALID("basis.40061", "邀请码关联的角色无效，请重新生成邀请码"),
 
     @Schema(description = "ORGAN_INVITE_GENERATE_FORBIDDEN")
-    ORGAN_INVITE_GENERATE_FORBIDDEN("basis.40062", "无权为该机构生成邀请码");
+    ORGAN_INVITE_GENERATE_FORBIDDEN("basis.40062", "无权为该机构生成邀请码"),
+
+    @Schema(description = "TENANT_IDP_SYNC_NOT_BOUND")
+    TENANT_IDP_SYNC_NOT_BOUND("basis.40065", "租户未绑定外部企业或 IdP 应用"),
+
+    @Schema(description = "TENANT_IDP_SYNC_FORBIDDEN")
+    TENANT_IDP_SYNC_FORBIDDEN("basis.40066", "无权执行租户 IdP 同步"),
+
+    @Schema(description = "TENANT_IDP_SYNC_IDP_TYPE_UNSUPPORTED")
+    TENANT_IDP_SYNC_IDP_TYPE_UNSUPPORTED("basis.40067", "当前仅支持钉钉（DINGTALK）通讯录同步"),
+
+    @Schema(description = "TENANT_IDP_SYNC_IDP_FETCH_FAILED")
+    TENANT_IDP_SYNC_IDP_FETCH_FAILED("basis.50201", "拉取 IdP 通讯录失败"),
+
+    @Schema(description = "TENANT_IDP_SYNC_DEPARTMENT_FAILED")
+    TENANT_IDP_SYNC_DEPARTMENT_FAILED("basis.50202", "部门同步失败"),
+
+    @Schema(description = "TENANT_IDP_SYNC_SNAPSHOT_INCOMPLETE")
+    TENANT_IDP_SYNC_SNAPSHOT_INCOMPLETE("basis.50203", "IdP 通讯录快照不完整，已阻断 FULL 对账删除"),
+
+    @Schema(description = "TENANT_IDP_SYNC_SNAPSHOT_EMPTY")
+    TENANT_IDP_SYNC_SNAPSHOT_EMPTY("basis.50204", "IdP 通讯录快照为空且租户已有同步数据，已阻断 FULL 对账删除"),
+
+    @Schema(description = "TENANT_IDP_SYNC_RECONCILE_RATIO_EXCEEDED")
+    TENANT_IDP_SYNC_RECONCILE_RATIO_EXCEEDED("basis.50205", "FULL 对账删除比例超过安全阈值，已阻断同步");
 
     private final String code;
 
