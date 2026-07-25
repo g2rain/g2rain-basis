@@ -41,9 +41,9 @@ DROP TABLE IF EXISTS `passport_idp_binding`;
 CREATE TABLE `passport_idp_binding` (
     `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
     `passport_id` BIGINT NOT NULL COMMENT                                                               '账号标识，关联 passport.id',
-    `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[IdpType: DINGTALK|FEISHU|WECHAT_WORK；当前 IAM 仅钉钉]',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[IdpType: DINGTALK|FEISHU|WECHAT_WORK]',
     `idp_subject` VARCHAR(128) NOT NULL COMMENT                                                         'IdP 侧稳定主体标识，建议存钉钉 unionId',
-    `corp_id` VARCHAR(64) DEFAULT NULL COMMENT                                                          '钉钉企业 corpId；企业内部模式可由 IAM 写入默认 corp',
+    `corp_id` VARCHAR(128) DEFAULT NULL COMMENT                                                         '外部身份源企业标识；企业内部模式可由 IAM 写入默认企业标识',
     `idp_user_id` VARCHAR(128) DEFAULT NULL COMMENT                                                     '钉钉 userid（corp 内），可选，便于审计与运营排查',
     `idp_open_id` VARCHAR(128) DEFAULT NULL COMMENT                                                     'IdP 开放平台 openId，可选',
     `idp_application_code` VARCHAR(128) NOT NULL DEFAULT '' COMMENT                                     '三方应用在 IdP 侧的应用标识（如钉钉 OAuth clientId），与 application_idp_provision.idp_application_code 对齐',
@@ -134,7 +134,7 @@ DROP TABLE IF EXISTS `idp_enterprise_organ`;
 CREATE TABLE `idp_enterprise_organ` (
     `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
     `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型[DINGTALK, WECHAT_WORK, FEISHU, ...]',
-    `enterprise_id` VARCHAR(64) NOT NULL COMMENT                                                        '外部企业/租户标识（与 passport_idp_binding.enterprise_id 一致）',
+    `enterprise_id` VARCHAR(128) NOT NULL COMMENT                                                       '外部企业/租户标识（与 passport_idp_binding.corp_id 一致）',
     `bind_mode` VARCHAR(32) NOT NULL DEFAULT 'INTERNAL' COMMENT                                         '接入形态[IdpBindMode: INTERNAL企业内部应用|THIRD_PARTY第三方应用]',
     `organ_id` BIGINT NOT NULL COMMENT                                                                  '机构标识，关联 organ.id（业务上应为租户类型机构）',
     `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT                                              '状态[ACTIVE:有效, INACTIVE:停用]',
@@ -148,6 +148,34 @@ CREATE TABLE `idp_enterprise_organ` (
     KEY `idx_idp_enterprise` (`idp_type`, `enterprise_id`),
     KEY `idx_delete_flag` (`delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '外部企业/租户与平台机构关联表';
+
+-- =============================================
+-- 6.1 外部 IdP 企业应用安装授权
+-- =============================================
+DROP TABLE IF EXISTS `idp_enterprise_application_authorization`;
+
+CREATE TABLE `idp_enterprise_application_authorization` (
+    `id` BIGINT NOT NULL COMMENT                                                                        '主键标识',
+    `idp_type` VARCHAR(32) NOT NULL COMMENT                                                             '身份源类型，与 IdpType 枚举名一致',
+    `bind_mode` VARCHAR(32) NOT NULL DEFAULT 'THIRD_PARTY' COMMENT                                      '接入形态，与 IdpBindMode 枚举名一致',
+    `idp_application_code` VARCHAR(128) NOT NULL COMMENT                                                'IdP 应用标识；企业微信为 SuiteID',
+    `enterprise_id` VARCHAR(128) NOT NULL COMMENT                                                       'IdP 返回的外部企业标识',
+    `installed_application_id` VARCHAR(128) DEFAULT NULL COMMENT                                        '企业安装后的应用标识；企业微信为 AgentID',
+    `authorization_status` VARCHAR(32) NOT NULL COMMENT                                                 '授权状态[PENDING, ACTIVE, REVOKED, EXPIRED]',
+    `credential_ciphertext` TEXT DEFAULT NULL COMMENT                                                   '加密后的永久授权凭证',
+    `credential_key_id` VARCHAR(128) DEFAULT NULL COMMENT                                               '凭证加密密钥版本标识',
+    `authorized_at` TIMESTAMP NULL COMMENT                                                              '授权时间',
+    `revoked_at` TIMESTAMP NULL COMMENT                                                                 '取消授权时间',
+    `credential_expire_at` TIMESTAMP NULL COMMENT                                                       '凭证过期时间；永久凭证可为空',
+    `raw_authorization` JSON DEFAULT NULL COMMENT                                                       '脱敏后的授权元数据',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '乐观锁版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_idp_enterprise_application` (`idp_type`, `idp_application_code`, `enterprise_id`),
+    KEY `idx_idp_authorization_status` (`idp_type`, `authorization_status`, `delete_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '外部 IdP 企业应用授权记录';
 
 -- =============================================
 -- 7. 机构路径关系表 (organ_closure)
@@ -846,7 +874,14 @@ VALUES
     (211, 'G2RAIN_DEPARTMENT', '数据权限 Other 规则表', '分页查询数据权限 Other 规则表列表', 'GET', '/data_permission_other/page', '分页查询数据权限 Other 规则表列表', '2026-06-03 02:28:25', '2026-06-03 02:28:25'),
     (212, 'G2RAIN_DEPARTMENT', '数据权限 Other 规则表', '查询数据权限 Other 规则表列表', 'GET', '/data_permission_other/list', '根据查询条件返回数据权限 Other 规则表列表', '2026-06-03 02:28:25', '2026-06-03 02:28:25'),
     (213, 'G2RAIN_BASIS', '租户 IdP 同步', '同步租户成员与部门', 'POST', '/tenant_idp_sync/sync', '从 IdP 拉取通讯录，创建/更新平台成员、部门及部门关系', '2026-07-16 15:00:00', '2026-07-16 15:00:00'),
-    (214, 'G2RAIN_DEPARTMENT', '部门 IdP 同步', '同步 IdP 部门与成员关系', 'POST', '/department_idp_sync/sync', '按 IdP 部门树 upsert 平台部门并批量关联成员，仅供服务间调用', '2026-07-16 15:00:00', '2026-07-16 15:00:00');
+    (214, 'G2RAIN_DEPARTMENT', '部门 IdP 同步', '同步 IdP 部门与成员关系', 'POST', '/department_idp_sync/sync', '按 IdP 部门树 upsert 平台部门并批量关联成员，仅供服务间调用', '2026-07-16 15:00:00', '2026-07-16 15:00:00'),
+    (215, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '新增或更新授权', 'POST', '/idp_enterprise_application_authorization/save', '新增或更新外部 IdP 企业应用授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00'),
+    (216, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '删除授权', 'DELETE', '/idp_enterprise_application_authorization/{id}', '删除外部 IdP 企业应用授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00'),
+    (217, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '查询授权列表', 'GET', '/idp_enterprise_application_authorization/list', '查询外部 IdP 企业应用授权列表', '2026-07-24 00:00:00', '2026-07-24 00:00:00'),
+    (218, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '分页查询授权', 'GET', '/idp_enterprise_application_authorization/page', '分页查询外部 IdP 企业应用授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00'),
+    (219, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '服务间写入授权', 'POST', '/internal/idp/enterprise-application-authorization/upsert', '仅供受信服务间幂等写入授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00'),
+    (220, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '服务间撤销授权', 'POST', '/internal/idp/enterprise-application-authorization/revoke', '仅供受信服务间撤销授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00'),
+    (221, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '服务间解析授权', 'POST', '/internal/idp/enterprise-application-authorization/resolve', '仅供受信服务间解析授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00');
 
 -- 应用资源菜单
 INSERT INTO `resource_menu`
