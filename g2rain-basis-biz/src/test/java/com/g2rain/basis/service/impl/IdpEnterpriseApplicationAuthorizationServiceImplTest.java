@@ -2,8 +2,11 @@ package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.dao.IdpEnterpriseApplicationAuthorizationDao;
 import com.g2rain.basis.dao.po.IdpEnterpriseApplicationAuthorizationPo;
+import com.g2rain.basis.dto.IdpEnterpriseApplicationAuthorizationDto;
 import com.g2rain.basis.dto.IdpEnterpriseApplicationAuthorizationRevokeDto;
+import com.g2rain.basis.dto.IdpEnterpriseApplicationAuthorizationSelectDto;
 import com.g2rain.basis.dto.IdpEnterpriseApplicationAuthorizationUpsertDto;
+import com.g2rain.basis.vo.IdpEnterpriseApplicationAuthorizationVo;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.id.IdGenerator;
 import org.junit.jupiter.api.Test;
@@ -82,6 +85,42 @@ class IdpEnterpriseApplicationAuthorizationServiceImplTest {
         dto.setEnterpriseId("corp");
 
         assertEquals(1, service.revoke(dto));
+    }
+
+    @Test
+    void managementListRedactsCredentialFields() {
+        IdpEnterpriseApplicationAuthorizationDao dao =
+            mock(IdpEnterpriseApplicationAuthorizationDao.class);
+        IdpEnterpriseApplicationAuthorizationPo entity =
+            new IdpEnterpriseApplicationAuthorizationPo();
+        entity.setId(1L);
+        entity.setIdpType("WECHAT_WORK");
+        entity.setCredentialCiphertext("cipher");
+        entity.setCredentialKeyId("key");
+        entity.setRawAuthorization("{\"secret\":true}");
+        when(dao.selectList(any())).thenReturn(List.of(entity));
+        IdpEnterpriseApplicationAuthorizationServiceImpl service =
+            serviceWith(dao);
+
+        List<IdpEnterpriseApplicationAuthorizationVo> result =
+            service.selectList(new IdpEnterpriseApplicationAuthorizationSelectDto());
+
+        assertEquals(1, result.size());
+        assertNull(result.getFirst().getCredentialCiphertext());
+        assertNull(result.getFirst().getCredentialKeyId());
+        assertNull(result.getFirst().getRawAuthorization());
+    }
+
+    @Test
+    void managementSaveRejectsCredentialWrite() {
+        IdpEnterpriseApplicationAuthorizationServiceImpl service =
+            serviceWith(mock(IdpEnterpriseApplicationAuthorizationDao.class));
+        IdpEnterpriseApplicationAuthorizationDto dto =
+            new IdpEnterpriseApplicationAuthorizationDto();
+        dto.setIdpType("WECHAT_WORK");
+        dto.setCredentialCiphertext("cipher");
+
+        assertThrows(BusinessException.class, () -> service.save(dto));
     }
 
     private static IdpEnterpriseApplicationAuthorizationServiceImpl serviceWith(

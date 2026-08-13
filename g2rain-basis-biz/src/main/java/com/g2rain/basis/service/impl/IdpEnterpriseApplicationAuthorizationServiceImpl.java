@@ -53,7 +53,7 @@ public class IdpEnterpriseApplicationAuthorizationServiceImpl
     public List<IdpEnterpriseApplicationAuthorizationVo> selectList(
         IdpEnterpriseApplicationAuthorizationSelectDto selectDto) {
         return dao.selectList(selectDto).stream()
-            .map(IdpEnterpriseApplicationAuthorizationConverter.INSTANCE::po2vo)
+            .map(this::toManagementVo)
             .toList();
     }
 
@@ -64,7 +64,7 @@ public class IdpEnterpriseApplicationAuthorizationServiceImpl
             PageContext.of(selectDto.getPageNum(), selectDto.getPageSize(),
                 () -> dao.selectList(selectDto.getQuery()));
         List<IdpEnterpriseApplicationAuthorizationVo> result = page.getResult().stream()
-            .map(IdpEnterpriseApplicationAuthorizationConverter.INSTANCE::po2vo)
+            .map(this::toManagementVo)
             .toList();
         return PageData.of(page.getPageNum(), page.getPageSize(), page.getTotal(), result);
     }
@@ -72,8 +72,10 @@ public class IdpEnterpriseApplicationAuthorizationServiceImpl
     @Override
     @Transactional
     public Long save(IdpEnterpriseApplicationAuthorizationDto dto) {
+        rejectManagementCredentialWrite(dto);
         IdpEnterpriseApplicationAuthorizationPo entity =
             IdpEnterpriseApplicationAuthorizationConverter.INSTANCE.dto2po(dto);
+        stripCredentialFields(entity);
         normalizeAndValidate(entity);
         LocalDateTime now = Moments.now();
         if (entity.getId() == null || entity.getId() == 0) {
@@ -227,5 +229,38 @@ public class IdpEnterpriseApplicationAuthorizationServiceImpl
             throw new BusinessException(SystemErrorCode.CREATE_DATA_ERROR);
         }
         return idGenerator.generateId();
+    }
+
+    private IdpEnterpriseApplicationAuthorizationVo toManagementVo(
+        IdpEnterpriseApplicationAuthorizationPo po) {
+        IdpEnterpriseApplicationAuthorizationVo vo =
+            IdpEnterpriseApplicationAuthorizationConverter.INSTANCE.po2vo(po);
+        stripCredentialFields(vo);
+        return vo;
+    }
+
+    private static void rejectManagementCredentialWrite(
+        IdpEnterpriseApplicationAuthorizationDto dto) {
+        if (Strings.isNotBlank(dto.getCredentialCiphertext())
+            || Strings.isNotBlank(dto.getCredentialKeyId())
+            || dto.getCredentialExpireAt() != null
+            || Strings.isNotBlank(dto.getRawAuthorization())) {
+            throw new BusinessException(SystemErrorCode.PARAM_VAL_INVALID,
+                "credentialCiphertext");
+        }
+    }
+
+    private static void stripCredentialFields(IdpEnterpriseApplicationAuthorizationPo entity) {
+        entity.setCredentialCiphertext(null);
+        entity.setCredentialKeyId(null);
+        entity.setCredentialExpireAt(null);
+        entity.setRawAuthorization(null);
+    }
+
+    private static void stripCredentialFields(IdpEnterpriseApplicationAuthorizationVo vo) {
+        vo.setCredentialCiphertext(null);
+        vo.setCredentialKeyId(null);
+        vo.setCredentialExpireAt(null);
+        vo.setRawAuthorization(null);
     }
 }

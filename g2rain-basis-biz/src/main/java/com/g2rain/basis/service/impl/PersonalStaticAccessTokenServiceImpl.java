@@ -9,10 +9,12 @@ import com.g2rain.basis.dao.po.ApplicationAuthorizationPo;
 import com.g2rain.basis.dao.po.ApplicationPo;
 import com.g2rain.basis.dao.po.PersonalStaticAccessTokenPo;
 import com.g2rain.basis.dao.po.UserPo;
+import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
 import com.g2rain.basis.dto.PersonalStaticAccessTokenDto;
 import com.g2rain.basis.dto.PersonalStaticAccessTokenSelectDto;
 import com.g2rain.basis.dto.UpdateStatusDto;
 import com.g2rain.basis.dto.UserSelectDto;
+import com.g2rain.basis.enums.AuthorizationStatus;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.enums.StaticTokenStatus;
@@ -84,9 +86,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
 
     @Override
     public List<PersonalStaticAccessTokenVo> selectList(PersonalStaticAccessTokenSelectDto selectDto) {
-        Asserts.isTrue(Objects.nonNull(selectDto.getApplicationAuthorizationId()),
-            SystemErrorCode.PARAM_REQUIRED, "applicationAuthorizationId"
-        );
+        validateQueryScope(selectDto);
 
         if (!(PrincipalContextHolder.isAdminCompany() || PrincipalContextHolder.isAdminUser())) {
             selectDto.setUserId(PrincipalContextHolder.getUserId());
@@ -97,9 +97,9 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
 
     @Override
     public PageData<PersonalStaticAccessTokenVo> selectPage(PageSelectListDto<PersonalStaticAccessTokenSelectDto> selectDto) {
-        boolean required = Objects.nonNull(selectDto) && Objects.nonNull(selectDto.getQuery())
-            && Objects.nonNull(selectDto.getQuery().getApplicationAuthorizationId());
-        Asserts.isTrue(required, SystemErrorCode.PARAM_REQUIRED, "applicationAuthorizationId");
+        Asserts.isTrue(Objects.nonNull(selectDto) && Objects.nonNull(selectDto.getQuery()),
+            SystemErrorCode.PARAM_REQUIRED, "query");
+        validateQueryScope(selectDto.getQuery());
 
         Page<PersonalStaticAccessTokenPo> page = PageContext.of(selectDto.getPageNum(), selectDto.getPageSize(), () -> {
             PersonalStaticAccessTokenSelectDto query = selectDto.getQuery();
@@ -115,9 +115,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
 
     @Override
     public Long save(PersonalStaticAccessTokenDto dto) {
-        Long applicationAuthorizationId = dto.getApplicationAuthorizationId();
-        ApplicationAuthorizationPo applicationAuthorization = applicationAuthorizationDao.selectById(applicationAuthorizationId);
-        Asserts.isTrue(Objects.nonNull(applicationAuthorization), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorizationId);
+        ApplicationAuthorizationPo applicationAuthorization = resolveApplicationAuthorization(dto);
 
         // 当前用户不属于当前的应用授权记录, 禁止生成, 防止运营乱创建
         Long userOrganId = PrincipalContextHolder.getOrganId();
@@ -125,8 +123,8 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         Asserts.isTrue(Objects.equals(userOrganId, appAuthorizationOrganId), BasisErrorCode.ONLY_OWN_ORG_APIKEY_ALLOWED);
 
         ApplicationPo application = applicationDao.selectById(applicationAuthorization.getApplicationId());
-        Asserts.isTrue(Objects.nonNull(application), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorizationId);
-        Asserts.isTrue(Boolean.TRUE.equals(application.getApiKeySupported()), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorizationId);
+        Asserts.isTrue(Objects.nonNull(application), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorization.getId());
+        Asserts.isTrue(Boolean.TRUE.equals(application.getApiKeySupported()), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorization.getId());
         Long userId = PrincipalContextHolder.getUserId();
 
         // 判断是新增还是更新
@@ -159,6 +157,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         entity.setCreateTime(now);
         entity.setUpdateTime(now);
         entity.setUserId(userId);
+        entity.setApplicationAuthorizationId(applicationAuthorization.getId());
         entity.setApplicationId(application.getId());
         entity.setStatus(StaticTokenStatus.ACTIVATED.name());
         entity.setOrganId(applicationAuthorization.getOrganId());
@@ -286,5 +285,45 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         }
 
         return result;
+    }
+
+    private void validateQueryScope(PersonalStaticAccessTokenSelectDto selectDto) {
+        boolean hasScope = Objects.nonNull(selectDto)
+            && (Objects.nonNull(selectDto.getApplicationAuthorizationId())
+            || Objects.nonNull(selectDto.getApplicationId()));
+        Asserts.isTrue(hasScope, SystemErrorCode.PARAM_REQUIRED, "applicationId|applicationAuthorizationId");
+    }
+
+    private ApplicationAuthorizationPo resolveApplicationAuthorization(PersonalStaticAccessTokenDto dto) {
+        Long applicationAuthorizationId = dto.getApplicationAuthorizationId();
+        Long applicationId = dto.getApplicationId();
+
+        if (Objects.isNull(applicationAuthorizationId) && Objects.isNull(applicationId)) {
+            throw new BusinessException(SystemErrorCode.PARAM_REQUIRED,
+                "applicationId|applicationAuthorizationId");
+        }
+
+        ApplicationAuthorizationPo applicationAuthorization;
+        if (Objects.nonNull(applicationAuthorizationId)) {
+            applicationAuthorization = applicationAuthorizationDao.selectById(applicationAuthorizationId);
+            Asserts.isTrue(Objects.nonNull(applicationAuthorization), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorizationId);
+            if (Objects.nonNull(applicationId)) {
+                Asserts.isTrue(
+                    Objects.equals(applicationId, applicationAuthorization.getApplicationId()),
+                    SystemErrorCode.PARAM_VAL_INVALID,
+                    applicationId
+                );
+            }
+            return applicationAuthorization;
+        }
+
+        Long organId = PrincipalContextHolder.getOrganId();
+        ApplicationAuthorizationSelectDto authSelectDto = new ApplicationAuthorizationSelectDto();
+        authSelectDto.setOrganId(organId);
+        authSelectDto.setApplicationId(applicationId);
+        authSelectDto.setStatus(AuthorizationStatus.ACTIVATED.name());
+        List<ApplicationAuthorizationPo> authorizations = applicationAuthorizationDao.selectList(authSelectDto);
+        Asserts.isTrue(authorizations.size() == 1, SystemErrorCode.PARAM_VAL_INVALID, applicationId);
+        return authorizations.getFirst();
     }
 }
