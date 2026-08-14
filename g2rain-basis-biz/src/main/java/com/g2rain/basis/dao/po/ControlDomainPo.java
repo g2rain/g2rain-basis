@@ -41,6 +41,11 @@ public class ControlDomainPo extends BasePo {
     private String controlDomainScope;
 
     /**
+     * 默认控制域[0:否, 1:是]
+     */
+    private Boolean landing;
+
+    /**
      * 业务说明
      */
     private String description;

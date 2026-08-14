@@ -404,6 +404,7 @@ CREATE TABLE `control_domain` (
     `control_domain_name` VARCHAR(128) NOT NULL COMMENT                                                 '控制域名称',
     `control_domain_type` VARCHAR(32) NOT NULL COMMENT                                                  '控制域类型[TRADE("交易开通"), APPLICATION("应用授权开通")]',
     `control_domain_scope` VARCHAR(32) NOT NULL COMMENT                                                 '交付范围[CUSTOMER("客户交付"), OPERATION("平台运营")]',
+    `landing` TINYINT NOT NULL DEFAULT 0 COMMENT                                                        '默认控制域[0:否, 1:是]',
     `description` TEXT DEFAULT NULL COMMENT   												            '业务说明',
     `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
@@ -666,10 +667,10 @@ VALUES
 
 -- 控制域
 INSERT INTO `control_domain`
-(`id`, `application_id`, `control_domain_name`, `control_domain_type`, `control_domain_scope`, `description`, `create_time`, `update_time`)
+(`id`, `application_id`, `control_domain_name`, `control_domain_type`, `control_domain_scope`, `landing`, `description`, `create_time`, `update_time`)
 VALUES
-    (23, 10, '权限模型运营交付', 'APPLICATION', 'OPERATION', '面向平台运营的权限模型能力交付包，开通后同步权限模型运营配置等相关功能权限', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (24, 10, '部门管理平台交付', 'APPLICATION', 'CUSTOMER', '面向租户售卖的部门管理平台能力包，开通后同步部门权限租户配置等相关功能权限', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
+    (23, 10, '权限模型运营交付', 'APPLICATION', 'OPERATION', 0, '面向平台运营的权限模型能力交付包，开通后同步权限模型运营配置等相关功能权限', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (24, 10, '部门管理平台交付', 'APPLICATION', 'CUSTOMER', 1, '面向租户售卖的部门管理平台能力包，开通后同步部门权限租户配置等相关功能权限', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 控制域控制单元关联
 INSERT INTO `control_domain_control_unit_relation`
