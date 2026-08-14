@@ -35,6 +35,12 @@ public class PersonalStaticAccessTokenDto extends BaseDto {
     private Long applicationId;
 
     /**
+     * 用户标识（租户管理员创建时可指定目标用户，默认当前登录用户）
+     */
+    @Schema(description = "用户标识（租户管理员创建时可指定目标用户，默认当前登录用户）")
+    private Long userId;
+
+    /**
      * 访问令牌名称
      */
     @NotBlank

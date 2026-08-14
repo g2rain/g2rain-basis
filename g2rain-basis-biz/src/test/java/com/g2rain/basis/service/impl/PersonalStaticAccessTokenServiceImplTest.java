@@ -12,8 +12,8 @@ import com.g2rain.basis.dto.PersonalStaticAccessTokenDto;
 import com.g2rain.basis.dto.PersonalStaticAccessTokenSelectDto;
 import com.g2rain.basis.enums.AuthorizationStatus;
 import com.g2rain.common.exception.BusinessException;
+import com.g2rain.common.web.PrincipalContext;
 import com.g2rain.common.web.PrincipalContextHolder;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -31,28 +31,79 @@ class PersonalStaticAccessTokenServiceImplTest {
     private PersonalStaticAccessTokenServiceImpl service;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         service = new PersonalStaticAccessTokenServiceImpl();
-        PrincipalContextHolder.setOrganId(100L);
-        PrincipalContextHolder.setUserId(1001L);
-    }
-
-    @AfterEach
-    void tearDown() {
-        PrincipalContextHolder.setOrganId(null);
-        PrincipalContextHolder.setUserId(null);
     }
 
     @Test
-    void validateQueryScope_shouldRejectWhenScopeMissing() throws Exception {
-        assertThrows(BusinessException.class, () -> invokeValidateQueryScope(new PersonalStaticAccessTokenSelectDto()));
+    void resolveTargetUserId_shouldAllowTenantAdminToSpecifyUser() throws Exception {
+        UserPo targetUser = new UserPo();
+        targetUser.setId(2002L);
+        targetUser.setOrganId(100L);
+        StubUserDao userDao = new StubUserDao();
+        userDao.selectByIdResult = targetUser;
+        injectDao("userDao", userDao);
+
+        PersonalStaticAccessTokenDto dto = new PersonalStaticAccessTokenDto();
+        dto.setUserId(2002L);
+
+        runWithPrincipal(true, () -> {
+            try {
+                assertEquals(2002L, invokeResolveTargetUserId(dto, 100L));
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
     }
 
     @Test
-    void validateQueryScope_shouldAcceptApplicationIdOnly() throws Exception {
-        PersonalStaticAccessTokenSelectDto selectDto = new PersonalStaticAccessTokenSelectDto();
-        selectDto.setApplicationId(200L);
-        invokeValidateQueryScope(selectDto);
+    void resolveTargetUserId_shouldRejectUserFromOtherOrgan() throws Exception {
+        UserPo targetUser = new UserPo();
+        targetUser.setId(2002L);
+        targetUser.setOrganId(999L);
+        StubUserDao userDao = new StubUserDao();
+        userDao.selectByIdResult = targetUser;
+        injectDao("userDao", userDao);
+
+        PersonalStaticAccessTokenDto dto = new PersonalStaticAccessTokenDto();
+        dto.setUserId(2002L);
+
+        runWithPrincipal(true, () ->
+            assertThrows(BusinessException.class, () -> invokeResolveTargetUserId(dto, 100L)));
+    }
+
+    @Test
+    void resolveTargetUserId_shouldRejectNonAdminPassingOtherUserId() {
+        PersonalStaticAccessTokenDto dto = new PersonalStaticAccessTokenDto();
+        dto.setUserId(2002L);
+
+        runWithPrincipal(false, () ->
+            assertThrows(BusinessException.class, () -> invokeResolveTargetUserId(dto, 100L)));
+    }
+
+    @Test
+    void resolveTargetUserId_shouldUseCurrentUserWhenNotSpecified() {
+        runWithPrincipal(false, () -> {
+            try {
+                assertEquals(1001L, invokeResolveTargetUserId(new PersonalStaticAccessTokenDto(), 100L));
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
+    void selectList_shouldAcceptQueryWithoutApplicationScope() throws Exception {
+        injectDao("personalStaticAccessTokenDao", new StubPersonalStaticAccessTokenDao());
+        injectDao("userDao", new StubUserDao());
+
+        runWithPrincipal(false, () -> {
+            try {
+                assertEquals(0, service.selectList(new PersonalStaticAccessTokenSelectDto()).size());
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
     }
 
     @Test
@@ -62,7 +113,8 @@ class PersonalStaticAccessTokenServiceImplTest {
 
         PersonalStaticAccessTokenSelectDto selectDto = new PersonalStaticAccessTokenSelectDto();
         selectDto.setApplicationId(200L);
-        assertEquals(0, service.selectList(selectDto).size());
+        runWithPrincipal(false, () ->
+            assertEquals(0, service.selectList(selectDto).size()));
     }
 
     @Test
@@ -84,8 +136,6 @@ class PersonalStaticAccessTokenServiceImplTest {
 
     @Test
     void resolveApplicationAuthorization_shouldResolveByApplicationIdAndOrganId() throws Exception {
-        PrincipalContextHolder.setOrganId(100L);
-
         ApplicationAuthorizationPo authorization = new ApplicationAuthorizationPo();
         authorization.setId(10L);
         authorization.setApplicationId(200L);
@@ -98,10 +148,16 @@ class PersonalStaticAccessTokenServiceImplTest {
         PersonalStaticAccessTokenDto dto = new PersonalStaticAccessTokenDto();
         dto.setApplicationId(200L);
 
-        ApplicationAuthorizationPo resolved = invokeResolveApplicationAuthorization(dto);
-        assertEquals(10L, resolved.getId());
-        assertEquals(200L, authorizationDao.lastSelect.getApplicationId());
-        assertEquals(AuthorizationStatus.ACTIVATED.name(), authorizationDao.lastSelect.getStatus());
+        runWithPrincipal(false, () -> {
+            try {
+                ApplicationAuthorizationPo resolved = invokeResolveApplicationAuthorization(dto);
+                assertEquals(10L, resolved.getId());
+                assertEquals(200L, authorizationDao.lastSelect.getApplicationId());
+                assertEquals(AuthorizationStatus.ACTIVATED.name(), authorizationDao.lastSelect.getStatus());
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
     }
 
     @Test
@@ -127,18 +183,12 @@ class PersonalStaticAccessTokenServiceImplTest {
         field.set(service, dao);
     }
 
-    private void invokeValidateQueryScope(PersonalStaticAccessTokenSelectDto selectDto) throws Exception {
-        Method method = PersonalStaticAccessTokenServiceImpl.class.getDeclaredMethod(
-            "validateQueryScope", PersonalStaticAccessTokenSelectDto.class);
-        method.setAccessible(true);
-        try {
-            method.invoke(service, selectDto);
-        } catch (InvocationTargetException ex) {
-            if (ex.getCause() instanceof Exception exception) {
-                throw exception;
-            }
-            throw ex;
-        }
+    private void runWithPrincipal(boolean adminUser, Runnable action) {
+        PrincipalContext context = PrincipalContext.of();
+        context.setOrganId(100L);
+        context.setUserId(1001L);
+        context.setAdminUser(adminUser);
+        PrincipalContextHolder.runWith(context, action);
     }
 
     private ApplicationAuthorizationPo invokeResolveApplicationAuthorization(PersonalStaticAccessTokenDto dto)
@@ -148,6 +198,20 @@ class PersonalStaticAccessTokenServiceImplTest {
         method.setAccessible(true);
         try {
             return (ApplicationAuthorizationPo) method.invoke(service, dto);
+        } catch (InvocationTargetException ex) {
+            if (ex.getCause() instanceof Exception exception) {
+                throw exception;
+            }
+            throw ex;
+        }
+    }
+
+    private Long invokeResolveTargetUserId(PersonalStaticAccessTokenDto dto, Long organId) throws Exception {
+        Method method = PersonalStaticAccessTokenServiceImpl.class.getDeclaredMethod(
+            "resolveTargetUserId", PersonalStaticAccessTokenDto.class, Long.class);
+        method.setAccessible(true);
+        try {
+            return (Long) method.invoke(service, dto, organId);
         } catch (InvocationTargetException ex) {
             if (ex.getCause() instanceof Exception exception) {
                 throw exception;
@@ -254,6 +318,13 @@ class PersonalStaticAccessTokenServiceImplTest {
 
     private static final class StubUserDao implements UserDao {
 
+        private UserPo selectByIdResult;
+
+        @Override
+        public UserPo selectById(Long id) {
+            return selectByIdResult;
+        }
+
         @Override
         public List<UserPo> selectListWithoutIsolation(UserSelectDto selectDto) {
             return Collections.emptyList();
@@ -292,11 +363,6 @@ class PersonalStaticAccessTokenServiceImplTest {
         @Override
         public int updateByVersion(UserPo entity) {
             return 0;
-        }
-
-        @Override
-        public UserPo selectById(Long id) {
-            return null;
         }
 
         @Override

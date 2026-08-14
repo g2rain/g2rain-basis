@@ -26,6 +26,7 @@
 - 环境要求
 - 快速开始
 - 构建与镜像
+- 接口示例
 - 与关联仓库的关系
 - 模块说明
 - 职责边界
@@ -106,6 +107,17 @@
 | 可执行 Jar | `mvn clean package` | `g2rain-basis-1.0.0.jar` | 执行 Maven 标准构建，生成服务可执行产物。 |
 | 本地运行 | `mvn spring-boot:run` | 本地 Spring Boot 进程 | 使用当前 profile 启动服务，便于本地联调。 |
 | 构建脚本 | `./build.sh` | 脚本定义的构建结果 | 仓库提供 build.sh，可承载组织内约定的镜像或发布流程。 |
+
+## 接口示例
+
+| 示例 | 方法 | 路径 | 用途 | 调用示例 |
+| --- | --- | --- | --- | --- |
+| DELETE /application/{id} | DELETE | `/application/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/application/{id}` |
+| DELETE /application_authorization/{id} | DELETE | `/application_authorization/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/application_authorization/{id}` |
+| DELETE /application_idp_provision/{id} | DELETE | `/application_idp_provision/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/application_idp_provision/{id}` |
+| DELETE /control_domain/{id} | DELETE | `/control_domain/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/control_domain/{id}` |
+| DELETE /control_unit/{id} | DELETE | `/control_unit/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/control_unit/{id}` |
+| DELETE /idp_enterprise_application_authorization/{id} | DELETE | `/idp_enterprise_application_authorization/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/idp_enterprise_application_authorization/{id}` |
 
 ## 与关联仓库的关系
 
@@ -259,3 +271,4 @@
 ## 致谢
 
 感谢所有为 g2rain 项目提交 Issue、代码、文档、建议和使用反馈的开发者们！
+
