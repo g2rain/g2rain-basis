@@ -1,17 +1,24 @@
 package com.g2rain.basis.service.impl;
 
+import com.g2rain.basis.dto.ApplicationAuthorizationDto;
+import com.g2rain.basis.dto.ControlDomainSelectDto;
 import com.g2rain.basis.dto.ControlUnitSelectDto;
 import com.g2rain.basis.dto.OrganDto;
 import com.g2rain.basis.dto.RoleDto;
+import com.g2rain.basis.enums.ControlDomainScope;
+import com.g2rain.basis.enums.ControlDomainType;
 import com.g2rain.basis.enums.ControlUnitScope;
 import com.g2rain.basis.enums.RoleType;
 import com.g2rain.basis.model.RoleControlUnitRelation;
+import com.g2rain.basis.service.ApplicationAuthorizationService;
+import com.g2rain.basis.service.ControlDomainService;
 import com.g2rain.basis.service.ControlUnitService;
 import com.g2rain.basis.service.OrganProvisionService;
 import com.g2rain.basis.service.OrganService;
 import com.g2rain.basis.service.RoleControlUnitRelationService;
 import com.g2rain.basis.service.RoleService;
 import com.g2rain.basis.utils.Constants;
+import com.g2rain.basis.vo.ControlDomainVo;
 import com.g2rain.basis.vo.ControlUnitVo;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -40,6 +47,12 @@ public class OrganProvisionServiceImpl implements OrganProvisionService {
 
     @Resource(name = "roleControlUnitRelationServiceImpl")
     private RoleControlUnitRelationService roleControlUnitRelationService;
+
+    @Resource(name = "controlDomainServiceImpl")
+    private ControlDomainService controlDomainService;
+
+    @Resource(name = "applicationAuthorizationServiceImpl")
+    private ApplicationAuthorizationService applicationAuthorizationService;
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -81,6 +94,21 @@ public class OrganProvisionServiceImpl implements OrganProvisionService {
         relation.setRoleId(roleId);
         relation.setControlUnitIds(ids);
         roleControlUnitRelationService.internalSave(relation);
+
+        // 5. 为 landing 控制域自动开通应用授权
+        ControlDomainSelectDto domainSelect = new ControlDomainSelectDto();
+        domainSelect.setLanding(true);
+        domainSelect.setControlDomainScope(ControlDomainScope.CUSTOMER.name());
+        for (ControlDomainVo domain : controlDomainService.selectList(domainSelect)) {
+            if (ControlDomainType.TRADE.name().equals(domain.getControlDomainType())) {
+                continue;
+            }
+            ApplicationAuthorizationDto authDto = new ApplicationAuthorizationDto();
+            authDto.setOrganId(organId);
+            authDto.setApplicationId(domain.getApplicationId());
+            authDto.setControlDomainId(domain.getId());
+            applicationAuthorizationService.save(authDto);
+        }
 
         return organId;
     }

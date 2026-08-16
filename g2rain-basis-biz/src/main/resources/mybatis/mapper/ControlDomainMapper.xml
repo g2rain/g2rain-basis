@@ -15,6 +15,7 @@
         <result column="control_domain_name" property="controlDomainName" jdbcType="VARCHAR"/>
         <result column="control_domain_type" property="controlDomainType" jdbcType="VARCHAR"/>
         <result column="control_domain_scope" property="controlDomainScope" jdbcType="VARCHAR"/>
+        <result column="landing" property="landing" jdbcType="TINYINT"/>
         <result column="description" property="description" jdbcType="LONGVARCHAR"/>
         <!-- deleteFlag字段（如果存在） -->
         <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
@@ -61,6 +62,10 @@
                     </when>
                     <when test="item.column == 'controlDomainScope'">
                         control_domain_scope
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'landing'">
+                        landing
                         <include refid="directionClause"/>
                     </when>
                     <when test="item.column == 'description'">
@@ -123,6 +128,9 @@
             <if test="controlDomainScope != null">
                 AND control_domain_scope = #{controlDomainScope, jdbcType=VARCHAR}
             </if>
+            <if test="landing != null">
+                AND landing = #{landing, jdbcType=TINYINT}
+            </if>
             <if test="description != null">
                 AND description = #{description, jdbcType=LONGVARCHAR}
             </if>
@@ -140,7 +148,7 @@
         create_time, update_time,
         <!-- 业务字段 -->
         application_id, control_domain_name, control_domain_type, control_domain_scope,
-        description,
+        landing, description,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -153,7 +161,7 @@
         <!-- 业务字段值 -->
         #{applicationId, jdbcType=BIGINT}, #{controlDomainName, jdbcType=VARCHAR},
         #{controlDomainType, jdbcType=VARCHAR},#{controlDomainScope, jdbcType=VARCHAR},
-        #{description, jdbcType=LONGVARCHAR},
+        #{landing, jdbcType=TINYINT}, #{description, jdbcType=LONGVARCHAR},
         <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
         0,
         <!-- version字段值（如果存在，设置默认值为0） -->
@@ -170,7 +178,7 @@
         create_time, update_time,
         <!-- 业务字段 -->
         application_id, control_domain_name, control_domain_type, control_domain_scope,
-        description,
+        landing, description,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -185,7 +193,7 @@
             <!-- 业务字段值 -->
             #{item.applicationId, jdbcType=BIGINT}, #{item.controlDomainName, jdbcType=VARCHAR},
             #{item.controlDomainType, jdbcType=VARCHAR}, #{item.controlDomainScope, jdbcType=VARCHAR},
-            #{item.description, jdbcType=LONGVARCHAR},
+            #{item.landing, jdbcType=TINYINT}, #{item.description, jdbcType=LONGVARCHAR},
             <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
             0,
             <!-- version字段值（如果存在，设置默认值为0） -->
@@ -215,6 +223,9 @@
             <if test="controlDomainScope != null">
                 control_domain_scope = #{controlDomainScope, jdbcType=VARCHAR},
             </if>
+            <if test="landing != null">
+                landing = #{landing, jdbcType=TINYINT},
+            </if>
             description = #{description, jdbcType=LONGVARCHAR},
             <!-- version字段更新（如果存在，版本号自增） -->
             version = version + 1
@@ -242,6 +253,9 @@
             </if>
             <if test="controlDomainScope != null">
                 control_domain_scope = #{controlDomainScope, jdbcType=VARCHAR},
+            </if>
+            <if test="landing != null">
+                landing = #{landing, jdbcType=TINYINT},
             </if>
             description = #{description, jdbcType=LONGVARCHAR},
             <!-- version字段更新（乐观锁版本号自增） -->
@@ -271,7 +285,7 @@
         create_time, update_time,
         <!-- 业务字段 -->
         application_id, control_domain_name, control_domain_type, control_domain_scope,
-        description,
+        landing, description,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -291,7 +305,7 @@
         create_time, update_time,
         <!-- 业务字段 -->
         application_id, control_domain_name, control_domain_type, control_domain_scope,
-        description,
+        landing, description,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
