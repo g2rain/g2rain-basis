@@ -8,6 +8,7 @@ import com.g2rain.basis.dao.ControlDomainDao;
 import com.g2rain.basis.dao.po.ApplicationPo;
 import com.g2rain.basis.dao.po.ControlDomainPo;
 import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
+import com.g2rain.basis.dto.ControlDomainControlUnitRelationSelectDto;
 import com.g2rain.basis.dto.ControlDomainDto;
 import com.g2rain.basis.dto.ControlDomainSelectDto;
 import com.g2rain.basis.enums.AuthorizationStatus;
@@ -145,8 +146,13 @@ public class ControlDomainServiceImpl implements ControlDomainService {
             );
         }
 
+        validateLanding(dto);
+
         // 转换 DTO 为 PO
         ControlDomainPo entity = ControlDomainConverter.INSTANCE.dto2po(dto);
+        if (Objects.isNull(entity.getLanding())) {
+            entity.setLanding(false);
+        }
         LocalDateTime now = Moments.now();
         entity.setUpdateTime(now);
 
@@ -173,9 +179,13 @@ public class ControlDomainServiceImpl implements ControlDomainService {
     @Override
     @Transactional
     public int delete(Long id) {
+        ControlDomainPo domain = controlDomainDao.selectById(id);
+        Asserts.isTrue(Objects.nonNull(domain), SystemErrorCode.PARAM_VAL_INVALID, id);
+        Asserts.isTrue(!Boolean.TRUE.equals(domain.getLanding()), BasisErrorCode.DEL_LANDING_CONTROL_DOMAIN_ILLEGAL);
+
         // 存在有效的授权记录, 不允许删除
         ApplicationAuthorizationSelectDto selectAuthDto = new ApplicationAuthorizationSelectDto();
-        selectAuthDto.setApplicationId(id);
+        selectAuthDto.setControlDomainId(id);
         selectAuthDto.setStatus(AuthorizationStatus.ACTIVATED.name());
         long total = applicationAuthorizationDao.checkApplicationAuthorizationExists(selectAuthDto);
         Asserts.lessThanOrEqual(total, 0, BasisErrorCode.DEL_APP_EXIST_AUTH_UNDELETABLE);
@@ -184,5 +194,35 @@ public class ControlDomainServiceImpl implements ControlDomainService {
         controlDomainControlUnitRelationDao.deleteByControlDomainId(id);
         // 删除控制域
         return controlDomainDao.delete(id);
+    }
+
+    private void validateLanding(ControlDomainDto dto) {
+        if (!Boolean.TRUE.equals(dto.getLanding())) {
+            return;
+        }
+        ControlDomainType type = ControlDomainType.fromName(dto.getControlDomainType());
+        ControlDomainScope scope = ControlDomainScope.fromName(dto.getControlDomainScope());
+        if (ControlDomainType.TRADE.equals(type)) {
+            throw new BusinessException(BasisErrorCode.LANDING_CONTROL_DOMAIN_TRADE_ILLEGAL);
+        }
+        if (!ControlDomainScope.CUSTOMER.equals(scope)) {
+            throw new BusinessException(BasisErrorCode.LANDING_CONTROL_DOMAIN_SCOPE_ILLEGAL);
+        }
+        ControlDomainSelectDto landingSelect = new ControlDomainSelectDto();
+        landingSelect.setApplicationId(dto.getApplicationId());
+        landingSelect.setLanding(true);
+        controlDomainDao.selectList(landingSelect).stream()
+            .filter(o -> !Objects.equals(o.getId(), dto.getId()))
+            .findAny()
+            .ifPresent(_ -> {
+                throw new BusinessException(BasisErrorCode.PARAM_ALREADY_EXISTS, "landing", dto.getApplicationId());
+            });
+        Long id = dto.getId();
+        if (Objects.nonNull(id) && id > 0) {
+            ControlDomainControlUnitRelationSelectDto relationSelect = new ControlDomainControlUnitRelationSelectDto();
+            relationSelect.setControlDomainId(id);
+            long unitCount = controlDomainControlUnitRelationDao.checkControlDomainControlUnitExists(relationSelect);
+            Asserts.greaterThan(unitCount, 0L, BasisErrorCode.LANDING_CONTROL_DOMAIN_WITHOUT_UNITS);
+        }
     }
 }

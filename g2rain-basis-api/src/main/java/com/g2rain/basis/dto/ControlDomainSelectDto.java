@@ -47,6 +47,12 @@ public class ControlDomainSelectDto extends BaseSelectListDto {
     private String controlDomainScope;
 
     /**
+     * 默认控制域
+     */
+    @Schema(description = "默认控制域")
+    private Boolean landing;
+
+    /**
      * 业务说明
      */
     @Schema(description = "业务说明")

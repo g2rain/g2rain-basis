@@ -224,6 +224,27 @@ public enum BasisErrorCode implements ErrorCode {
     TENANT_IDP_SYNC_SNAPSHOT_EMPTY("basis.50204", "IdP 通讯录快照为空且租户已有同步数据，已阻断 FULL 对账删除"),
 
     @Schema(description = "TENANT_IDP_SYNC_RECONCILE_RATIO_EXCEEDED")
+    TENANT_IDP_SYNC_RECONCILE_RATIO_EXCEEDED("basis.50205", "FULL 对账删除比例超过安全阈值，已阻断同步"),
+
+    @Schema(description = "IDP_ENTERPRISE_APPLICATION_AUTHORIZATION_NOT_ACTIVE")
+    IDP_ENTERPRISE_APPLICATION_AUTHORIZATION_NOT_ACTIVE(
+        "basis.40068", "外部企业应用尚未授权或授权已失效"),
+
+    @Schema(description = "IDP_ENTERPRISE_APPLICATION_AGENT_MISSING")
+    IDP_ENTERPRISE_APPLICATION_AGENT_MISSING(
+        "basis.40069", "有效的外部企业应用授权必须包含安装应用标识"),
+
+    @Schema(description = "LANDING_CONTROL_DOMAIN_TRADE_ILLEGAL")
+    LANDING_CONTROL_DOMAIN_TRADE_ILLEGAL("basis.40070", "交易开通类型控制域不允许设为默认控制域"),
+
+    @Schema(description = "LANDING_CONTROL_DOMAIN_SCOPE_ILLEGAL")
+    LANDING_CONTROL_DOMAIN_SCOPE_ILLEGAL("basis.40071", "仅客户交付范围的控制域可设为默认控制域"),
+
+    @Schema(description = "LANDING_CONTROL_DOMAIN_WITHOUT_UNITS")
+    LANDING_CONTROL_DOMAIN_WITHOUT_UNITS("basis.40072", "默认控制域须至少关联一个控制单元"),
+
+    @Schema(description = "DEL_LANDING_CONTROL_DOMAIN_ILLEGAL")
+    DEL_LANDING_CONTROL_DOMAIN_ILLEGAL("basis.40073", "不允许删除默认控制域"),
     TENANT_IDP_SYNC_RECONCILE_RATIO_EXCEEDED("basis.50205", "FULL 对账删除比例超过安全阈值，已阻断同步");
 
     private final String code;

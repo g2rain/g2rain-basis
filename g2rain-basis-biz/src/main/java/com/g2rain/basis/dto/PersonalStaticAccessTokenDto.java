@@ -3,7 +3,6 @@ package com.g2rain.basis.dto;
 import com.g2rain.common.model.BaseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,11 +23,22 @@ import lombok.Setter;
 public class PersonalStaticAccessTokenDto extends BaseDto {
 
     /**
-     * 授权记录标识
+     * 授权记录标识（与 applicationId 二选一）
      */
-    @NotNull
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "授权记录标识")
+    @Schema(description = "授权记录标识（与 applicationId 二选一）")
     private Long applicationAuthorizationId;
+
+    /**
+     * 应用标识（与 applicationAuthorizationId 二选一）
+     */
+    @Schema(description = "应用标识（与 applicationAuthorizationId 二选一）")
+    private Long applicationId;
+
+    /**
+     * 用户标识（租户管理员创建时可指定目标用户，默认当前登录用户）
+     */
+    @Schema(description = "用户标识（租户管理员创建时可指定目标用户，默认当前登录用户）")
+    private Long userId;
 
     /**
      * 访问令牌名称

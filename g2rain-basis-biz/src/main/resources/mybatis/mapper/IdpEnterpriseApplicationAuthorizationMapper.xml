@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.g2rain.basis.dao.IdpEnterpriseApplicationAuthorizationDao">
+    <resultMap id="BaseResultMap"
+        type="com.g2rain.basis.dao.po.IdpEnterpriseApplicationAuthorizationPo">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="idp_type" property="idpType" jdbcType="VARCHAR"/>
+        <result column="bind_mode" property="bindMode" jdbcType="VARCHAR"/>
+        <result column="idp_application_code" property="idpApplicationCode"
+            jdbcType="VARCHAR"/>
+        <result column="enterprise_id" property="enterpriseId" jdbcType="VARCHAR"/>
+        <result column="installed_application_id" property="installedApplicationId"
+            jdbcType="VARCHAR"/>
+        <result column="authorization_status" property="authorizationStatus"
+            jdbcType="VARCHAR"/>
+        <result column="credential_ciphertext" property="credentialCiphertext"
+            jdbcType="LONGVARCHAR"/>
+        <result column="credential_key_id" property="credentialKeyId"
+            jdbcType="VARCHAR"/>
+        <result column="authorized_at" property="authorizedAt" jdbcType="TIMESTAMP"/>
+        <result column="revoked_at" property="revokedAt" jdbcType="TIMESTAMP"/>
+        <result column="credential_expire_at" property="credentialExpireAt"
+            jdbcType="TIMESTAMP"/>
+        <result column="raw_authorization" property="rawAuthorization"
+            jdbcType="VARCHAR"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+        <result column="delete_flag" property="deleteFlag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="columns">
+        id, create_time, update_time, idp_type, bind_mode,
+        idp_application_code, enterprise_id, installed_application_id,
+        authorization_status, credential_ciphertext, credential_key_id,
+        authorized_at, revoked_at, credential_expire_at, raw_authorization,
+        version, delete_flag
+    </sql>
+
+    <insert id="insert"
+        parameterType="com.g2rain.basis.dao.po.IdpEnterpriseApplicationAuthorizationPo">
+        INSERT INTO idp_enterprise_application_authorization (
+            <include refid="columns"/>
+        ) VALUES (
+            #{id}, #{createTime}, #{updateTime}, #{idpType}, #{bindMode},
+            #{idpApplicationCode}, #{enterpriseId}, #{installedApplicationId},
+            #{authorizationStatus}, #{credentialCiphertext}, #{credentialKeyId},
+            #{authorizedAt}, #{revokedAt}, #{credentialExpireAt},
+            #{rawAuthorization}, 0, 0
+        )
+    </insert>
+
+    <update id="update"
+        parameterType="com.g2rain.basis.dao.po.IdpEnterpriseApplicationAuthorizationPo">
+        UPDATE idp_enterprise_application_authorization
+        <set>
+            <if test="idpType != null">idp_type = #{idpType},</if>
+            <if test="bindMode != null">bind_mode = #{bindMode},</if>
+            <if test="idpApplicationCode != null">
+                idp_application_code = #{idpApplicationCode},
+            </if>
+            <if test="enterpriseId != null">enterprise_id = #{enterpriseId},</if>
+            <if test="installedApplicationId != null">
+                installed_application_id = #{installedApplicationId},
+            </if>
+            <if test="authorizationStatus != null">
+                authorization_status = #{authorizationStatus},
+            </if>
+            <if test="credentialCiphertext != null">
+                credential_ciphertext = #{credentialCiphertext},
+            </if>
+            <if test="credentialKeyId != null">
+                credential_key_id = #{credentialKeyId},
+            </if>
+            <if test="authorizedAt != null">authorized_at = #{authorizedAt},</if>
+            <if test="revokedAt != null">revoked_at = #{revokedAt},</if>
+            <if test="credentialExpireAt != null">
+                credential_expire_at = #{credentialExpireAt},
+            </if>
+            <if test="rawAuthorization != null">
+                raw_authorization = #{rawAuthorization},
+            </if>
+            update_time = #{updateTime},
+            version = version + 1
+        </set>
+        WHERE id = #{id}
+          AND (delete_flag = 0 OR delete_flag IS NULL)
+    </update>
+
+    <update id="updateByVersion"
+        parameterType="com.g2rain.basis.dao.po.IdpEnterpriseApplicationAuthorizationPo">
+        UPDATE idp_enterprise_application_authorization
+        SET bind_mode = #{bindMode},
+            installed_application_id = #{installedApplicationId},
+            authorization_status = #{authorizationStatus},
+            credential_ciphertext = #{credentialCiphertext},
+            credential_key_id = #{credentialKeyId},
+            authorized_at = #{authorizedAt},
+            revoked_at = #{revokedAt},
+            credential_expire_at = #{credentialExpireAt},
+            raw_authorization = #{rawAuthorization},
+            update_time = #{updateTime},
+            version = version + 1
+        WHERE id = #{id}
+          AND version = #{version}
+          AND (delete_flag = 0 OR delete_flag IS NULL)
+    </update>
+
+    <update id="delete" parameterType="Long">
+        UPDATE idp_enterprise_application_authorization
+        SET delete_flag = 1, version = version + 1
+        WHERE id = #{id}
+          AND (delete_flag = 0 OR delete_flag IS NULL)
+    </update>
+
+    <select id="selectById" parameterType="Long" resultMap="BaseResultMap">
+        SELECT <include refid="columns"/>
+        FROM idp_enterprise_application_authorization
+        WHERE id = #{id}
+          AND (delete_flag = 0 OR delete_flag IS NULL)
+    </select>
+
+    <select id="selectList"
+        parameterType="com.g2rain.basis.dto.IdpEnterpriseApplicationAuthorizationSelectDto"
+        resultMap="BaseResultMap">
+        SELECT <include refid="columns"/>
+        FROM idp_enterprise_application_authorization
+        <where>
+            <if test="id != null">AND id = #{id}</if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="idpType != null">AND idp_type = #{idpType}</if>
+            <if test="bindMode != null">AND bind_mode = #{bindMode}</if>
+            <if test="idpApplicationCode != null">
+                AND idp_application_code = #{idpApplicationCode}
+            </if>
+            <if test="enterpriseId != null">AND enterprise_id = #{enterpriseId}</if>
+            <if test="installedApplicationId != null">
+                AND installed_application_id = #{installedApplicationId}
+            </if>
+            <if test="authorizationStatus != null">
+                AND authorization_status = #{authorizationStatus}
+            </if>
+            AND (delete_flag = 0 OR delete_flag IS NULL)
+        </where>
+        ORDER BY id DESC
+    </select>
+</mapper>
