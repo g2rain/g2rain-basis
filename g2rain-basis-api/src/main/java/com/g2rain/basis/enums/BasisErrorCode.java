@@ -244,7 +244,10 @@ public enum BasisErrorCode implements ErrorCode {
     LANDING_CONTROL_DOMAIN_WITHOUT_UNITS("basis.40072", "默认控制域须至少关联一个控制单元"),
 
     @Schema(description = "DEL_LANDING_CONTROL_DOMAIN_ILLEGAL")
-    DEL_LANDING_CONTROL_DOMAIN_ILLEGAL("basis.40073", "不允许删除默认控制域");
+    DEL_LANDING_CONTROL_DOMAIN_ILLEGAL("basis.40073", "不允许删除默认控制域"),
+
+    @Schema(description = "TENANT_PROVISION_VERIFY_FAILED")
+    TENANT_PROVISION_VERIFY_FAILED("basis.40074", "租户开通权限校验失败，请稍后重试");
 
     private final String code;
 
