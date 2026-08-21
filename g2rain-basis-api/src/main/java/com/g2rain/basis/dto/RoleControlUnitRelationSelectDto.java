@@ -31,6 +31,12 @@ public class RoleControlUnitRelationSelectDto extends BaseSelectListDto {
     private Long roleId;
 
     /**
+     * 角色标识集合
+     */
+    @Schema(description = "角色标识集合")
+    private Set<Long> roleIds;
+
+    /**
      * 控制单元标识
      */
     @Schema(description = "控制单元标识")

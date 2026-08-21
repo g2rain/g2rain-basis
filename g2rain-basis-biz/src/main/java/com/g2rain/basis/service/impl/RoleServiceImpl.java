@@ -141,6 +141,8 @@ public class RoleServiceImpl implements RoleService {
         // 判断是新增还是更新
         Long id = entity.getId();
 
+        assertRoleNameUnique(dto.getOrganId(), dto.getRoleName(), id);
+
         // 更新：直接更新
         if (Objects.nonNull(id) && id != 0) {
             // 更新：直接更新
@@ -159,6 +161,20 @@ public class RoleServiceImpl implements RoleService {
         int success = insertFn.apply(entity);
         Asserts.greaterThan(success, 0, SystemErrorCode.CREATE_DATA_ERROR);
         return entity.getId();
+    }
+
+    /**
+     * 同机构下角色名称唯一（更新时排除自身）
+     */
+    private void assertRoleNameUnique(Long organId, String roleName, Long currentId) {
+        RoleSelectDto selectDto = new RoleSelectDto();
+        selectDto.setOrganId(organId);
+        selectDto.setRoleName(roleName);
+        List<RolePo> roles = roleDao.selectList(selectDto);
+        boolean duplicated = roles.stream().anyMatch(role -> !Objects.equals(role.getId(), currentId));
+        if (duplicated) {
+            throw new BusinessException(BasisErrorCode.PARAM_ALREADY_EXISTS, "roleName", roleName);
+        }
     }
 
     /**
