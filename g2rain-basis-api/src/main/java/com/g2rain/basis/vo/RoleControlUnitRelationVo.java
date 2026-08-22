@@ -42,6 +42,12 @@ public class RoleControlUnitRelationVo extends BaseVo {
     private String controlUnitName;
 
     /**
+     * 控制单元业务说明
+     */
+    @Schema(description = "控制单元业务说明")
+    private String description;
+
+    /**
      * 应用授权标识
      */
     @Schema(description = "应用授权标识")

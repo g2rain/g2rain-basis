@@ -1,0 +1,91 @@
+schemaVersion: 1
+name: g2rain-basis
+family: backend-foundation-service
+role: 平台核心主数据与权限治理服务
+language: Java
+buildTool: Maven
+
+ownership:
+  owns:
+    - 组织、用户、通行证与租户开通主数据
+    - 应用、资源、角色与功能权限关系
+    - 外部身份提供方绑定、企业映射与企业应用授权
+    - 权限聚合、服务注册和审计事件持久化
+  excludes:
+    - OAuth/OIDC 页面、授权码和令牌签发
+    - 网关路由、统一入口鉴权和请求转发
+    - 部门数据权限模型
+    - 管理端前端页面
+
+modules:
+  - name: g2rain-basis-api
+    path: g2rain-basis-api
+    role: 领域契约
+    mayDependOn: []
+  - name: g2rain-basis-biz
+    path: g2rain-basis-biz
+    role: 领域实现
+    mayDependOn:
+      - g2rain-basis-api
+  - name: g2rain-basis-startup
+    path: g2rain-basis-startup
+    role: 运行时组装
+    mayDependOn:
+      - g2rain-basis-biz
+
+runtime:
+  mainClass: com.g2rain.basis.Application
+  defaultPort: 8080
+  defaultProfile: dev
+  dependencies:
+    - MySQL
+    - Redis
+    - Nacos
+    - Kafka
+
+commands:
+  verify: mvn clean verify
+  run: mvn -pl g2rain-basis-startup -am spring-boot:run
+  codegen: mvn g2rain-crafter:bootstrap
+  image: ./build.sh <tag>
+
+community:
+  website: https://www.g2rain.com
+  issues: https://github.com/g2rain/g2rain/issues
+  discussions: https://github.com/g2rain/g2rain/discussions
+  email: g2rain_developer@163.com
+  license:
+    name: Apache License 2.0
+    file: LICENSE
+    url: https://github.com/g2rain/g2rain-basis/blob/main/LICENSE
+  contributionNotice: 代码贡献前请尽量补充必要的测试和文档，并确保构建、测试与静态检查通过。
+  acknowledgement: 感谢所有为 g2rain 项目提交 Issue、代码、文档、建议和使用反馈的开发者们！
+
+architectureRules:
+  - g2rain-basis-api 不得依赖 g2rain-basis-biz 或 g2rain-basis-startup
+  - g2rain-basis-biz 必须依赖 g2rain-basis-api 且不得依赖 g2rain-basis-startup
+  - g2rain-basis-startup 负责组装 g2rain-basis-biz
+  - API 模块不得引用 controller、service、dao、config 等实现包
+  - 前端 App 通过 g2rain-iam 完成认证并取得用于 Gateway 的 Token
+  - 前端 App 携带 Token 通过 Gateway 访问平台服务
+  - 前端 App 和普通外部调用方必须通过 Gateway 访问 Basis
+  - g2rain-iam 可以直连 Basis 明确开放的部分受信内部接口
+  - Basis 与 Department 之间允许按内部服务契约直接调用
+  - 受信内部接口必须显式隐藏，不得只依赖 URL 前缀隔离
+
+documentation:
+  entry: docs/index.md
+  architecture: docs/architecture/overview.md
+  decisions: docs/decisions
+  required:
+    - docs/community.md
+    - docs/architecture/overview.md
+    - docs/architecture/modules.md
+    - docs/architecture/dependencies.md
+    - docs/architecture/runtime-flows.md
+    - docs/development/local-development.md
+    - docs/development/code-conventions.md
+    - docs/development/code-generation.md
+    - docs/operations/configuration.md
+    - docs/operations/deployment.md
+    - docs/operations/troubleshooting.md

@@ -109,6 +109,12 @@
             <if test="roleId != null">
                 AND role_id = #{roleId, jdbcType=BIGINT}
             </if>
+            <if test="roleIds != null and roleIds.size() > 0">
+                AND role_id IN
+                <foreach collection="roleIds" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
             <if test="controlUnitId != null">
                 AND control_unit_id = #{controlUnitId, jdbcType=BIGINT}
             </if>
