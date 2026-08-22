@@ -1,4 +1,4 @@
-﻿<p align="center">
+<p align="center">
   <img src="https://github.com/g2rain.png" alt="G2Rain" width="180" />
 </p>
 
@@ -10,265 +10,180 @@
 [![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.1.1-586069?logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud)
 [![Maven](https://img.shields.io/badge/build-Maven-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 
-下一代AI软件开发范式，AI原生Agent平台，开源的企业级SaaS底座。
+g2rain 平台核心主数据与权限治理服务，统一维护组织、用户、通行证、应用、资源、角色、功能权限以及外部身份提供方关系，为 IAM、网关、管理端和其他平台服务提供稳定的领域契约与运行时能力。
 
-平台核心主数据与权限治理服务，围绕组织、租户、用户、通行证、应用、资源、角色与权限提供统一领域能力；采用 API、业务实现与启动模块分层组织后端工程
+[官网](https://www.g2rain.com) · [完整文档](docs/index.md) · [架构说明](docs/architecture/overview.md) · [代码规范](docs/development/code-conventions.md) · [Issues](https://github.com/g2rain/g2rain/issues) · [Discussions](https://github.com/g2rain/g2rain/discussions)
 
-[官网](https://www.g2rain.com) · [Issues](https://github.com/g2rain/g2rain/issues) · [Discussions](https://github.com/g2rain/g2rain/discussions)
+## 项目定位
 
-## 目录
+`g2rain-basis` 位于平台基础服务层，是组织、身份主数据、应用资源和功能权限关系的权威数据服务：
 
-- 项目简介
-- 平台定位
-- 业务域说明
-- 功能概览
-- 技术栈
-- 环境要求
-- 快速开始
-- 构建与镜像
-- 接口示例
-- 与关联仓库的关系
-- 模块说明
-- 职责边界
-- 主要 HTTP 路径
-- 关联仓库
-- 参与贡献
-- 许可证
-- 联系我们
-- 致谢
+- 向 `g2rain-iam` 提供 Passport、用户、IdP 绑定和企业应用授权等受信内部能力。
+- 向 Gateway 后面的 App 和平台调用方提供组织、应用、资源、角色与权限接口。
+- 直接调用 `g2rain-department` 的内部服务契约，协同处理部门主体相关能力。
+- 使用 MySQL 持久化主数据，通过 Redis、Nacos 和 Kafka 接入平台基础设施。
 
-## 项目简介
+## 核心领域
 
-平台核心主数据与权限治理服务，围绕组织、租户、用户、通行证、应用、资源、角色与权限提供统一领域能力；采用 API、业务实现与启动模块分层组织后端工程
+| 领域 | 代表对象 | 主要职责 |
+| --- | --- | --- |
+| 组织与租户 | `Organ`、`OrganClosure`、`TenantProvision` | 维护组织层级、组织范围和租户开通。 |
+| 身份主数据 | `User`、`Passport`、`LoginToken` | 维护用户、通行证与登录令牌记录。 |
+| 应用治理 | `Application`、`ApplicationSuite`、`ApplicationAuthorization` | 管理应用定义、归类和机构授权。 |
+| 资源模型 | `ResourceMenu`、`ResourcePage`、`ResourcePageElement`、`ResourceApi` | 维护可授权的菜单、页面、页面元素和 API。 |
+| 权限治理 | `Role`、`ControlDomain`、`ControlUnit` | 组合角色、能力与资源关系，聚合主体权限。 |
+| 身份提供方 | `PassportIdpBinding`、`IdpEnterpriseOrgan`、`IdpEnterpriseApplicationAuthorization` | 管理外部主体绑定、企业映射和企业应用授权。 |
+| 平台治理 | `AuditEvent`、`ServiceRegistry`、`PersonalStaticAccessToken` | 支撑审计、服务登记和静态访问令牌。 |
 
-## 平台定位
+## 认证与服务访问
 
-该仓库位于 g2rain 后端平台链路中，承担“后端基础服务”的角色。
+```mermaid
+flowchart LR
+  App[前端 App] -->|登录 / 授权| IAM[g2rain-iam]
+  IAM -->|签发用于 Gateway 的 Token| App
+  App -->|携带 Token| Gateway[g2rain 网关]
+  Gateway --> Basis[g2rain-basis]
+  Gateway --> Department[g2rain-department]
+  Gateway --> Services[其他平台服务]
+  IAM -->|部分受信内部接口直连| Basis
+  Basis -->|内部服务直接调用| Department
+```
 
-## 业务域说明
+- App 从 IAM 获得 Token，再携带 Token 通过 Gateway 访问平台服务。
+- IAM 是受信服务例外，只能直连 Basis 明确开放的部分内部接口。
+- Basis 与 Department 按内部服务契约直接调用，不经过 Gateway。
+- 完整时序及安全边界见[核心运行流程](docs/architecture/runtime-flows.md)。
 
-该仓库聚焦于 `平台基础能力`。
+## 架构概览
 
-核心对象包括：
-- 访问令牌
-- 会话
-- 身份提供方绑定
-- 通行证
-- 应用
+```text
+g2rain-basis-api
+  领域契约、DTO、VO、枚举
+          ↑
+g2rain-basis-biz
+  Controller、Service、DAO、领域实现
+          ↑
+g2rain-basis-startup
+  Spring Boot 启动、运行配置、镜像构建
+```
 
-主要流程包括：
-- 凭证登录与已认证会话建立流程
-- 授权确认与授权码签发流程
-- 令牌签发、刷新与交换流程
+依赖只能沿 `startup → biz → api` 方向流动。API 模块不得依赖业务实现或启动模块，业务模块不得反向依赖启动模块。详细约束见[模块与依赖边界](docs/architecture/dependencies.md)。
 
-## 功能概览
-
-| 能力 | 说明 |
+| 模块 | 职责 |
 | --- | --- |
-| 组织与租户治理 | 维护组织、租户开通、用户及其身份归属等平台主数据。 |
-| 应用与授权管理 | 维护应用、应用套件、应用授权及身份提供方接入配置。 |
-| 资源模型 | 统一管理菜单、页面、页面元素与 API 资源。 |
-| 角色与功能权限 | 维护角色、功能权限、业务能力及其资源关系。 |
-| 统一权限聚合 | 为 IAM、网关和平台应用提供主体权限与 Authority 聚合查询。 |
+| `g2rain-basis-api` | 对外提供组织、用户、应用、资源、权限和 IdP 等领域契约。 |
+| `g2rain-basis-biz` | 实现领域规则、接口适配、数据访问、缓存同步和服务协作。 |
+| `g2rain-basis-startup` | 组装可运行 Spring Boot 服务并提供运行、观测和镜像配置。 |
 
 ## 技术栈
 
-| 类别 | 说明 |
+| 类别 | 技术 |
 | --- | --- |
 | 运行时 | Java 25、Spring Boot 4.0.5、Spring Cloud 2025.1.1 |
-| 安全与令牌 | g2rain-starter-aegis-core |
-| 基础设施 | Redis、Nacos、OpenFeign |
-| 内部 API | g2rain-basis-api |
-| 其他 | Lombok |
-
-## 环境要求
-
-- JDK 25+
-- Maven 3.9+
-- Redis
-- Nacos
-- 可访问的 g2rain-basis 服务
+| 数据访问 | MyBatis、MySQL、MapStruct |
+| 平台基础设施 | Redis、Nacos、Kafka、OpenFeign |
+| API 与文档 | Spring Web、Jakarta Validation、OpenAPI |
+| 构建与部署 | Maven、Jib、Docker |
+| 测试 | JUnit 5、Mockito |
 
 ## 快速开始
 
-| 步骤 | 命令或位置 | 说明 |
-| --- | --- | --- |
-| 准备运行环境 | JDK 25+、Maven 3.9+、Redis、Nacos | 后端服务启动前需要准备 Java 构建环境和平台依赖的基础设施。 |
-| 调整配置 | `src/main/resources/application.yml` | 按需设置 SERVER_PORT、SPRING_PROFILES_ACTIVE、NACOS_SERVER_ADDR 等环境变量。 |
-| 构建项目 | `mvn clean package` | 执行 Maven 构建并生成可执行 Jar。 |
-| 本地启动 | `mvn spring-boot:run` | 以当前 profile 启动服务，默认端口以 application.yml 中的 SERVER_PORT 为准。 |
+### 环境
 
-版本号以项目构建配置为准，当前识别为 `1.0.0`。
+- JDK 25
+- Maven 3.9+
+- MySQL 8+
+- Redis
+- Nacos
+- Kafka（启用审计事件消费时需要）
 
-## 构建与镜像
+### 构建与测试
 
-| 目标 | 命令 | 产物 | 说明 |
-| --- | --- | --- | --- |
-| 可执行 Jar | `mvn clean package` | `g2rain-basis-1.0.0.jar` | 执行 Maven 标准构建，生成服务可执行产物。 |
-| 本地运行 | `mvn spring-boot:run` | 本地 Spring Boot 进程 | 使用当前 profile 启动服务，便于本地联调。 |
-| 构建脚本 | `./build.sh` | 脚本定义的构建结果 | 仓库提供 build.sh，可承载组织内约定的镜像或发布流程。 |
+```bash
+mvn clean verify
+```
 
-## 接口示例
+### 启动服务
 
-| 示例 | 方法 | 路径 | 用途 | 调用示例 |
-| --- | --- | --- | --- | --- |
-| DELETE /application/{id} | DELETE | `/application/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/application/{id}` |
-| DELETE /application_authorization/{id} | DELETE | `/application_authorization/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/application_authorization/{id}` |
-| DELETE /application_idp_provision/{id} | DELETE | `/application_idp_provision/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/application_idp_provision/{id}` |
-| DELETE /control_domain/{id} | DELETE | `/control_domain/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/control_domain/{id}` |
-| DELETE /control_unit/{id} | DELETE | `/control_unit/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/control_unit/{id}` |
-| DELETE /idp_enterprise_application_authorization/{id} | DELETE | `/idp_enterprise_application_authorization/{id}` | 从代码中提取的代表性后端接口，可用于验证服务路由和基础业务能力。 | `curl -X DELETE http://localhost:8080/idp_enterprise_application_authorization/{id}` |
+```bash
+mvn -pl g2rain-basis-startup -am spring-boot:run
+```
 
-## 与关联仓库的关系
+默认端口为 `8080`，默认 profile 为 `dev`。生产或共享环境应通过环境变量及 Nacos 配置覆盖本地默认值，参见[配置说明](docs/operations/configuration.md)。
 
-本仓库不直接承载用户、通行证、应用等主数据，而是作为认证体验与令牌发放服务，与 g2rain-basis-api 分工协作，完成主数据访问与认证链路闭环。
+健康检查入口：
 
-## 模块说明
+```text
+GET /actuator/health
+```
 
-| 模块 | 职责说明 | 代码线索 |
-| --- | --- | --- |
-| g2rain-basis-api | 定义组织、用户、应用、资源与权限等领域 API 契约。 | g2rain-basis-api |
-| g2rain-basis-biz | 实现平台主数据、资源模型与权限治理业务。 | g2rain-basis-biz |
-| g2rain-basis-startup | 提供 Spring Boot 启动入口与运行配置。 | g2rain-basis-startup |
+## CRUD 代码生成
+
+项目通过 `g2rain-crafter` 根据数据库表生成标准 CRUD 骨架：
+
+```bash
+mvn g2rain-crafter:bootstrap
+```
+
+生成前应在 `codegen.properties` 中收敛 `database.tables`，并保持 `tables.overwrite=false`。生成结果必须经过 Git Diff 审查，再补充领域状态机、幂等、事务、权限、凭证脱敏和测试。详见[CRUD 代码生成](docs/development/code-generation.md)。
+
+## 项目文档
+
+| 场景 | 入口 |
+| --- | --- |
+| 文档首页 | [docs/index.md](docs/index.md) |
+| 架构总览 | [docs/architecture/overview.md](docs/architecture/overview.md) |
+| 本地开发与测试 | [docs/development/local-development.md](docs/development/local-development.md) |
+| 代码规范 | [docs/development/code-conventions.md](docs/development/code-conventions.md) |
+| CRUD 代码生成 | [docs/development/code-generation.md](docs/development/code-generation.md) |
+| 模块职责 | [docs/architecture/modules.md](docs/architecture/modules.md) |
+| 核心运行流程 | [docs/architecture/runtime-flows.md](docs/architecture/runtime-flows.md) |
+| 配置与敏感信息 | [docs/operations/configuration.md](docs/operations/configuration.md) |
+| 镜像与部署 | [docs/operations/deployment.md](docs/operations/deployment.md) |
+| 故障排查 | [docs/operations/troubleshooting.md](docs/operations/troubleshooting.md) |
+| 企业微信授权设计 | [docs/design/wechat-work-authorization.md](docs/design/wechat-work-authorization.md) |
+| 社区与贡献 | [docs/community.md](docs/community.md) |
+
+## 开发约定
+
+- 依赖方向固定为 `g2rain-basis-startup → g2rain-basis-biz → g2rain-basis-api`。
+- Controller 负责协议适配，业务规则、事务、幂等和安全校验位于 Service。
+- DTO、VO、PO 不混用，常规转换使用 MapStruct，敏感字段在 Service 出口显式处理。
+- 内部接口使用明确的 `/internal/...` 路径并设置 `@Operation(hidden = true)`，但路径和文档隐藏不能替代访问控制。
+- 新增或修改代码遵循[代码规范](docs/development/code-conventions.md)，提交前运行 `mvn clean verify`。
 
 ## 职责边界
 
-该仓库主要负责：
-- 负责对应平台基础领域的 API、业务规则、数据持久化与运行时服务
-- 负责向网关、IAM、平台应用或业务服务提供可复用的基础能力
+本仓库负责平台主数据、资源模型、权限关系和 IdP 绑定/授权数据，不负责：
 
-该仓库默认不负责：
-- 不负责具体业务域的产品流程和业务前端实现
-- 不替代网关统一入口、IAM 认证协议或部署编排职责
+- OAuth/OIDC 登录页面、授权码与令牌签发，这些由 `g2rain-iam` 负责。
+- 统一流量入口、网关鉴权和下游转发，这些由网关服务负责。
+- 部门数据权限领域，该能力由 `g2rain-department` 负责。
+- 管理端交互界面，该能力由 `g2rain-manager-app` 负责。
 
-## 主要 HTTP 路径
+## 贡献
 
-| 方法 | 路径 | 说明 |
-| --- | --- | --- |
-| DELETE | /application/{id} | 对外暴露的服务接口 |
-| DELETE | /application_authorization/{id} | 对外暴露的服务接口 |
-| DELETE | /application_idp_provision/{id} | 对外暴露的服务接口 |
-| DELETE | /control_domain/{id} | 对外暴露的服务接口 |
-| DELETE | /control_unit/{id} | 对外暴露的服务接口 |
-| DELETE | /idp_enterprise_application_authorization/{id} | 对外暴露的服务接口 |
-| DELETE | /idp_enterprise_organ/{id} | 对外暴露的服务接口 |
-| DELETE | /organ/{id} | 对外暴露的服务接口 |
-| DELETE | /passport/{id} | 对外暴露的服务接口 |
-| DELETE | /passport_idp_binding/{id} | 对外暴露的服务接口 |
-| DELETE | /personal_static_access_token/{id} | 对外暴露的服务接口 |
-| DELETE | /resource_api/{id} | 对外暴露的服务接口 |
-| DELETE | /resource_menu/{id} | 对外暴露的服务接口 |
-| DELETE | /resource_page/{id} | 对外暴露的服务接口 |
-| DELETE | /resource_page_element/{id} | 对外暴露的服务接口 |
-| DELETE | /role/{id} | 对外暴露的服务接口 |
-| DELETE | /service_registry/{id} | 对外暴露的服务接口 |
-| DELETE | /user/{id} | 对外暴露的服务接口 |
-| GET | /{applicationCode}/public_key/descriptor | 对外暴露的服务接口 |
-| GET | /abc | 对外暴露的服务接口 |
-| GET | /anonymous_token_context | 对外暴露的服务接口 |
-| GET | /apis | 对外暴露的服务接口 |
-| GET | /application/{id}/has_public_key | 对外暴露的服务接口 |
-| GET | /application/{id}/public_key | 对外暴露的服务接口 |
-| GET | /application/id_name_map | 对外暴露的服务接口 |
-| GET | /authority/menus | 对外暴露的服务接口 |
-| GET | /authority/resources | 对外暴露的服务接口 |
-| GET | /authority/user | 对外暴露的服务接口 |
-| GET | /hierarchy/exists | 对外暴露的服务接口 |
-| GET | /idp_enterprise_application_authorization/list | 对外暴露的服务接口 |
-| GET | /idp_enterprise_application_authorization/page | 对外暴露的服务接口 |
-| GET | /list | 对外暴露的服务接口 |
-| GET | /organ/hierarchy | 对外暴露的服务接口 |
-| GET | /organ/search | 对外暴露的服务接口 |
-| GET | /page | 对外暴露的服务接口 |
-| GET | /passport_api_permissions | 对外暴露的服务接口 |
-| GET | /role_control_unit_relation/role/{roleId} | 对外暴露的服务接口 |
-| GET | /route_definitions | 对外暴露的服务接口 |
-| GET | /static_access_token_context | 对外暴露的服务接口 |
-| GET | /token_context | 对外暴露的服务接口 |
-| GET | /user/role/{roleId} | 对外暴露的服务接口 |
-| GET | /user_options | 对外暴露的服务接口 |
-| POST | /{applicationCode}/save | 对外暴露的服务接口 |
-| POST | /application/{id}/public_key | 对外暴露的服务接口 |
-| POST | /application/{id}/status | 对外暴露的服务接口 |
-| POST | /application/save | 对外暴露的服务接口 |
-| POST | /application_authorization/{id}/status | 对外暴露的服务接口 |
-| POST | /application_authorization/save | 对外暴露的服务接口 |
-| POST | /application_idp_provision/save | 对外暴露的服务接口 |
-| POST | /application_suite/save | 对外暴露的服务接口 |
-| POST | /bind | 对外暴露的服务接口 |
-| POST | /control_domain/save | 对外暴露的服务接口 |
-| POST | /control_domain_control_unit_relation/save | 对外暴露的服务接口 |
-| POST | /control_unit/{id}/status | 对外暴露的服务接口 |
-| POST | /control_unit/save | 对外暴露的服务接口 |
-| POST | /control_unit_resource_relation/save | 对外暴露的服务接口 |
-| POST | /fetch_member | 对外暴露的服务接口 |
-| POST | /fetch_snapshot | 对外暴露的服务接口 |
-| POST | /generate | 对外暴露的服务接口 |
-| POST | /id_name_map | 对外暴露的服务接口 |
-| POST | /idp_enterprise_application_authorization/save | 对外暴露的服务接口 |
-| POST | /internal/idp/enterprise-application-authorization/resolve | 对外暴露的服务接口 |
-| POST | /internal/idp/enterprise-application-authorization/revoke | 对外暴露的服务接口 |
-| POST | /internal/idp/enterprise-application-authorization/upsert | 对外暴露的服务接口 |
-| POST | /internal_login | 对外暴露的服务接口 |
-| POST | /join_organ | 对外暴露的服务接口 |
-| POST | /organ/{descendantId}/hierarchy | 对外暴露的服务接口 |
-| POST | /organ/{id}/status | 对外暴露的服务接口 |
-| POST | /organ/save | 对外暴露的服务接口 |
-| POST | /passport/{id}/password | 对外暴露的服务接口 |
-| POST | /passport/{id}/status | 对外暴露的服务接口 |
-| POST | /personal_static_access_token/{id}/status | 对外暴露的服务接口 |
-| POST | /personal_static_access_token/save | 对外暴露的服务接口 |
-| POST | /resolve | 对外暴露的服务接口 |
-| POST | /resource/{applicationId}/upload | 对外暴露的服务接口 |
-| POST | /resource_api/{serviceCode}/import | 对外暴露的服务接口 |
-| POST | /resource_api/save | 对外暴露的服务接口 |
-| POST | /resource_menu/save | 对外暴露的服务接口 |
-| POST | /resource_page/save | 对外暴露的服务接口 |
-| POST | /resource_page_element/save | 对外暴露的服务接口 |
-| POST | /role/save | 对外暴露的服务接口 |
-| POST | /role_control_unit_relation/save | 对外暴露的服务接口 |
-| POST | /save | 对外暴露的服务接口 |
-| POST | /service_registry/save | 对外暴露的服务接口 |
-| POST | /sync | 对外暴露的服务接口 |
-| POST | /tenant_provision/provision_account | 对外暴露的服务接口 |
-| POST | /user/save | 对外暴露的服务接口 |
-| POST | /user_role_relation/assign_users | 对外暴露的服务接口 |
-| POST | /user_role_relation/save | 对外暴露的服务接口 |
+欢迎通过 Issue、Discussion 和 Pull Request 参与 g2rain 建设。
 
-## 关联仓库
+代码贡献前请尽量补充必要的测试和文档，并确保构建、测试与静态检查通过。提交代码时，请同步更新受影响的 `docs` 文档；新增或改变长期架构决策时，在 `docs/decisions` 中增加 ADR。
 
-| 仓库 | 协作关系 |
-| --- | --- |
-| g2rain-basis-api | 通过内部 API 访问平台基础主数据与基础服务能力。 |
-| g2rain-common | 复用平台公共规范、通用模型、工具能力或基础依赖约束。 |
-| g2rain-iam | 协同完成登录认证、令牌发放、SSO 回调或前端登录态衔接。 |
-| g2rain-infra | 协同提供路由、配置、基础设施数据或平台运行支撑能力。 |
+提交前至少执行：
 
-## 参与贡献
-
-我们欢迎所有形式的贡献：Issue 反馈、文档改进、功能建议与代码提交。
-
-推荐流程：
-
-1. Fork 本仓库。
-2. 创建特性分支：`git checkout -b feature/your-feature-name`。
-3. 提交更改：`git commit -m "Add some feature"`。
-4. 推送分支：`git push origin feature/your-feature-name`。
-5. 提交 Pull Request。
-
-代码贡献前请尽量补充必要的测试和文档，并确保构建、测试与静态检查通过。
+```bash
+mvn clean verify
+```
 
 ## 许可证
 
-本项目基于 [Apache 2.0许可证](https://github.com/g2rain/g2rain-common/blob/main/LICENSE) 开源。
+本项目基于 [Apache 2.0 许可证](LICENSE) 开源。
 
 ## 联系我们
 
-- Issues: [GitHub Issues](https://github.com/g2rain/g2rain/issues)
-- 讨论: [GitHub Discussions](https://github.com/g2rain/g2rain/discussions)
-- 邮箱: g2rain_developer@163.com
+- 官网：[https://www.g2rain.com](https://www.g2rain.com)
+- Issues：[GitHub Issues](https://github.com/g2rain/g2rain/issues)
+- 讨论：[GitHub Discussions](https://github.com/g2rain/g2rain/discussions)
+- 邮箱：[g2rain_developer@163.com](mailto:g2rain_developer@163.com)
 
 ## 致谢
 
 感谢所有为 g2rain 项目提交 Issue、代码、文档、建议和使用反馈的开发者们！
-
