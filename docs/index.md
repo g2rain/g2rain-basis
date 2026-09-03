@@ -41,6 +41,7 @@
 ### 专题设计
 
 - [企业微信三方应用授权与扫码登录](design/wechat-work-authorization.md)
+- [受信服务 API 与跨服务协作](design/trusted-service-collaboration.md)
 
 ### 社区
 

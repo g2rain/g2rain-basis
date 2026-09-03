@@ -116,6 +116,7 @@ documentation:
     - docs/development/testing.md
     - docs/development/definition-of-done.md
     - docs/development/code-generation.md
+    - docs/design/trusted-service-collaboration.md
     - docs/operations/configuration.md
     - docs/operations/deployment.md
     - docs/operations/observability.md

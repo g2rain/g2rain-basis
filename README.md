@@ -147,6 +147,7 @@ mvn g2rain-crafter:bootstrap
 | 镜像与部署 | [docs/operations/deployment.md](docs/operations/deployment.md) |
 | 故障排查 | [docs/operations/troubleshooting.md](docs/operations/troubleshooting.md) |
 | 企业微信授权设计 | [docs/design/wechat-work-authorization.md](docs/design/wechat-work-authorization.md) |
+| 受信服务与跨服务协作 | [docs/design/trusted-service-collaboration.md](docs/design/trusted-service-collaboration.md) |
 | 社区与贡献 | [docs/community.md](docs/community.md) |
 
 ## 开发约定

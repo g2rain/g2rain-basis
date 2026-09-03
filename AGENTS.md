@@ -7,7 +7,7 @@
 - Profile：`java-domain-service 1.0.0`
 - 固定引用：`architecture-v1.0.0`
 - 中央仓库：`https://github.com/g2rain/g2rain`
-- 当前状态：`planned`，中央项目目录登记并完成 `docs/architecture/deviations.md` 中的接入项后才能改为 `adopted`
+- 当前状态：已在中央项目目录登记为 `planned`，完成 `docs/architecture/deviations.md` 中的接入项后才能改为 `adopted`
 
 ## 开始工作前
 
