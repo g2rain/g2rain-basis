@@ -9,6 +9,8 @@
 | `SERVER_PORT` | `8080` | HTTP 服务端口。 |
 | `SPRING_PROFILES_ACTIVE` | `dev` | 当前 Spring profile。 |
 | `NACOS_SERVER_ADDR` | `127.0.0.1:8848` | Nacos 服务地址。 |
+| `SPRING_CLOUD_NACOS_DISCOVERY_USERNAME` / `PASSWORD` | 本地默认值 | 注册中心凭证；共享和生产环境必须覆盖。 |
+| `SPRING_CLOUD_NACOS_CONFIG_USERNAME` / `PASSWORD` | 本地默认值 | 配置中心凭证；共享和生产环境必须覆盖。 |
 | `SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE` | `dev` | 注册中心 namespace。 |
 | `SPRING_CLOUD_NACOS_CONFIG_NAMESPACE` | `dev` | 配置中心 namespace。 |
 | `REDIS_HOST` | `127.0.0.1` | Redis 地址。 |
@@ -36,4 +38,5 @@ Nacos discovery group 固定为 `g2rain`，配置 group 默认为应用名 `g2ra
 - Nacos、数据库、Redis、Kafka 和 IdP 凭证应由环境变量、Secret 或配置中心提供。
 - 不得把生产密码、PermanentCode、访问令牌或密钥写入仓库。
 - `application-dev.yml` 和 `codegen.properties` 中的默认值只适用于隔离的本地开发环境；接入共享环境前必须覆盖。
+- 当前仓库仍保留开发默认凭证，迁移要求见[架构差异](../architecture/deviations.md)。
 - 日志、审计记录和 API 响应不得输出可用凭证。

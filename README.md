@@ -12,7 +12,7 @@
 
 g2rain 平台核心主数据与权限治理服务，统一维护组织、用户、通行证、应用、资源、角色、功能权限以及外部身份提供方关系，为 IAM、网关、管理端和其他平台服务提供稳定的领域契约与运行时能力。
 
-[官网](https://www.g2rain.com) · [完整文档](docs/index.md) · [架构说明](docs/architecture/overview.md) · [代码规范](docs/development/code-conventions.md) · [Issues](https://github.com/g2rain/g2rain/issues) · [Discussions](https://github.com/g2rain/g2rain/discussions)
+[官网](https://www.g2rain.com) · [完整文档](docs/index.md) · [中央架构 Profile](https://github.com/g2rain/g2rain/tree/architecture-v1.0.0/docs/architecture/profiles/java-domain-service) · [架构说明](docs/architecture/overview.md) · [代码规范](docs/development/code-conventions.md) · [Issues](https://github.com/g2rain/g2rain/issues) · [Discussions](https://github.com/g2rain/g2rain/discussions)
 
 ## 项目定位
 
@@ -133,12 +133,17 @@ mvn g2rain-crafter:bootstrap
 | --- | --- |
 | 文档首页 | [docs/index.md](docs/index.md) |
 | 架构总览 | [docs/architecture/overview.md](docs/architecture/overview.md) |
+| 中央基线与项目差异 | [Java Domain Service 1.0.0](https://github.com/g2rain/g2rain/tree/architecture-v1.0.0/docs/architecture/profiles/java-domain-service) · [接入项](docs/architecture/deviations.md) |
 | 本地开发与测试 | [docs/development/local-development.md](docs/development/local-development.md) |
 | 代码规范 | [docs/development/code-conventions.md](docs/development/code-conventions.md) |
+| API 与数据库 | [API 设计规范](docs/development/api-conventions.md) · [数据库与数据模型](docs/development/database-conventions.md) |
+| 测试与完成定义 | [测试策略](docs/development/testing.md) · [Definition of Done](docs/development/definition-of-done.md) |
+| 需求设计 | [docs/requirements/README.md](docs/requirements/README.md) |
 | CRUD 代码生成 | [docs/development/code-generation.md](docs/development/code-generation.md) |
 | 模块职责 | [docs/architecture/modules.md](docs/architecture/modules.md) |
 | 核心运行流程 | [docs/architecture/runtime-flows.md](docs/architecture/runtime-flows.md) |
 | 配置与敏感信息 | [docs/operations/configuration.md](docs/operations/configuration.md) |
+| 安全与可观测性 | [安全边界](docs/security/security-boundaries.md) · [可观测性](docs/operations/observability.md) |
 | 镜像与部署 | [docs/operations/deployment.md](docs/operations/deployment.md) |
 | 故障排查 | [docs/operations/troubleshooting.md](docs/operations/troubleshooting.md) |
 | 企业微信授权设计 | [docs/design/wechat-work-authorization.md](docs/design/wechat-work-authorization.md) |

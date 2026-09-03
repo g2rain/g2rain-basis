@@ -1,5 +1,7 @@
 # 架构总览
 
+本项目按 g2rain [`java-domain-service 1.0.0`](https://github.com/g2rain/g2rain/tree/architecture-v1.0.0/docs/architecture/profiles/java-domain-service) 进行接入准备。本页描述 Basis 的领域落地；尚未完成的接入项见[架构差异](deviations.md)。
+
 ## 系统职责
 
 `g2rain-basis` 位于 g2rain 平台基础服务层，是组织、身份主数据、应用资源和功能权限关系的权威数据服务。
@@ -23,6 +25,7 @@ flowchart LR
   Gateway -->|Department API| Department[g2rain-department]
   Gateway -->|其他服务 API| Services[其他平台服务]
   IAM -->|部分受信内部接口直连| Basis
+  Basis -->|租户校验 / IdP 快照| IAM
   Basis -->|内部服务直接调用| Department
   Basis --> MySQL[(MySQL)]
   Basis --> Redis[(Redis)]
@@ -34,6 +37,7 @@ flowchart LR
 - App 携带该 Token 通过网关访问 Basis、Department 及其他平台服务；其他外部调用方同样需要携带有效凭证。
 - 网关负责向 App 暴露服务接口，并把请求路由到对应的后端服务。
 - `g2rain-iam` 是受信服务例外，可以直接调用 Basis 明确开放的部分内部接口，不需要经过网关；该例外不代表 IAM 可以绕过边界访问全部管理接口。
+- Basis 也通过受信 Feign 契约调用 IAM 的租户校验和 IdP 快照能力；服务间写入与部分成功风险记录在架构差异中。
 - Basis 复用 `g2rain-department-api` 契约直接调用 Department；该内部服务调用不经过网关。
 - MySQL、Redis、Nacos 和 Kafka 属于 Basis 直接使用的基础设施依赖。
 

@@ -1,5 +1,7 @@
 # 模块与依赖边界
 
+本页是中央 [`java-domain-service 1.0.0`](https://github.com/g2rain/g2rain/tree/architecture-v1.0.0/docs/architecture/profiles/java-domain-service) 在 Basis 中的具体落地。项目尚未完成的接入项统一记录在[架构差异](deviations.md)。
+
 ## 允许的方向
 
 ```text
@@ -36,6 +38,8 @@ Controller → Service → DAO
 - API 源码不得导入 Controller、Service、DAO、Config 或 Biz 实现包。
 - 必需文档及相对链接必须有效。
 - 新增模块、依赖或实现包是否已经同步到架构文档。
+- 新增同步写契约是否说明调用方、权限、幂等、事务、重试、兼容和补偿。
+- `WithoutIsolation` 路径是否由受信 Service 补足组织范围校验。
 
 这些检查由 Agent 在任务期间执行并报告结果，不要求业务仓库维护专用验证脚本。
 
