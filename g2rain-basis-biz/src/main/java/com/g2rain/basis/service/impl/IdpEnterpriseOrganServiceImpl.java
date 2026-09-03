@@ -15,7 +15,6 @@ import com.g2rain.basis.dto.IdpEnterpriseOrganDto;
 import com.g2rain.basis.dto.IdpEnterpriseOrganSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.IdpBindMode;
-import com.g2rain.basis.enums.IdpType;
 import com.g2rain.basis.service.IdpEnterpriseOrganService;
 import com.g2rain.basis.vo.IdpEnterpriseOrganVo;
 import com.g2rain.mybatis.pagination.PageContext;
@@ -99,8 +98,7 @@ public class IdpEnterpriseOrganServiceImpl implements IdpEnterpriseOrganService 
 
     @Override
     public Long save(IdpEnterpriseOrganDto dto) {
-        IdpType idpTypeEnum = IdpType.nameOf(dto.getIdpType());
-        if(idpTypeEnum == null) {
+        if (Strings.isBlank(dto.getIdpType())) {
             throw new BusinessException(SystemErrorCode.PARAM_VAL_INVALID, "idpType");
         }
         String idpType = dto.getIdpType().trim();

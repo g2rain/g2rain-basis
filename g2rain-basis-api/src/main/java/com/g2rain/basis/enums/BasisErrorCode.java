@@ -245,7 +245,9 @@ public enum BasisErrorCode implements ErrorCode {
 
     @Schema(description = "DEL_LANDING_CONTROL_DOMAIN_ILLEGAL")
     DEL_LANDING_CONTROL_DOMAIN_ILLEGAL("basis.40073", "不允许删除默认控制域"),
-    TENANT_IDP_SYNC_RECONCILE_RATIO_EXCEEDED("basis.50205", "FULL 对账删除比例超过安全阈值，已阻断同步");
+
+    @Schema(description = "TENANT_PROVISION_VERIFY_FAILED")
+    TENANT_PROVISION_VERIFY_FAILED("basis.40074", "租户开通权限校验失败，请稍后重试");
 
     private final String code;
 

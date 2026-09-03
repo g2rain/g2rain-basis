@@ -42,6 +42,14 @@ public interface RoleControlUnitRelationService {
     List<RoleControlUnitRelationVo> selectByRole(Long roleId);
 
     /**
+     * 按机构查询可分配的功能权限（该机构 ADMIN 超管角色的控制单元集合）
+     *
+     * @param organId 机构 ID
+     * @return VO 对象列表
+     */
+    List<RoleControlUnitRelationVo> selectAssignableByOrgan(Long organId);
+
+    /**
      * 新增或更新数据
      *
      * @param dto 数据传输对象

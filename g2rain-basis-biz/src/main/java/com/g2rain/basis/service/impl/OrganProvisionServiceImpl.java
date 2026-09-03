@@ -83,13 +83,27 @@ public class OrganProvisionServiceImpl implements OrganProvisionService {
         role.setOrganId(organId);
         Long roleId = saveRoleFn.apply(role);
 
-        // 3. 查找客户的默认控制单元集合
+        // 3. 为 landing 控制域自动开通应用授权（同步该域下控制单元到默认角色）
+        ControlDomainSelectDto domainSelect = new ControlDomainSelectDto();
+        domainSelect.setLanding(true);
+        domainSelect.setControlDomainScope(ControlDomainScope.CUSTOMER.name());
+        for (ControlDomainVo domain : controlDomainService.selectList(domainSelect)) {
+            if (ControlDomainType.TRADE.name().equals(domain.getControlDomainType())) {
+                continue;
+            }
+            ApplicationAuthorizationDto authDto = new ApplicationAuthorizationDto();
+            authDto.setOrganId(organId);
+            authDto.setApplicationId(domain.getApplicationId());
+            authDto.setControlDomainId(domain.getId());
+            applicationAuthorizationService.save(authDto);
+        }
+
+        // 4. 查找客户的默认控制单元集合并补全最小功能
         ControlUnitSelectDto select = new ControlUnitSelectDto();
         select.setLanding(true);
         select.setControlUnitScope(ControlUnitScope.CUSTOMER.name());
         Set<Long> ids = controlUnitService.selectList(select).stream()
             .map(ControlUnitVo::getId).collect(Collectors.toSet());
-        // 4. 为机构开通最小功能
         RoleControlUnitRelation relation = new RoleControlUnitRelation();
         relation.setRoleId(roleId);
         relation.setControlUnitIds(ids);
