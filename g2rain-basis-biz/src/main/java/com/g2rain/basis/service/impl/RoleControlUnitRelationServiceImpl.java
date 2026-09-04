@@ -29,6 +29,7 @@ import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Moments;
 import com.g2rain.common.utils.Strings;
+import com.g2rain.common.web.PrincipalContextHolder;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
@@ -118,8 +119,22 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
     public List<RoleControlUnitRelationVo> selectByRole(Long roleId) {
         RolePo role = roleDao.selectById(roleId);
         Asserts.isTrue(Objects.nonNull(role), SystemErrorCode.PARAM_VAL_INVALID, roleId);
+        return selectAssignableByOrgan(role.getOrganId());
+    }
+
+    /**
+     * 按机构查询可分配功能权限（机构 ADMIN 超管角色的控制单元集合）
+     *
+     * @param organId 机构 ID
+     * @return 控制单元集合
+     */
+    @Override
+    public List<RoleControlUnitRelationVo> selectAssignableByOrgan(Long organId) {
+        Asserts.isTrue(Objects.nonNull(organId) && organId > 0, SystemErrorCode.PARAM_VAL_INVALID, "organId");
+        assertOrganReadable(organId);
+
         RoleSelectDto selectDto = new RoleSelectDto();
-        selectDto.setOrganId(role.getOrganId());
+        selectDto.setOrganId(organId);
         selectDto.setRoleType(RoleType.ADMIN.name());
         List<RolePo> roles = roleDao.selectList(selectDto);
         if (Collections.isEmpty(roles)) {
@@ -129,6 +144,17 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
         RoleControlUnitRelationSelectDto rs = new RoleControlUnitRelationSelectDto();
         rs.setRoleId(roles.getFirst().getId());
         return selectList(rs);
+    }
+
+    /**
+     * 非管理公司仅允许查询本机构可分配权限
+     */
+    private void assertOrganReadable(Long organId) {
+        if (PrincipalContextHolder.isAdminCompany()) {
+            return;
+        }
+        Long currentOrganId = PrincipalContextHolder.getOrganId();
+        Asserts.isTrue(Objects.equals(currentOrganId, organId), SystemErrorCode.PARAM_VAL_INVALID, "organId");
     }
 
     /**
@@ -472,7 +498,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
     }
 
     /**
-     * 设置控制单元名称到 VO 列表
+     * 设置控制单元名称与业务说明到 VO 列表
      *
      * @param relations 角色控制单元关联 VO 列表
      */
@@ -487,15 +513,20 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
 
         ControlUnitSelectDto selectDto = new ControlUnitSelectDto();
         selectDto.setIds(controlUnitIds);
-        Map<Long, String> id2name = controlUnitDao.selectList(selectDto).stream()
+        Map<Long, ControlUnitPo> id2unit = controlUnitDao.selectList(selectDto).stream()
             .collect(Collectors.toMap(
                 ControlUnitPo::getId,
-                ControlUnitPo::getControlUnitName,
+                unit -> unit,
                 (existing, r) -> existing
             ));
 
         for (RoleControlUnitRelationVo relation : relations) {
-            relation.setControlUnitName(id2name.get(relation.getControlUnitId()));
+            ControlUnitPo unit = id2unit.get(relation.getControlUnitId());
+            if (unit == null) {
+                continue;
+            }
+            relation.setControlUnitName(unit.getControlUnitName());
+            relation.setDescription(unit.getDescription());
         }
 
         return relations;

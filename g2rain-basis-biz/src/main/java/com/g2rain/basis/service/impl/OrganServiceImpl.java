@@ -34,6 +34,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -272,17 +274,16 @@ public class OrganServiceImpl implements OrganService {
             int success = organDao.update(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
 
-            // 机构名称发生了变化, 需要推送消息同步广播
+            // 机构名称发生了变化, 需要推送消息同步广播（事务提交后再发）
             if (organs.isEmpty()) {
-                // 广播修改机构
-                eventPublisherHub.sendUpdate(
+                publishOrganNameEvent(() -> eventPublisherHub.sendUpdate(
                     Constants.SYNC_OUTPUT_BINDING,
                     BasisSyncerEnum.ORGAN_NAME.name(),
                     new OrganIdNameVo(
                         entity.getId(),
                         entity.getOrganName()
                     )
-                );
+                ));
             }
 
             return entity.getId();
@@ -322,17 +323,35 @@ public class OrganServiceImpl implements OrganService {
             parentId, parentOrganType
         );
 
-        // 广播添加机构
-        eventPublisherHub.sendCreate(
+        // 广播添加机构（事务提交后再发，外层如 provisionAccount 回滚时不通知）
+        publishOrganNameEvent(() -> eventPublisherHub.sendCreate(
             Constants.SYNC_OUTPUT_BINDING,
             BasisSyncerEnum.ORGAN_NAME.name(),
             new OrganIdNameVo(
                 entity.getId(),
                 entity.getOrganName()
             )
-        );
+        ));
 
         return entity.getId();
+    }
+
+    /**
+     * 在事务提交后发布机构名称同步事件；无活跃事务同步时立即发送（测试/非事务调用兜底）。
+     */
+    private void publishOrganNameEvent(Runnable publish) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        publish.run();
+                    }
+                }
+            );
+            return;
+        }
+        publish.run();
     }
 
     /**

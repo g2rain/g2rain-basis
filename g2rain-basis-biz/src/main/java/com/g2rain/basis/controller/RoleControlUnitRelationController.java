@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -66,6 +67,20 @@ public class RoleControlUnitRelationController implements RoleControlUnitRelatio
     @Operation(summary = "按角色查询控制单元关联", description = "根据角色主键查询角色控制单元关联列表")
     public Result<List<RoleControlUnitRelationVo>> selectByRole(@Parameter(description = "角色标识") @PathVariable Long roleId) {
         return Result.success(roleControlUnitRelationService.selectByRole(roleId));
+    }
+
+    /**
+     * 按机构查询可分配的功能权限（该机构 ADMIN 超管角色的控制单元集合）
+     *
+     * @param organId 机构标识
+     * @return 可分配控制单元视图对象列表
+     */
+    @GetMapping("/assignable")
+    @Operation(summary = "按机构查询可分配功能权限", description = "根据机构标识返回该机构超管角色的功能权限集合，作为角色可分配上限")
+    public Result<List<RoleControlUnitRelationVo>> selectAssignableByOrgan(
+        @Parameter(description = "机构标识", required = true) @RequestParam Long organId
+    ) {
+        return Result.success(roleControlUnitRelationService.selectAssignableByOrgan(organId));
     }
 
     /**

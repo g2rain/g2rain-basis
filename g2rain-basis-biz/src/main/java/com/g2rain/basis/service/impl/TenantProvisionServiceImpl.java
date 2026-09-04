@@ -1,6 +1,8 @@
 package com.g2rain.basis.service.impl;
 
 
+import com.g2rain.basis.client.TenantProvisionClient;
+import com.g2rain.basis.client.dto.VerifyCreateOrganRequest;
 import com.g2rain.basis.dao.OrganDao;
 import com.g2rain.basis.dao.PassportIdpBindingDao;
 import com.g2rain.basis.dao.RoleDao;
@@ -19,7 +21,6 @@ import com.g2rain.basis.dto.UserDto;
 import com.g2rain.basis.dto.UserRoleRelationDto;
 import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
-import com.g2rain.basis.enums.IdpType;
 import com.g2rain.basis.enums.OrganStatus;
 import com.g2rain.basis.enums.RoleType;
 import com.g2rain.basis.service.IdpEnterpriseOrganService;
@@ -33,7 +34,9 @@ import com.g2rain.basis.vo.RoleVo;
 import com.g2rain.basis.vo.UserVo;
 import com.g2rain.common.enums.OrganType;
 import com.g2rain.common.exception.BusinessException;
+import com.g2rain.common.exception.ExceptionConverter;
 import com.g2rain.common.exception.SystemErrorCode;
+import com.g2rain.common.model.Result;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Collections;
 import com.g2rain.common.utils.Strings;
@@ -99,6 +102,9 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
     @Resource(name = "idpEnterpriseOrganServiceImpl")
     private IdpEnterpriseOrganService idpEnterpriseOrganService;
 
+    @Resource
+    private TenantProvisionClient tenantProvisionClient;
+
     /**
      * 为账号在租户下开通最小可用功能。
      *
@@ -124,6 +130,12 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         Asserts.isTrue(Strings.isNotBlank(dto.getOrganName()),
             SystemErrorCode.PARAM_VAL_INVALID, "organName"
         );
+
+        Long passportId = PrincipalContextHolder.getPassportId();
+        Asserts.isTrue(passportId != null && passportId > 0, SystemErrorCode.UNAUTHORIZED);
+        if (hasIdpBinding(passportId)) {
+            verifyCreateOrganViaIam(passportId);
+        }
 
         // 1. 创建机构、机构角色、开通功能
         OrganDto organDto = new OrganDto();
@@ -184,12 +196,26 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
             if (Strings.isBlank(idpType) || Strings.isBlank(corpId)) {
                 continue;
             }
-            IdpType idp = IdpType.nameOf(idpType.trim());
-            if (idp == null || !idp.requiresEnterpriseId()) {
-                continue;
-            }
             idpEnterpriseOrganService.ensureEnterpriseOrganBound(
                 organId, idpType.trim(), corpId.trim(), null, true);
+        }
+    }
+
+    private boolean hasIdpBinding(Long passportId) {
+        PassportIdpBindingSelectDto query = new PassportIdpBindingSelectDto();
+        query.setPassportId(passportId);
+        return Collections.isNotEmpty(passportIdpBindingDao.selectList(query));
+    }
+
+    private void verifyCreateOrganViaIam(Long passportId) {
+        Result<Void> result;
+        try {
+            result = tenantProvisionClient.verifyCreateOrgan(new VerifyCreateOrganRequest(passportId));
+        } catch (Exception ex) {
+            throw new BusinessException(BasisErrorCode.TENANT_PROVISION_VERIFY_FAILED);
+        }
+        if (!result.isSuccess()) {
+            throw ExceptionConverter.of(result);
         }
     }
 
@@ -237,7 +263,7 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
             BasisErrorCode.ORGAN_INVITE_ROLE_INVALID
         );
 
-        invite = organInviteRedisService.consumeInvite(dto.getInviteCode());
+        organInviteRedisService.consumeInvite(dto.getInviteCode());
 
         UserDto userDto = new UserDto();
         userDto.setOrganId(organId);
