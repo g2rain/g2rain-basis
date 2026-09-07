@@ -34,6 +34,14 @@ public interface PersonalStaticAccessTokenService {
     PageData<PersonalStaticAccessTokenVo> selectPage(PageSelectListDto<PersonalStaticAccessTokenSelectDto> selectDto);
 
     /**
+     * 根据条件统计数量
+     *
+     * @param selectDto 查询条件 DTO
+     * @return 命中总数
+     */
+    Long selectCount(PersonalStaticAccessTokenSelectDto selectDto);
+
+    /**
      * 新增或更新数据
      *
      * @param dto 数据传输对象

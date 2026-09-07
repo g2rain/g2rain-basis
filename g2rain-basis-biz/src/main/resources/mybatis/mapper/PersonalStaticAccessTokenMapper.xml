@@ -354,4 +354,9 @@
         SELECT count(1) TOTAL FROM personal_static_access_token
         <include refid="commonWhereClause"/>
     </select>
+
+    <select id="selectCount" parameterType="com.g2rain.basis.dto.PersonalStaticAccessTokenSelectDto" resultType="Long">
+        SELECT count(1) TOTAL FROM personal_static_access_token
+        <include refid="commonWhereClause"/>
+    </select>
 </mapper>

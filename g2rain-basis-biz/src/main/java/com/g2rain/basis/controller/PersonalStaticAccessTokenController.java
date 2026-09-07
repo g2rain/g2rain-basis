@@ -45,6 +45,11 @@ public class PersonalStaticAccessTokenController implements PersonalStaticAccess
         return Result.successPage(personalStaticAccessTokenService.selectPage(selectDto));
     }
 
+    @Override
+    public Result<Long> selectCount(PersonalStaticAccessTokenSelectDto selectDto) {
+        return Result.success(personalStaticAccessTokenService.selectCount(selectDto));
+    }
+
     @PostMapping("/save")
     @Operation(summary = "新增或更新个人静态访问令牌信息", description = "新增或更新个人静态访问令牌基础信息")
     public Result<Long> save(@RequestBody PersonalStaticAccessTokenDto dto) {

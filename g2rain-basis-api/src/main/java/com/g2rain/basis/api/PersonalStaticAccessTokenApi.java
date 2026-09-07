@@ -40,4 +40,14 @@ public interface PersonalStaticAccessTokenApi {
     @GetMapping("/page")
     @Operation(summary = "分页查询个人静态访问令牌列表", description = "分页查询个人静态访问令牌列表")
     Result<PageData<PersonalStaticAccessTokenVo>> selectPage(PageSelectListDto<PersonalStaticAccessTokenSelectDto> selectDto);
+
+    /**
+     * 根据条件统计数量
+     *
+     * @param selectDto 查询条件 DTO
+     * @return 命中总数
+     */
+    @GetMapping("/count")
+    @Operation(summary = "统计个人静态访问令牌数量", description = "根据查询条件返回个人静态访问令牌命中总数")
+    Result<Long> selectCount(PersonalStaticAccessTokenSelectDto selectDto);
 }

@@ -118,6 +118,23 @@ class PersonalStaticAccessTokenServiceImplTest {
     }
 
     @Test
+    void selectCount_shouldForceCurrentUserIdForNonAdmin() throws Exception {
+        StubPersonalStaticAccessTokenDao tokenDao = new StubPersonalStaticAccessTokenDao();
+        tokenDao.selectCountResult = 3L;
+        injectDao("personalStaticAccessTokenDao", tokenDao);
+
+        PersonalStaticAccessTokenSelectDto selectDto = new PersonalStaticAccessTokenSelectDto();
+        selectDto.setApplicationId(200L);
+        selectDto.setUserId(9999L);
+
+        runWithPrincipal(false, () -> {
+            assertEquals(3L, service.selectCount(selectDto));
+            assertEquals(1001L, tokenDao.lastSelectCountDto.getUserId());
+            assertEquals(200L, tokenDao.lastSelectCountDto.getApplicationId());
+        });
+    }
+
+    @Test
     void resolveApplicationAuthorization_shouldLoadByAuthorizationId() throws Exception {
         ApplicationAuthorizationPo authorization = new ApplicationAuthorizationPo();
         authorization.setId(10L);
@@ -222,6 +239,9 @@ class PersonalStaticAccessTokenServiceImplTest {
 
     private static final class StubPersonalStaticAccessTokenDao implements PersonalStaticAccessTokenDao {
 
+        private Long selectCountResult = 0L;
+        private PersonalStaticAccessTokenSelectDto lastSelectCountDto;
+
         @Override
         public List<PersonalStaticAccessTokenPo> selectList(PersonalStaticAccessTokenSelectDto selectDto) {
             return Collections.emptyList();
@@ -265,6 +285,12 @@ class PersonalStaticAccessTokenServiceImplTest {
         @Override
         public Long checkStaticAccessTokenExists(PersonalStaticAccessTokenSelectDto selectDto) {
             return 0L;
+        }
+
+        @Override
+        public Long selectCount(PersonalStaticAccessTokenSelectDto selectDto) {
+            lastSelectCountDto = selectDto;
+            return selectCountResult;
         }
     }
 

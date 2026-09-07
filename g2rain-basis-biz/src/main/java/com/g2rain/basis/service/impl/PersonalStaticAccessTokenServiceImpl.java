@@ -111,6 +111,16 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
     }
 
     @Override
+    public Long selectCount(PersonalStaticAccessTokenSelectDto selectDto) {
+        if (!(PrincipalContextHolder.isAdminCompany() || PrincipalContextHolder.isAdminUser())) {
+            selectDto.setUserId(PrincipalContextHolder.getUserId());
+        }
+
+        Long total = personalStaticAccessTokenDao.selectCount(selectDto);
+        return Objects.isNull(total) ? 0L : total;
+    }
+
+    @Override
     public Long save(PersonalStaticAccessTokenDto dto) {
         ApplicationAuthorizationPo applicationAuthorization = resolveApplicationAuthorization(dto);
 
