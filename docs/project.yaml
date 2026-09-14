@@ -62,11 +62,11 @@ commands:
   image: ./build.sh <tag>
 
 validation:
-  lastVerifiedAt: "2026-09-03"
+  lastVerifiedAt: "2026-09-13"
   command: mvn clean verify
   result: passed
-  testsRun: 64
-  testClasses: 12
+  testsRun: 77
+  testClasses: 17
   note: 当前以 Service 和领域工具单元测试为主；数据库、Controller、跨服务与 Startup 集成覆盖仍待补充
 
 community:
@@ -117,6 +117,7 @@ documentation:
     - docs/development/definition-of-done.md
     - docs/development/code-generation.md
     - docs/design/trusted-service-collaboration.md
+    - docs/design/control-unit-session-type-upgrade.md
     - docs/operations/configuration.md
     - docs/operations/deployment.md
     - docs/operations/observability.md
@@ -125,6 +126,7 @@ documentation:
 
 aiCoding:
   instructionEntry: AGENTS.md
+  activeRequirement: docs/design/control-unit-session-type-upgrade.md
   requirementTemplate: docs/requirements/README.md
   validation:
     - 检查需求、中央 Profile、项目差异、源码、配置、数据库、测试和 Git Diff

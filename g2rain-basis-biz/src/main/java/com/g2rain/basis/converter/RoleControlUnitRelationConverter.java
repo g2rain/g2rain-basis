@@ -29,6 +29,8 @@ public interface RoleControlUnitRelationConverter {
      * 自动将 createTime 和 updateTime 从 {@link LocalDateTime} 转换为 {@link String}
      */
     @Mapping(target = "controlUnitName", ignore = true)
+    @Mapping(target = "sessionType", ignore = true)
+    @Mapping(target = "description", ignore = true)
     @Mapping(target = "createTime", source = "createTime", qualifiedByName = "localDateTimeToString")
     @Mapping(target = "updateTime", source = "updateTime", qualifiedByName = "localDateTimeToString")
     RoleControlUnitRelationVo po2vo(RoleControlUnitRelationPo po);

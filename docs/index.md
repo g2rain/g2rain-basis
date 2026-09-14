@@ -42,6 +42,7 @@
 
 - [企业微信三方应用授权与扫码登录](design/wechat-work-authorization.md)
 - [受信服务 API 与跨服务协作](design/trusted-service-collaboration.md)
+- [控制单元 SessionType 权限模型升级](design/control-unit-session-type-upgrade.md)
 
 ### 社区
 

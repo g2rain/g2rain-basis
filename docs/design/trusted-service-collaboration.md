@@ -22,9 +22,11 @@ flowchart LR
 | IAM → Basis | `/internal/idp_passport/resolve` | 跨机构查询 | 按 IdP 主体解析 Passport、绑定和机构用户 | 调用方身份、最小返回字段和枚举防护 |
 | IAM → Basis | `/internal/passport_idp_binding/bind` | 幂等写 | 保存扫码绑定关系 | State 校验事实的传递、防重放和并发唯一键 |
 | IAM → Basis | `/internal/idp/enterprise-application-authorization/*` | 查询/写 | 企业应用授权写入、撤销和解析 | 服务身份、密文访问权限、重试和审计 |
+| IAM → Basis | `/internal/idp/enterprise-organ/resolve` | 查询 | 按外部企业标识解析唯一 ACTIVE 的 organId | 服务身份、多映射歧义拒绝、限流 |
+| IAM → Basis | `/internal/idp/employee/ensure` | 幂等写 | IdP 员工扫码登录时按 passportId+organId 确保非 ADMIN 机构 User | 服务身份、首用户 admin 语义规避、幂等与并发唯一键 |
 | IAM/Gateway → Basis | `/login_token/...` 隐藏接口 | 查询/写 | 登录令牌保存、JWT 上下文和静态 API Key 解析 | 每个接口的唯一调用方、原始 API Key 传输保护和限流 |
 | Basis → IAM | `TenantProvisionClient.verifyCreateOrgan` | 查询/校验 | 创建机构前校验 Passport 是否允许开户 | 超时策略、调用身份和 IAM 不可用时的明确结果 |
-| Basis → IAM | `IdpSyncClient` | 外部快照查询 | 拉取钉钉部门和成员快照 | 超时、分页完整性、快照标识和可安全重试语义 |
+| Basis → IAM | `IdpSyncClient` | 外部快照查询 | 按 `idpType` 拉取 IdP 部门与成员快照 | 超时、分页完整性、快照标识和可安全重试语义 |
 | Basis → Department | `DepartmentIdpSyncApi.listMappedIdpDeptIds` | 查询 | 同步前评估已有部门映射规模 | 调用身份、机构范围与超时 |
 | Basis → Department | `DepartmentIdpSyncApi.sync` | 写 | 同步部门、映射和成员关系 | 幂等键、重复调用结果、部分成功补偿和版本兼容 |
 

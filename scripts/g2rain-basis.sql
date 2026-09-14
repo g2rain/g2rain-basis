@@ -307,6 +307,7 @@ DROP TABLE IF EXISTS `control_unit`;
 CREATE TABLE `control_unit` (
     `id` BIGINT NOT NULL COMMENT 													                    '控制单元标识',
     `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `session_type` VARCHAR(32) NOT NULL COMMENT                                                         '会话主体类型[SessionType: USER|MEMBER|PASSPORT|ANONYMOUS]',
     `control_unit_name` VARCHAR(128) NOT NULL COMMENT                                                   '控制单元名称',
     `control_unit_scope` VARCHAR(32) NOT NULL COMMENT                                                   '控制单元类型[OPERATION("运营功能"), CUSTOMER("客户功能"), PERPETUAL("永久有效功能")]',
     `landing` TINYINT NOT NULL DEFAULT 0 COMMENT                                                        '默认数据[0:否, 1:是]',
@@ -316,7 +317,8 @@ CREATE TABLE `control_unit` (
     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    INDEX `idx_control_unit_session_status` (`session_type`, `status`, (IF(delete_flag = 0, 0, NULL)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '控制单元表';
 
 -- =============================================
@@ -648,14 +650,14 @@ VALUES
 
 -- 控制单元
 INSERT INTO `control_unit`
-(`id`, `application_id`, `control_unit_name`, `control_unit_scope`, `landing`, `status`, `description`, `create_time`, `update_time`)
+(`id`, `application_id`, `session_type`, `control_unit_name`, `control_unit_scope`, `landing`, `status`, `description`, `create_time`, `update_time`)
 VALUES
-    (14, 7, '盘古',   'PERPETUAL', 1, 'PUBLISHED', '平台准入基础能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (15, 8, '燧人氏', 'OPERATION', 1, 'PUBLISHED', '平台保障技术能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (16, 9, '女娲',   'OPERATION',  1, 'PUBLISHED', '核心运营支撑组件', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (17, 10, '颛顼',   'OPERATION',  0, 'PUBLISHED', '权限模型运营配置', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (18, 9, '有巢氏',   'CUSTOMER',  1, 'PUBLISHED', '租户空间构建逻辑', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (19, 10, '大禹',   'CUSTOMER',  0, 'PUBLISHED', '部门权限租户配置', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
+    (14, 7, 'PASSPORT', '盘古',   'PERPETUAL', 1, 'PUBLISHED', '平台准入基础能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (15, 8, 'USER', '燧人氏', 'OPERATION', 1, 'PUBLISHED', '平台保障技术能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (16, 9, 'USER', '女娲',   'OPERATION',  1, 'PUBLISHED', '核心运营支撑组件', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (17, 10, 'USER', '颛顼',   'OPERATION',  0, 'PUBLISHED', '权限模型运营配置', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (18, 9, 'USER', '有巢氏',   'CUSTOMER',  1, 'PUBLISHED', '租户空间构建逻辑', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (19, 10, 'USER', '大禹',   'CUSTOMER',  0, 'PUBLISHED', '部门权限租户配置', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 角色控制单元关联
 INSERT INTO `role_control_unit_relation`

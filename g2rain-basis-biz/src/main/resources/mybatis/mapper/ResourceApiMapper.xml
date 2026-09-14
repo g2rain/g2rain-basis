@@ -359,6 +359,7 @@
         FROM user_role_relation urr
         JOIN role_control_unit_relation rcur ON urr.`role_id` = rcur.`role_id` AND rcur.`delete_flag` = 0
         JOIN control_unit cu ON cu.id = rcur.control_unit_id AND cu.`application_id` = #{applicationId}
+            AND cu.`delete_flag` = 0 AND cu.`session_type` = 'USER'
         JOIN control_unit_resource_relation curr ON rcur.`control_unit_id` = curr.`control_unit_id` AND curr.`delete_flag` = 0 AND curr.`resource_type` = 'API_ENDPOINT'
         JOIN resource_api rae ON curr.resource_id = rae.id AND rae.delete_flag = 0
         JOIN service_registry ae ON rae.service_code = ae.service_code AND ae.delete_flag = 0
@@ -377,6 +378,7 @@
         ROW_NUMBER() OVER (PARTITION BY rae.id ORDER BY CASE rcur.status WHEN 'ACTIVATED' THEN 1 ELSE 2 END) AS rn
         FROM role_control_unit_relation rcur
         JOIN control_unit cu ON cu.id = rcur.control_unit_id AND cu.`application_id` = #{applicationId}
+            AND cu.`delete_flag` = 0 AND cu.`session_type` = 'USER'
         JOIN control_unit_resource_relation curr ON rcur.`control_unit_id` = curr.`control_unit_id` AND curr.`delete_flag` = 0 AND curr.`resource_type` = 'API_ENDPOINT'
         JOIN resource_api rae ON curr.resource_id = rae.id AND rae.delete_flag = 0
         JOIN service_registry ae ON rae.service_code = ae.service_code AND ae.delete_flag = 0
@@ -407,5 +409,57 @@
         AND cu.`control_unit_scope` = 'PERPETUAL'
         AND cu.`status` = 'PUBLISHED'
         AND cu.`application_id` = #{applicationId}
+    </select>
+
+    <!--
+        按会话主体类型查询已发布控制单元关联的 API（不经角色链；非 MEMBER 目录用）
+    -->
+    <select id="listAuthorizedApisBySessionType" parameterType="java.lang.String"
+            resultType="com.g2rain.basis.dao.po.AuthorityApiEndpointPo">
+        SELECT DISTINCT rae.`id`, rae.`name` AS api_name, ae.`name` AS service_name, ae.`endpoint`,
+                        ae.`route_prefix`, rae.`method`, rae.`path`, 'ACTIVATED' AS status
+        FROM control_unit cu
+        JOIN control_unit_resource_relation curr
+          ON curr.control_unit_id = cu.id
+         AND curr.resource_type = 'API_ENDPOINT'
+         AND curr.delete_flag = 0
+        JOIN resource_api rae ON rae.id = curr.resource_id AND rae.delete_flag = 0
+        JOIN service_registry ae ON rae.service_code = ae.service_code AND ae.delete_flag = 0
+        WHERE cu.session_type = #{sessionType, jdbcType=VARCHAR}
+          AND cu.status = 'PUBLISHED'
+          AND cu.delete_flag = 0
+    </select>
+
+    <!--
+        按会话主体类型 + 机构：已发布控制单元 ∩ 租户已开通（aa + ADMIN rcur）
+    -->
+    <select id="listAuthorizedApisBySessionTypeAndOrgan"
+            resultType="com.g2rain.basis.dao.po.AuthorityApiEndpointPo">
+        SELECT DISTINCT rae.`id`, rae.`name` AS api_name, ae.`name` AS service_name, ae.`endpoint`,
+                        ae.`route_prefix`, rae.`method`, rae.`path`, 'ACTIVATED' AS status
+        FROM application_authorization aa
+        JOIN role_control_unit_relation rcur
+          ON rcur.application_authorization_id = aa.id
+         AND rcur.status = 'ACTIVATED'
+         AND rcur.delete_flag = 0
+        JOIN role r
+          ON r.id = rcur.role_id
+         AND r.organ_id = aa.organ_id
+         AND r.role_type = 'ADMIN'
+         AND r.delete_flag = 0
+        JOIN control_unit cu
+          ON cu.id = rcur.control_unit_id
+         AND cu.session_type = #{sessionType, jdbcType=VARCHAR}
+         AND cu.status = 'PUBLISHED'
+         AND cu.delete_flag = 0
+        JOIN control_unit_resource_relation curr
+          ON curr.control_unit_id = cu.id
+         AND curr.resource_type = 'API_ENDPOINT'
+         AND curr.delete_flag = 0
+        JOIN resource_api rae ON rae.id = curr.resource_id AND rae.delete_flag = 0
+        JOIN service_registry ae ON rae.service_code = ae.service_code AND ae.delete_flag = 0
+        WHERE aa.organ_id = #{organId, jdbcType=BIGINT}
+          AND aa.status = 'ACTIVATED'
+          AND aa.delete_flag = 0
     </select>
 </mapper>

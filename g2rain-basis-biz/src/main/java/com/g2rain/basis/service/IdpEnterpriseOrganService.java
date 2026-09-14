@@ -3,7 +3,9 @@ package com.g2rain.basis.service;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.basis.dto.IdpEnterpriseOrganDto;
+import com.g2rain.basis.dto.IdpEnterpriseOrganResolveRequest;
 import com.g2rain.basis.dto.IdpEnterpriseOrganSelectDto;
+import com.g2rain.basis.vo.IdpEnterpriseOrganResolveVo;
 import com.g2rain.basis.vo.IdpEnterpriseOrganVo;
 
 import java.util.List;
@@ -58,4 +60,12 @@ public interface IdpEnterpriseOrganService {
      */
     void ensureEnterpriseOrganBound(Long organId, String idpType, String enterpriseId, String bindMode,
                                     boolean autoProvision);
+
+    /**
+     * 按 {@code idpType + enterpriseId}（及可选 {@code bindMode}）解析唯一 ACTIVE 映射。
+     *
+     * @param request 解析请求
+     * @return 唯一映射结果
+     */
+    IdpEnterpriseOrganResolveVo resolve(IdpEnterpriseOrganResolveRequest request);
 }

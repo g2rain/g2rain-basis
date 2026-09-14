@@ -30,6 +30,12 @@ public class ControlUnitVo extends BaseVo {
     private Long applicationId;
 
     /**
+     * 会话主体类型[SessionType: USER|MEMBER|PASSPORT|ANONYMOUS]
+     */
+    @Schema(description = "会话主体类型[SessionType: USER|MEMBER|PASSPORT|ANONYMOUS]")
+    private String sessionType;
+
+    /**
      * 控制单元名称
      */
     @Schema(description = "控制单元名称")

@@ -181,6 +181,12 @@ public enum BasisErrorCode implements ErrorCode {
     @Schema(description = "IDP_ENTERPRISE_ORGAN_NOT_BOUND")
     IDP_ENTERPRISE_ORGAN_NOT_BOUND("basis.40057", "当前租户尚未绑定该外部企业，请联系管理员完成三方企业绑定"),
 
+    @Schema(description = "IDP_ENTERPRISE_ORGAN_NOT_FOUND")
+    IDP_ENTERPRISE_ORGAN_NOT_FOUND("basis.40068", "未找到该外部企业与平台机构的有效映射"),
+
+    @Schema(description = "IDP_ENTERPRISE_ORGAN_AMBIGUOUS")
+    IDP_ENTERPRISE_ORGAN_AMBIGUOUS("basis.40069", "该外部企业存在多条有效机构映射，无法唯一确定租户"),
+
     @Schema(description = "PASSPORT_IDP_SUBJECT_ALREADY_BOUND")
     PASSPORT_IDP_SUBJECT_ALREADY_BOUND("basis.40058", "该外部身份源账号已绑定其他通行证，无法重复绑定"),
 
@@ -247,7 +253,13 @@ public enum BasisErrorCode implements ErrorCode {
     DEL_LANDING_CONTROL_DOMAIN_ILLEGAL("basis.40073", "不允许删除默认控制域"),
 
     @Schema(description = "TENANT_PROVISION_VERIFY_FAILED")
-    TENANT_PROVISION_VERIFY_FAILED("basis.40074", "租户开通权限校验失败，请稍后重试");
+    TENANT_PROVISION_VERIFY_FAILED("basis.40074", "租户开通权限校验失败，请稍后重试"),
+
+    @Schema(description = "SESSION_TYPE_UPDATE_ILLEGAL")
+    SESSION_TYPE_UPDATE_ILLEGAL("basis.40075", "控制单元会话类型创建后不允许修改"),
+
+    @Schema(description = "CONTROL_UNIT_SESSION_TYPE_INVALID_FOR_ROLE")
+    CONTROL_UNIT_SESSION_TYPE_INVALID_FOR_ROLE("basis.40076", "仅 USER 会话类型的控制单元可分配给角色");
 
     private final String code;
 

@@ -26,6 +26,11 @@ public class ControlUnitPo extends BasePo {
     private Long applicationId;
 
     /**
+     * 会话主体类型[SessionType: USER|MEMBER|PASSPORT|ANONYMOUS]
+     */
+    private String sessionType;
+
+    /**
      * 控制单元名称
      */
     private String controlUnitName;
