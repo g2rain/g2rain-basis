@@ -94,6 +94,18 @@ public interface LoginTokenService {
     TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode, List<Long> roleIds);
 
     /**
+     * 构建会员会话（SessionType=MEMBER）的 Token JWT 载荷骨架。
+     *
+     * <p>含机构、入口应用 scopes 与时间窗；不含 {@code memberId}（由 IAM 在 resolve 后填入）。
+     * 机构必须为租户类型且可用。</p>
+     *
+     * @param organId         可信租户机构 ID
+     * @param applicationCode 入口应用编码（与 Client DPoP acd 一致）
+     * @return MEMBER 会话 JWT 载荷骨架
+     */
+    TokenJWTPayload fetchMemberTokenContext(Long organId, String applicationCode);
+
+    /**
      * 根据个人静态访问令牌解析状态与会话上下文。
      *
      * @param apiKey 原始 API Key（明文）

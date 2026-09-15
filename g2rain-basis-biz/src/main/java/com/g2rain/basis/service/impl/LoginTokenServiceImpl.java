@@ -461,6 +461,63 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         return payload;
     }
 
+    @Override
+    public TokenJWTPayload fetchMemberTokenContext(Long organId, String applicationCode) {
+        Asserts.isTrue(organId != null && organId > 0L, SystemErrorCode.PARAM_VAL_INVALID, organId);
+        Asserts.isTrue(Strings.isNotBlank(applicationCode), SystemErrorCode.PARAM_REQUIRED, "applicationCode");
+
+        ApplicationSelectDto appSelect = new ApplicationSelectDto();
+        appSelect.setApplicationCode(applicationCode);
+        List<ApplicationVo> applications = applicationService.selectList(appSelect);
+        Asserts.isTrue(Collections.isNotEmpty(applications),
+            SystemErrorCode.UNAUTHORIZED, applicationCode
+        );
+        ApplicationVo application = applications.getFirst();
+        Asserts.isTrue(application.getId() != null && application.getId() > 0L,
+            SystemErrorCode.UNAUTHORIZED, applicationCode
+        );
+        Asserts.isTrue(application.getOrganId() != null && application.getOrganId() > 0L,
+            SystemErrorCode.UNAUTHORIZED, applicationCode
+        );
+
+        OrganSelectDto organSelect = new OrganSelectDto();
+        organSelect.setId(organId);
+        List<OrganVo> organs = organService.selectList(organSelect);
+        Asserts.isTrue(Collections.isNotEmpty(organs),
+            SystemErrorCode.PARAM_VAL_INVALID, organId
+        );
+        OrganVo organ = organs.getFirst();
+        Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
+            BasisErrorCode.ORGAN_UNAVAILABLE
+        );
+        OrganType organType = OrganType.fromName(organ.getOrganType());
+        Asserts.isTrue(OrganType.isTenant(organType),
+            SystemErrorCode.PARAM_VAL_INVALID, organ.getOrganType()
+        );
+
+        TokenJWTPayload payload = new TokenJWTPayload();
+        payload.setSessionType(SessionType.MEMBER);
+        payload.setAdminUser(Boolean.FALSE);
+        payload.setOrganType(organType);
+        payload.setOrganId(organ.getId());
+        payload.setOrganName(organ.getOrganName());
+        payload.setAdminCompany(Boolean.FALSE);
+
+        Instant issuedAt = Instant.now();
+        payload.setIssuedAt(issuedAt.getEpochSecond());
+        payload.setExpireAt(issuedAt.plus(Duration.ofSeconds(
+            application.getAccessTokenExpiresIn()
+        )).getEpochSecond());
+        payload.setRefreshExpireAt(issuedAt.plus(Duration.ofSeconds(
+            application.getRefreshTokenExpiresIn()
+        )).getEpochSecond());
+
+        payload.setApplicationScopes(List.of(new ApplicationScope(
+            application.getId(), applicationCode, application.getOrganId()
+        )));
+        return payload;
+    }
+
     /**
      * 解析匿名会话角色：传入 roleIds 时校验其属于 organId；否则回退机构 ADMIN 角色。
      */
