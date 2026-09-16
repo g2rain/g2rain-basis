@@ -226,7 +226,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      *     <li>查询应用信息及应用作用域，并封装到 {@link ApplicationScope} 列表中。</li>
      * </ol>
      *
-     * @param passportId         发码侧通行证 ID；三方换票且 {@code userId} 非空时必传，且须与用户的 {@code passport_id} 一致
+     * @param passportId         发码侧通行证 ID；{@code userId} 非空时必传，且须与用户的 {@code passport_id} 一致
      * @param userId             用户 ID，可为 null（表示 Passport 会话）
      * @param applicationCode    应用编码
      * @param thirdPartyIdpLogin 是否外部身份源授权链路发码；为 {@link Boolean#TRUE} 且 {@code userId} 非空时校验
@@ -284,14 +284,15 @@ public class LoginTokenServiceImpl implements LoginTokenService {
             SystemErrorCode.PARAM_VAL_INVALID, userId
         );
 
+        Asserts.isTrue(passportId != null && passportId > 0L,
+            SystemErrorCode.PARAM_VAL_INVALID, "passportId");
+        Asserts.isTrue(Objects.equals(passportId, user.getPassportId()),
+            SystemErrorCode.UNAUTHORIZED, userId);
+
         if (isIdpLogin(thirdPartyIdpLogin, bindMode)) {
             Asserts.isTrue(Strings.isNotBlank(idpType) && Strings.isNotBlank(idpSubject)
                     && Strings.isNotBlank(idpApplicationCode),
                 SystemErrorCode.PARAM_VAL_INVALID, "idpType,idpSubject,idpApplicationCode");
-            Asserts.isTrue(passportId != null && passportId > 0L,
-                SystemErrorCode.PARAM_VAL_INVALID, "passportId");
-            Asserts.isTrue(Objects.equals(passportId, user.getPassportId()),
-                SystemErrorCode.PARAM_VAL_INVALID, userId);
             String idpTypeTrim = idpType.trim();
             String idpSubjectTrim = idpSubject.trim();
             String idpAppTrim = idpApplicationCode.trim();
