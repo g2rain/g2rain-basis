@@ -36,7 +36,36 @@ class PersonalStaticAccessTokenServiceImplTest {
     }
 
     @Test
-    void resolveTargetUserId_shouldAllowTenantAdminToSpecifyUser() throws Exception {
+    void resolveTargetUserId_shouldRejectOtherUserIdEvenForAdminUser() {
+        PersonalStaticAccessTokenDto dto = new PersonalStaticAccessTokenDto();
+        dto.setUserId(2002L);
+
+        runWithPrincipal(true, () ->
+            assertThrows(BusinessException.class, () -> invokeResolveTargetUserId(dto)));
+    }
+
+    @Test
+    void resolveTargetUserId_shouldRejectNonSelfUserId() {
+        PersonalStaticAccessTokenDto dto = new PersonalStaticAccessTokenDto();
+        dto.setUserId(2002L);
+
+        runWithPrincipal(false, () ->
+            assertThrows(BusinessException.class, () -> invokeResolveTargetUserId(dto)));
+    }
+
+    @Test
+    void resolveTargetUserId_shouldUseCurrentUserWhenNotSpecified() {
+        runWithPrincipal(false, () -> {
+            try {
+                assertEquals(1001L, invokeResolveTargetUserId(new PersonalStaticAccessTokenDto()));
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
+    void resolveDelegatedUserId_shouldAllowSameOrganUser() throws Exception {
         UserPo targetUser = new UserPo();
         targetUser.setId(2002L);
         targetUser.setOrganId(100L);
@@ -47,17 +76,11 @@ class PersonalStaticAccessTokenServiceImplTest {
         PersonalStaticAccessTokenDto dto = new PersonalStaticAccessTokenDto();
         dto.setUserId(2002L);
 
-        runWithPrincipal(true, () -> {
-            try {
-                assertEquals(2002L, invokeResolveTargetUserId(dto, 100L));
-            } catch (Exception exception) {
-                throw new RuntimeException(exception);
-            }
-        });
+        assertEquals(2002L, invokeResolveDelegatedUserId(dto, 100L));
     }
 
     @Test
-    void resolveTargetUserId_shouldRejectUserFromOtherOrgan() throws Exception {
+    void resolveDelegatedUserId_shouldRejectUserFromOtherOrgan() throws Exception {
         UserPo targetUser = new UserPo();
         targetUser.setId(2002L);
         targetUser.setOrganId(999L);
@@ -68,27 +91,46 @@ class PersonalStaticAccessTokenServiceImplTest {
         PersonalStaticAccessTokenDto dto = new PersonalStaticAccessTokenDto();
         dto.setUserId(2002L);
 
-        runWithPrincipal(true, () ->
-            assertThrows(BusinessException.class, () -> invokeResolveTargetUserId(dto, 100L)));
+        assertThrows(BusinessException.class, () -> invokeResolveDelegatedUserId(dto, 100L));
     }
 
     @Test
-    void resolveTargetUserId_shouldRejectNonAdminPassingOtherUserId() {
-        PersonalStaticAccessTokenDto dto = new PersonalStaticAccessTokenDto();
-        dto.setUserId(2002L);
-
-        runWithPrincipal(false, () ->
-            assertThrows(BusinessException.class, () -> invokeResolveTargetUserId(dto, 100L)));
+    void resolveDelegatedUserId_shouldRequireUserId() {
+        assertThrows(BusinessException.class,
+            () -> invokeResolveDelegatedUserId(new PersonalStaticAccessTokenDto(), 100L));
     }
 
     @Test
-    void resolveTargetUserId_shouldUseCurrentUserWhenNotSpecified() {
+    void selectList_shouldForceCurrentUserId() throws Exception {
+        StubPersonalStaticAccessTokenDao tokenDao = new StubPersonalStaticAccessTokenDao();
+        injectDao("personalStaticAccessTokenDao", tokenDao);
+        injectDao("userDao", new StubUserDao());
+
+        PersonalStaticAccessTokenSelectDto selectDto = new PersonalStaticAccessTokenSelectDto();
+        selectDto.setUserId(9999L);
+        selectDto.setApplicationId(200L);
+
+        runWithPrincipal(true, () -> {
+            assertEquals(0, service.selectList(selectDto).size());
+            assertEquals(1001L, tokenDao.lastSelectListDto.getUserId());
+            assertEquals(200L, tokenDao.lastSelectListDto.getApplicationId());
+        });
+    }
+
+    @Test
+    void selectListAll_shouldKeepRequestedUserId() throws Exception {
+        StubPersonalStaticAccessTokenDao tokenDao = new StubPersonalStaticAccessTokenDao();
+        injectDao("personalStaticAccessTokenDao", tokenDao);
+        injectDao("userDao", new StubUserDao());
+
+        PersonalStaticAccessTokenSelectDto selectDto = new PersonalStaticAccessTokenSelectDto();
+        selectDto.setUserId(2002L);
+        selectDto.setApplicationId(200L);
+
         runWithPrincipal(false, () -> {
-            try {
-                assertEquals(1001L, invokeResolveTargetUserId(new PersonalStaticAccessTokenDto(), 100L));
-            } catch (Exception exception) {
-                throw new RuntimeException(exception);
-            }
+            assertEquals(0, service.selectListAll(selectDto).size());
+            assertEquals(2002L, tokenDao.lastSelectListDto.getUserId());
+            assertEquals(200L, tokenDao.lastSelectListDto.getApplicationId());
         });
     }
 
@@ -118,18 +160,18 @@ class PersonalStaticAccessTokenServiceImplTest {
     }
 
     @Test
-    void selectCount_shouldForceCurrentUserIdForNonAdmin() throws Exception {
+    void selectCount_shouldKeepRequestedConditions() throws Exception {
         StubPersonalStaticAccessTokenDao tokenDao = new StubPersonalStaticAccessTokenDao();
         tokenDao.selectCountResult = 3L;
         injectDao("personalStaticAccessTokenDao", tokenDao);
 
         PersonalStaticAccessTokenSelectDto selectDto = new PersonalStaticAccessTokenSelectDto();
         selectDto.setApplicationId(200L);
-        selectDto.setUserId(9999L);
+        selectDto.setUserId(2002L);
 
         runWithPrincipal(false, () -> {
             assertEquals(3L, service.selectCount(selectDto));
-            assertEquals(1001L, tokenDao.lastSelectCountDto.getUserId());
+            assertEquals(2002L, tokenDao.lastSelectCountDto.getUserId());
             assertEquals(200L, tokenDao.lastSelectCountDto.getApplicationId());
         });
     }
@@ -223,9 +265,23 @@ class PersonalStaticAccessTokenServiceImplTest {
         }
     }
 
-    private Long invokeResolveTargetUserId(PersonalStaticAccessTokenDto dto, Long organId) throws Exception {
+    private Long invokeResolveTargetUserId(PersonalStaticAccessTokenDto dto) throws Exception {
         Method method = PersonalStaticAccessTokenServiceImpl.class.getDeclaredMethod(
-            "resolveTargetUserId", PersonalStaticAccessTokenDto.class, Long.class);
+            "resolveTargetUserId", PersonalStaticAccessTokenDto.class);
+        method.setAccessible(true);
+        try {
+            return (Long) method.invoke(service, dto);
+        } catch (InvocationTargetException ex) {
+            if (ex.getCause() instanceof Exception exception) {
+                throw exception;
+            }
+            throw ex;
+        }
+    }
+
+    private Long invokeResolveDelegatedUserId(PersonalStaticAccessTokenDto dto, Long organId) throws Exception {
+        Method method = PersonalStaticAccessTokenServiceImpl.class.getDeclaredMethod(
+            "resolveDelegatedUserId", PersonalStaticAccessTokenDto.class, Long.class);
         method.setAccessible(true);
         try {
             return (Long) method.invoke(service, dto, organId);
@@ -241,9 +297,11 @@ class PersonalStaticAccessTokenServiceImplTest {
 
         private Long selectCountResult = 0L;
         private PersonalStaticAccessTokenSelectDto lastSelectCountDto;
+        private PersonalStaticAccessTokenSelectDto lastSelectListDto;
 
         @Override
         public List<PersonalStaticAccessTokenPo> selectList(PersonalStaticAccessTokenSelectDto selectDto) {
+            lastSelectListDto = selectDto;
             return Collections.emptyList();
         }
 

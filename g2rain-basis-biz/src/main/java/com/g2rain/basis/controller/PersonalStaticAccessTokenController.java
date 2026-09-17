@@ -50,10 +50,28 @@ public class PersonalStaticAccessTokenController implements PersonalStaticAccess
         return Result.success(personalStaticAccessTokenService.selectCount(selectDto));
     }
 
+    @Override
+    public Result<List<PersonalStaticAccessTokenVo>> selectListAll(PersonalStaticAccessTokenSelectDto selectDto) {
+        return Result.success(personalStaticAccessTokenService.selectListAll(selectDto));
+    }
+
+    @Override
+    public Result<PageData<PersonalStaticAccessTokenVo>> selectPageAll(
+        PageSelectListDto<PersonalStaticAccessTokenSelectDto> selectDto) {
+        return Result.successPage(personalStaticAccessTokenService.selectPageAll(selectDto));
+    }
+
     @PostMapping("/save")
     @Operation(summary = "新增或更新个人静态访问令牌信息", description = "新增或更新个人静态访问令牌基础信息")
     public Result<Long> save(@RequestBody PersonalStaticAccessTokenDto dto) {
         return Result.success(personalStaticAccessTokenService.save(dto));
+    }
+
+    @PostMapping("/save_for_user")
+    @Operation(summary = "为指定用户新增或更新个人静态访问令牌",
+        description = "管理员为指定用户创建或更新个人静态访问令牌；权限由 Gateway 控制单元鉴权")
+    public Result<Long> saveForUser(@RequestBody PersonalStaticAccessTokenDto dto) {
+        return Result.success(personalStaticAccessTokenService.saveForUser(dto));
     }
 
     /**

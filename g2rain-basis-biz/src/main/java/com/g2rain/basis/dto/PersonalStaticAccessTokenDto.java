@@ -35,9 +35,9 @@ public class PersonalStaticAccessTokenDto extends BaseDto {
     private Long applicationId;
 
     /**
-     * 用户标识（租户管理员创建时可指定目标用户，默认当前登录用户）
+     * 用户标识（{@code /save_for_user} 必填目标用户；自助 {@code /save} 默认当前登录用户）
      */
-    @Schema(description = "用户标识（租户管理员创建时可指定目标用户，默认当前登录用户）")
+    @Schema(description = "用户标识（save_for_user 必填目标用户；自助 save 默认当前登录用户）")
     private Long userId;
 
     /**
