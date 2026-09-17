@@ -59,9 +59,25 @@ class MemberPermSyncServiceTest {
     @Test
     void currentVersion_shouldReadOrganKey() {
         when(genericRedisHelper.get(
-            BasisRedisKeyRule.MEMBER_PERM_VERSION.format("10001"), Long.class
+            BasisRedisKeyRule.MEMBER_PERM_VERSION.format("10001"), Number.class
         )).thenReturn(15L);
         assertEquals(15L, service.currentVersion(10001L));
+    }
+
+    @Test
+    void currentVersion_shouldAcceptIntegerFromRedis() {
+        when(genericRedisHelper.get(
+            BasisRedisKeyRule.MEMBER_PERM_VERSION.format("10001"), Number.class
+        )).thenReturn(16);
+        assertEquals(16L, service.currentVersion(10001L));
+    }
+
+    @Test
+    void currentVersion_shouldReturnZeroWhenMissing() {
+        when(genericRedisHelper.get(
+            BasisRedisKeyRule.MEMBER_PERM_VERSION.format("10001"), Number.class
+        )).thenReturn(null);
+        assertEquals(0L, service.currentVersion(10001L));
     }
 
     @Test

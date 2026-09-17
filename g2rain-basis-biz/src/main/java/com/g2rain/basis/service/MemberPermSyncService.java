@@ -34,16 +34,18 @@ public class MemberPermSyncService {
 
     /**
      * 读取某机构 MEMBER 权限版本；键不存在时返回 0。
+     * <p>
+     * Redis {@code INCR} 写入后，反序列化常为 {@link Integer}，不能直接按 {@link Long} 强转。
      */
     public long currentVersion(Long organId) {
         if (Objects.isNull(organId) || organId <= 0) {
             return 0L;
         }
-        Long version = genericRedisHelper.get(
+        Number version = genericRedisHelper.get(
             BasisRedisKeyRule.MEMBER_PERM_VERSION.format(String.valueOf(organId)),
-            Long.class
+            Number.class
         );
-        return Objects.requireNonNullElse(version, 0L);
+        return Objects.isNull(version) ? 0L : version.longValue();
     }
 
     /**
