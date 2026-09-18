@@ -83,7 +83,9 @@ public interface PersonalStaticAccessTokenService {
     PersonalStaticAccessTokenVo selectByApiKey(String apiKey);
 
     /**
-     * 修改个人静态访问令牌状态
+     * 修改个人静态访问令牌状态。
+     * 运营公司可跨租户修改；其余调用方仅可修改本机构令牌。
+     * 租户管理员是否可调用由 Gateway 控制单元鉴权。
      *
      * @param id 个人静态访问令牌 ID
      * @param dto 修改状态参数

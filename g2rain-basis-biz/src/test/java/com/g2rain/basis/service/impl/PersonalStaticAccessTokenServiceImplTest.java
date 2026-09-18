@@ -10,7 +10,9 @@ import com.g2rain.basis.dao.po.PersonalStaticAccessTokenPo;
 import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
 import com.g2rain.basis.dto.PersonalStaticAccessTokenDto;
 import com.g2rain.basis.dto.PersonalStaticAccessTokenSelectDto;
+import com.g2rain.basis.dto.UpdateStatusDto;
 import com.g2rain.basis.enums.AuthorizationStatus;
+import com.g2rain.basis.enums.StaticTokenStatus;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.web.PrincipalContext;
 import com.g2rain.common.web.PrincipalContextHolder;
@@ -220,6 +222,60 @@ class PersonalStaticAccessTokenServiceImplTest {
     }
 
     @Test
+    void updateStatus_shouldAllowSameOrganWhenNotAdminCompany() throws Exception {
+        StubPersonalStaticAccessTokenDao tokenDao = new StubPersonalStaticAccessTokenDao();
+        PersonalStaticAccessTokenPo token = new PersonalStaticAccessTokenPo();
+        token.setId(11L);
+        token.setOrganId(100L);
+        token.setStatus(StaticTokenStatus.ACTIVATED.name());
+        tokenDao.selectByIdResult = token;
+        tokenDao.updateResult = 1;
+        injectDao("personalStaticAccessTokenDao", tokenDao);
+
+        UpdateStatusDto dto = new UpdateStatusDto();
+        dto.setStatus(StaticTokenStatus.REVOKED.name());
+
+        runWithPrincipal(false, false, () -> {
+            assertEquals(1, service.updateStatus(11L, dto));
+            assertEquals(StaticTokenStatus.REVOKED.name(), tokenDao.lastUpdate.getStatus());
+            assertEquals(11L, tokenDao.lastUpdate.getId());
+        });
+    }
+
+    @Test
+    void updateStatus_shouldRejectOtherOrganWhenNotAdminCompany() throws Exception {
+        StubPersonalStaticAccessTokenDao tokenDao = new StubPersonalStaticAccessTokenDao();
+        PersonalStaticAccessTokenPo token = new PersonalStaticAccessTokenPo();
+        token.setId(11L);
+        token.setOrganId(999L);
+        token.setStatus(StaticTokenStatus.ACTIVATED.name());
+        tokenDao.selectByIdResult = token;
+        injectDao("personalStaticAccessTokenDao", tokenDao);
+
+        UpdateStatusDto dto = new UpdateStatusDto();
+        dto.setStatus(StaticTokenStatus.REVOKED.name());
+
+        runWithPrincipal(false, false, () ->
+            assertThrows(BusinessException.class, () -> service.updateStatus(11L, dto)));
+    }
+
+    @Test
+    void updateStatus_shouldAllowOtherOrganForAdminCompany() throws Exception {
+        StubPersonalStaticAccessTokenDao tokenDao = new StubPersonalStaticAccessTokenDao();
+        PersonalStaticAccessTokenPo token = new PersonalStaticAccessTokenPo();
+        token.setId(11L);
+        token.setOrganId(999L);
+        token.setStatus(StaticTokenStatus.ACTIVATED.name());
+        tokenDao.selectByIdResult = token;
+        injectDao("personalStaticAccessTokenDao", tokenDao);
+
+        UpdateStatusDto dto = new UpdateStatusDto();
+        dto.setStatus(StaticTokenStatus.ACTIVATED.name());
+
+        runWithPrincipal(false, true, () -> assertEquals(1, service.updateStatus(11L, dto)));
+    }
+
+    @Test
     void resolveApplicationAuthorization_shouldRejectMismatchedApplicationId() throws Exception {
         ApplicationAuthorizationPo authorization = new ApplicationAuthorizationPo();
         authorization.setId(10L);
@@ -243,10 +299,15 @@ class PersonalStaticAccessTokenServiceImplTest {
     }
 
     private void runWithPrincipal(boolean adminUser, Runnable action) {
+        runWithPrincipal(adminUser, false, action);
+    }
+
+    private void runWithPrincipal(boolean adminUser, boolean adminCompany, Runnable action) {
         PrincipalContext context = PrincipalContext.of();
         context.setOrganId(100L);
         context.setUserId(1001L);
         context.setAdminUser(adminUser);
+        context.setAdminCompany(adminCompany);
         PrincipalContextHolder.runWith(context, action);
     }
 
@@ -298,6 +359,9 @@ class PersonalStaticAccessTokenServiceImplTest {
         private Long selectCountResult = 0L;
         private PersonalStaticAccessTokenSelectDto lastSelectCountDto;
         private PersonalStaticAccessTokenSelectDto lastSelectListDto;
+        private PersonalStaticAccessTokenPo selectByIdResult;
+        private PersonalStaticAccessTokenPo lastUpdate;
+        private int updateResult;
 
         @Override
         public List<PersonalStaticAccessTokenPo> selectList(PersonalStaticAccessTokenSelectDto selectDto) {
@@ -317,7 +381,8 @@ class PersonalStaticAccessTokenServiceImplTest {
 
         @Override
         public int update(PersonalStaticAccessTokenPo entity) {
-            return 0;
+            lastUpdate = entity;
+            return updateResult;
         }
 
         @Override
@@ -332,7 +397,7 @@ class PersonalStaticAccessTokenServiceImplTest {
 
         @Override
         public PersonalStaticAccessTokenPo selectById(Long id) {
-            return null;
+            return selectByIdResult;
         }
 
         @Override

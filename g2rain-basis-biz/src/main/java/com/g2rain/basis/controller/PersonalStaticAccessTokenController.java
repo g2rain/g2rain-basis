@@ -82,7 +82,8 @@ public class PersonalStaticAccessTokenController implements PersonalStaticAccess
      * @return 受影响的记录行数
      */
     @PostMapping("/{id}/status")
-    @Operation(summary = "修改个人静态访问令牌记录状态", description = "修改个人静态访问令牌记录状态")
+    @Operation(summary = "修改个人静态访问令牌记录状态",
+        description = "运营公司可跨租户修改；本机构调用方仅可修改本机构令牌，权限由 Gateway 控制单元鉴权")
     public Result<Integer> updateStatus(@Parameter(description = "个人静态访问令牌记录状态标识") @PathVariable Long id, @RequestBody @Validated UpdateStatusDto dto) {
         return Result.success(personalStaticAccessTokenService.updateStatus(id, dto));
     }

@@ -62,11 +62,11 @@ commands:
   image: ./build.sh <tag>
 
 validation:
-  lastVerifiedAt: "2026-09-13"
+  lastVerifiedAt: "2026-09-18"
   command: mvn clean verify
   result: passed
-  testsRun: 77
-  testClasses: 17
+  testsRun: 91
+  testClasses: 18
   note: 当前以 Service 和领域工具单元测试为主；数据库、Controller、跨服务与 Startup 集成覆盖仍待补充
 
 community:

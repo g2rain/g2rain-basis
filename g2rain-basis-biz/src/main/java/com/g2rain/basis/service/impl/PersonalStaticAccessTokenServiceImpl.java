@@ -212,21 +212,19 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
     }
 
     /**
-     * 修改个人静态访问令牌状态
+     * 修改个人静态访问令牌状态。
      * <p>
+     * 运营公司可跨租户修改；其余调用方仅可修改本机构令牌。
+     * 租户管理员是否可调用由 Gateway 控制单元鉴权，服务端不依赖 {@code isAdminUser}。
      * 如果状态未变更，则直接返回成功。
      *
      * @param dto 修改状态参数
      * @return 更新记录数
      * @throws BusinessException 参数校验失败
      */
+    @Override
     @Transactional
     public int updateStatus(Long id, UpdateStatusDto dto) {
-        // 非运营公司不允许修改状态
-        if (!PrincipalContextHolder.isAdminCompany()) {
-            return 0;
-        }
-
         String status = dto.getStatus();
         // 校验状态参数
         StaticTokenStatus.validate(status);
@@ -234,6 +232,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         // 查看记录是否存在
         PersonalStaticAccessTokenPo personalStaticAccessToken = personalStaticAccessTokenDao.selectById(id);
         Asserts.isTrue(Objects.nonNull(personalStaticAccessToken), SystemErrorCode.PARAM_VAL_INVALID, id);
+        assertOwnOrganUnlessAdminCompany(personalStaticAccessToken.getOrganId());
 
         // 状态没变更, 不需要修改, 直接提示成功即可
         if (personalStaticAccessToken.getStatus().equals(status)) {
@@ -311,6 +310,17 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         }
 
         return result;
+    }
+
+    /**
+     * 运营公司可跨租户修改；其余调用方必须与令牌同机构。
+     */
+    private void assertOwnOrganUnlessAdminCompany(Long organId) {
+        if (PrincipalContextHolder.isAdminCompany()) {
+            return;
+        }
+        Asserts.isTrue(Objects.equals(PrincipalContextHolder.getOrganId(), organId),
+            BasisErrorCode.ONLY_OWN_ORG_APIKEY_ALLOWED);
     }
 
     /**
