@@ -13,7 +13,13 @@ import com.g2rain.basis.dao.po.ControlDomainControlUnitRelationPo;
 import com.g2rain.basis.dao.po.ControlDomainPo;
 import com.g2rain.basis.dao.po.OrganPo;
 import com.g2rain.basis.dao.po.RolePo;
+import com.g2rain.basis.dao.UserDao;
+import com.g2rain.basis.dao.po.UserPo;
+import com.g2rain.basis.dto.ApplicationAuthorizationActivateSelfRequest;
 import com.g2rain.basis.dto.ApplicationAuthorizationDto;
+import com.g2rain.basis.enums.OrganStatus;
+import com.g2rain.basis.vo.ApplicationAuthorizationActivateSelfVo;
+import com.g2rain.common.utils.Strings;
 import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
 import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.dto.ControlDomainControlUnitRelationSelectDto;
@@ -79,6 +85,9 @@ public class ApplicationAuthorizationServiceImpl implements ApplicationAuthoriza
 
     @Resource(name = "organDao")
     private OrganDao organDao;
+
+    @Resource(name = "userDao")
+    private UserDao userDao;
 
     @Resource(name = "roleDao")
     private RoleDao roleDao;
@@ -341,5 +350,67 @@ public class ApplicationAuthorizationServiceImpl implements ApplicationAuthoriza
         }
 
         return result;
+    }
+
+    @Override
+    @Transactional
+    public ApplicationAuthorizationActivateSelfVo activateSelf(ApplicationAuthorizationActivateSelfRequest request) {
+        ConsentContext context = resolveConsentContext(request.getApplicationCode(), request.getUserId());
+        List<ControlDomainPo> selfDomains = listSelfDomains(context.application().getId());
+
+        List<Long> authorizationIds = new ArrayList<>();
+        for (ControlDomainPo domain : selfDomains) {
+            ApplicationAuthorizationDto dto = new ApplicationAuthorizationDto();
+            dto.setOrganId(context.organ().getId());
+            dto.setApplicationId(context.application().getId());
+            dto.setControlDomainId(domain.getId());
+            authorizationIds.add(save(dto));
+        }
+
+        ApplicationAuthorizationActivateSelfVo result = new ApplicationAuthorizationActivateSelfVo();
+        result.setApplicationId(context.application().getId());
+        result.setApplicationCode(context.application().getApplicationCode());
+        result.setOrganId(context.organ().getId());
+        result.setAuthorizationIds(authorizationIds);
+        return result;
+    }
+
+    private ConsentContext resolveConsentContext(String applicationCode, Long userId) {
+        Asserts.isTrue(Strings.isNotBlank(applicationCode),
+            SystemErrorCode.PARAM_REQUIRED, "applicationCode");
+        Asserts.isTrue(Objects.nonNull(userId),
+            SystemErrorCode.PARAM_REQUIRED, "userId");
+
+        ApplicationSelectDto appSelect = new ApplicationSelectDto();
+        appSelect.setApplicationCode(applicationCode.trim());
+        List<ApplicationPo> applications = applicationDao.selectList(appSelect);
+        Asserts.isTrue(Collections.isNotEmpty(applications),
+            SystemErrorCode.UNAUTHORIZED, applicationCode);
+        ApplicationPo application = applications.getFirst();
+
+        UserPo user = userDao.selectByIdWithoutIsolation(userId);
+        Asserts.isTrue(Objects.nonNull(user),
+            SystemErrorCode.PARAM_VAL_INVALID, userId);
+        Asserts.isTrue(Boolean.TRUE.equals(user.getAdmin()),
+            BasisErrorCode.APPLICATION_SELF_ACTIVATE_ADMIN_REQUIRED);
+
+        OrganPo organ = organDao.selectById(user.getOrganId());
+        Asserts.isTrue(Objects.nonNull(organ),
+            SystemErrorCode.PARAM_VAL_INVALID, user.getOrganId());
+        Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
+            BasisErrorCode.ORGAN_UNAVAILABLE);
+
+        return new ConsentContext(application, user, organ);
+    }
+
+    private List<ControlDomainPo> listSelfDomains(Long applicationId) {
+        ControlDomainSelectDto selectDto = new ControlDomainSelectDto();
+        selectDto.setApplicationId(applicationId);
+        selectDto.setControlDomainType(ControlDomainType.SELF.name());
+        List<ControlDomainPo> domains = controlDomainDao.selectList(selectDto);
+        return domains == null ? List.of() : domains;
+    }
+
+    private record ConsentContext(ApplicationPo application, UserPo user, OrganPo organ) {
     }
 }

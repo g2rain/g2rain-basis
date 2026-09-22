@@ -1,10 +1,12 @@
 package com.g2rain.basis.controller;
 
 import com.g2rain.basis.api.ApplicationAuthorizationApi;
+import com.g2rain.basis.dto.ApplicationAuthorizationActivateSelfRequest;
 import com.g2rain.basis.dto.ApplicationAuthorizationDto;
 import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
 import com.g2rain.basis.dto.UpdateStatusDto;
 import com.g2rain.basis.service.ApplicationAuthorizationService;
+import com.g2rain.basis.vo.ApplicationAuthorizationActivateSelfVo;
 import com.g2rain.basis.vo.ApplicationAuthorizationVo;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
@@ -12,6 +14,7 @@ import com.g2rain.common.model.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,6 +58,12 @@ public class ApplicationAuthorizationController implements ApplicationAuthorizat
     @Override
     public Result<PageData<ApplicationAuthorizationVo>> selectPage(PageSelectListDto<ApplicationAuthorizationSelectDto> selectDto) {
         return Result.successPage(applicationAuthorizationService.selectPage(selectDto));
+    }
+
+    @Override
+    public Result<ApplicationAuthorizationActivateSelfVo> activateSelf(
+        @Valid @RequestBody ApplicationAuthorizationActivateSelfRequest request) {
+        return Result.success(applicationAuthorizationService.activateSelf(request));
     }
 
     /**

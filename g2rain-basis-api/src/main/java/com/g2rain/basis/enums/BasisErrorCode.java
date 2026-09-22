@@ -259,7 +259,13 @@ public enum BasisErrorCode implements ErrorCode {
     SESSION_TYPE_UPDATE_ILLEGAL("basis.40075", "控制单元会话类型创建后不允许修改"),
 
     @Schema(description = "CONTROL_UNIT_SESSION_TYPE_INVALID_FOR_ROLE")
-    CONTROL_UNIT_SESSION_TYPE_INVALID_FOR_ROLE("basis.40076", "仅 USER 会话类型的控制单元可分配给角色");
+    CONTROL_UNIT_SESSION_TYPE_INVALID_FOR_ROLE("basis.40076", "仅 USER 会话类型的控制单元可分配给角色"),
+
+    @Schema(description = "APPLICATION_SELF_ACTIVATE_ADMIN_REQUIRED")
+    APPLICATION_SELF_ACTIVATE_ADMIN_REQUIRED("basis.40077", "仅租户管理员可以开通应用"),
+
+    @Schema(description = "APPLICATION_AUTHORIZATION_MISSING")
+    APPLICATION_AUTHORIZATION_MISSING("basis.40080", "目标应用尚未开通或授权已停用");
 
     private final String code;
 

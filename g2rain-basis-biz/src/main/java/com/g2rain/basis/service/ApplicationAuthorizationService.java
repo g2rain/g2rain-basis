@@ -1,8 +1,10 @@
 package com.g2rain.basis.service;
 
+import com.g2rain.basis.dto.ApplicationAuthorizationActivateSelfRequest;
 import com.g2rain.basis.dto.ApplicationAuthorizationDto;
 import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
 import com.g2rain.basis.dto.UpdateStatusDto;
+import com.g2rain.basis.vo.ApplicationAuthorizationActivateSelfVo;
 import com.g2rain.basis.vo.ApplicationAuthorizationVo;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
@@ -57,4 +59,9 @@ public interface ApplicationAuthorizationService {
      * @return 操作结果（影响行数）
      */
     int delete(Long id);
+
+    /**
+     * 自动开通目标应用全部 SELF 控制域；无 SELF 时成功且 authorizationIds 为空。
+     */
+    ApplicationAuthorizationActivateSelfVo activateSelf(ApplicationAuthorizationActivateSelfRequest request);
 }

@@ -1,6 +1,7 @@
 package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.converter.LoginTokenConverter;
+import com.g2rain.basis.dao.ApplicationAuthorizationDao;
 import com.g2rain.basis.dao.ApplicationDao;
 import com.g2rain.basis.dao.ApplicationIdpProvisionDao;
 import com.g2rain.basis.dao.LoginTokenDao;
@@ -8,17 +9,20 @@ import com.g2rain.basis.dao.OrganDao;
 import com.g2rain.basis.dao.PassportIdpBindingDao;
 import com.g2rain.basis.dao.RoleControlUnitRelationDao;
 import com.g2rain.basis.dao.UserDao;
+import com.g2rain.basis.dao.po.ApplicationAuthorizationPo;
 import com.g2rain.basis.dao.po.ApplicationPo;
 import com.g2rain.basis.dao.po.CountRoleControlUnitPo;
 import com.g2rain.basis.dao.po.LoginTokenPo;
 import com.g2rain.basis.dao.po.OrganPo;
 import com.g2rain.basis.dao.po.UserPo;
+import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
 import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
 import com.g2rain.basis.dto.OrganSelectDto;
 import com.g2rain.basis.dto.RoleSelectDto;
 import com.g2rain.basis.dto.UserSelectDto;
+import com.g2rain.basis.enums.AuthorizationStatus;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.IdpBindMode;
 import com.g2rain.basis.enums.OrganStatus;
@@ -98,6 +102,9 @@ public class LoginTokenServiceImpl implements LoginTokenService {
 
     @Resource(name = "applicationDao")
     private ApplicationDao applicationDao;
+
+    @Resource(name = "applicationAuthorizationDao")
+    private ApplicationAuthorizationDao applicationAuthorizationDao;
 
     @Resource(name = "organDao")
     private OrganDao organDao;
@@ -332,8 +339,16 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         // 需要外部的Starter 提供能力, 没有实现也没关系
         principalEnrichers.forEach(enricher -> enricher.enrich(payload));
 
-        // 如果入口应用不是 `默认应用`, 需要校验应用是否做过授权
+        // 如果入口应用不是 `默认应用`, 需要校验目标应用开通事实与可调用控制单元
         if (!isDefaultMain) {
+            ApplicationAuthorizationSelectDto authSelect = new ApplicationAuthorizationSelectDto();
+            authSelect.setOrganId(organ.getId());
+            authSelect.setApplicationId(application.getId());
+            authSelect.setStatus(AuthorizationStatus.ACTIVATED.name());
+            List<ApplicationAuthorizationPo> authorizations = applicationAuthorizationDao.selectList(authSelect);
+            Asserts.isTrue(Collections.isNotEmpty(authorizations),
+                BasisErrorCode.APPLICATION_AUTHORIZATION_MISSING, applicationCode);
+
             CountRoleControlUnitPo countRoleControlUnit = roleControlUnitRelationDao
                 .countRoleControlUnits(user.getId());
 

@@ -88,7 +88,9 @@ public class OrganProvisionServiceImpl implements OrganProvisionService {
         domainSelect.setLanding(true);
         domainSelect.setControlDomainScope(ControlDomainScope.CUSTOMER.name());
         for (ControlDomainVo domain : controlDomainService.selectList(domainSelect)) {
-            if (ControlDomainType.TRADE.name().equals(domain.getControlDomainType())) {
+            String domainType = domain.getControlDomainType();
+            if (ControlDomainType.TRADE.name().equals(domainType)
+                || ControlDomainType.SELF.name().equals(domainType)) {
                 continue;
             }
             ApplicationAuthorizationDto authDto = new ApplicationAuthorizationDto();
