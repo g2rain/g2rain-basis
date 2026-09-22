@@ -68,7 +68,7 @@ class ApplicationAuthorizationActivateSelfTest {
         request.setUserId(7L);
 
         BusinessException ex = assertThrows(BusinessException.class, () -> service.activateSelf(request));
-        assertEquals(BasisErrorCode.APPLICATION_SELF_ACTIVATE_ADMIN_REQUIRED.code(), ex.getErrorCode().code());
+        assertEquals(BasisErrorCode.APPLICATION_SELF_ACTIVATE_ADMIN_REQUIRED.code(), ex.getErrorCode());
     }
 
     @Test
