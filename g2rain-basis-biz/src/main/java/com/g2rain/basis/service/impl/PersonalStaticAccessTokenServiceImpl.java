@@ -86,10 +86,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
 
     @Override
     public List<PersonalStaticAccessTokenVo> selectList(PersonalStaticAccessTokenSelectDto selectDto) {
-        if (!(PrincipalContextHolder.isAdminCompany() || PrincipalContextHolder.isAdminUser())) {
-            selectDto.setUserId(PrincipalContextHolder.getUserId());
-        }
-
+        selectDto.setUserId(PrincipalContextHolder.getUserId());
         return mergeUsers(personalStaticAccessTokenDao.selectList(selectDto));
     }
 
@@ -100,10 +97,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
 
         Page<PersonalStaticAccessTokenPo> page = PageContext.of(selectDto.getPageNum(), selectDto.getPageSize(), () -> {
             PersonalStaticAccessTokenSelectDto query = selectDto.getQuery();
-            if (!(PrincipalContextHolder.isAdminCompany() || PrincipalContextHolder.isAdminUser())) {
-                query.setUserId(PrincipalContextHolder.getUserId());
-            }
-
+            query.setUserId(PrincipalContextHolder.getUserId());
             personalStaticAccessTokenDao.selectList(query);
         });
 
@@ -111,7 +105,40 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
     }
 
     @Override
+    public Long selectCount(PersonalStaticAccessTokenSelectDto selectDto) {
+        Long total = personalStaticAccessTokenDao.selectCount(selectDto);
+        return Objects.isNull(total) ? 0L : total;
+    }
+
+    @Override
+    public List<PersonalStaticAccessTokenVo> selectListAll(PersonalStaticAccessTokenSelectDto selectDto) {
+        return mergeUsers(personalStaticAccessTokenDao.selectList(selectDto));
+    }
+
+    @Override
+    public PageData<PersonalStaticAccessTokenVo> selectPageAll(
+        PageSelectListDto<PersonalStaticAccessTokenSelectDto> selectDto) {
+        Asserts.isTrue(Objects.nonNull(selectDto) && Objects.nonNull(selectDto.getQuery()),
+            SystemErrorCode.PARAM_REQUIRED, "query");
+
+        Page<PersonalStaticAccessTokenPo> page = PageContext.of(selectDto.getPageNum(), selectDto.getPageSize(), () ->
+            personalStaticAccessTokenDao.selectList(selectDto.getQuery())
+        );
+
+        return PageData.of(page.getPageNum(), page.getPageSize(), page.getTotal(), mergeUsers(page.getResult()));
+    }
+
+    @Override
     public Long save(PersonalStaticAccessTokenDto dto) {
+        return doSave(dto, false);
+    }
+
+    @Override
+    public Long saveForUser(PersonalStaticAccessTokenDto dto) {
+        return doSave(dto, true);
+    }
+
+    private Long doSave(PersonalStaticAccessTokenDto dto, boolean forUser) {
         ApplicationAuthorizationPo applicationAuthorization = resolveApplicationAuthorization(dto);
 
         // 当前用户不属于当前的应用授权记录, 禁止生成, 防止运营乱创建
@@ -122,7 +149,9 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         ApplicationPo application = applicationDao.selectById(applicationAuthorization.getApplicationId());
         Asserts.isTrue(Objects.nonNull(application), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorization.getId());
         Asserts.isTrue(Boolean.TRUE.equals(application.getApiKeySupported()), SystemErrorCode.PARAM_VAL_INVALID, applicationAuthorization.getId());
-        Long userId = resolveTargetUserId(dto, applicationAuthorization.getOrganId());
+        Long userId = forUser
+            ? resolveDelegatedUserId(dto, applicationAuthorization.getOrganId())
+            : resolveTargetUserId(dto);
 
         // 判断是新增还是更新
         Long id = dto.getId();
@@ -183,21 +212,19 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
     }
 
     /**
-     * 修改个人静态访问令牌状态
+     * 修改个人静态访问令牌状态。
      * <p>
+     * 运营公司可跨租户修改；其余调用方仅可修改本机构令牌。
+     * 租户管理员是否可调用由 Gateway 控制单元鉴权，服务端不依赖 {@code isAdminUser}。
      * 如果状态未变更，则直接返回成功。
      *
      * @param dto 修改状态参数
      * @return 更新记录数
      * @throws BusinessException 参数校验失败
      */
+    @Override
     @Transactional
     public int updateStatus(Long id, UpdateStatusDto dto) {
-        // 非运营公司不允许修改状态
-        if (!PrincipalContextHolder.isAdminCompany()) {
-            return 0;
-        }
-
         String status = dto.getStatus();
         // 校验状态参数
         StaticTokenStatus.validate(status);
@@ -205,6 +232,7 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         // 查看记录是否存在
         PersonalStaticAccessTokenPo personalStaticAccessToken = personalStaticAccessTokenDao.selectById(id);
         Asserts.isTrue(Objects.nonNull(personalStaticAccessToken), SystemErrorCode.PARAM_VAL_INVALID, id);
+        assertOwnOrganUnlessAdminCompany(personalStaticAccessToken.getOrganId());
 
         // 状态没变更, 不需要修改, 直接提示成功即可
         if (personalStaticAccessToken.getStatus().equals(status)) {
@@ -284,24 +312,42 @@ public class PersonalStaticAccessTokenServiceImpl implements PersonalStaticAcces
         return result;
     }
 
-    private Long resolveTargetUserId(PersonalStaticAccessTokenDto dto, Long organId) {
-        Long requestedUserId = dto.getUserId();
-        if (PrincipalContextHolder.isAdminUser()
-            && Objects.nonNull(requestedUserId)
-            && requestedUserId > 0) {
-            UserPo user = userDao.selectById(requestedUserId);
-            Asserts.isTrue(Objects.nonNull(user), SystemErrorCode.PARAM_VAL_INVALID, requestedUserId);
-            Asserts.isTrue(Objects.equals(user.getOrganId(), organId),
-                SystemErrorCode.PARAM_VAL_INVALID, requestedUserId);
-            return requestedUserId;
+    /**
+     * 运营公司可跨租户修改；其余调用方必须与令牌同机构。
+     */
+    private void assertOwnOrganUnlessAdminCompany(Long organId) {
+        if (PrincipalContextHolder.isAdminCompany()) {
+            return;
         }
+        Asserts.isTrue(Objects.equals(PrincipalContextHolder.getOrganId(), organId),
+            BasisErrorCode.ONLY_OWN_ORG_APIKEY_ALLOWED);
+    }
 
+    /**
+     * 自助创建：仅允许当前登录用户。
+     */
+    private Long resolveTargetUserId(PersonalStaticAccessTokenDto dto) {
         Long currentUserId = PrincipalContextHolder.getUserId();
+        Long requestedUserId = dto.getUserId();
         if (Objects.nonNull(requestedUserId)
             && !Objects.equals(requestedUserId, currentUserId)) {
             throw new BusinessException(SystemErrorCode.PARAM_VAL_INVALID, "userId");
         }
         return currentUserId;
+    }
+
+    /**
+     * 代他人创建：必须指定目标用户，且与应用授权同机构。
+     */
+    private Long resolveDelegatedUserId(PersonalStaticAccessTokenDto dto, Long organId) {
+        Long requestedUserId = dto.getUserId();
+        Asserts.isTrue(Objects.nonNull(requestedUserId) && requestedUserId > 0,
+            SystemErrorCode.PARAM_REQUIRED, "userId");
+        UserPo user = userDao.selectById(requestedUserId);
+        Asserts.isTrue(Objects.nonNull(user), SystemErrorCode.PARAM_VAL_INVALID, requestedUserId);
+        Asserts.isTrue(Objects.equals(user.getOrganId(), organId),
+            SystemErrorCode.PARAM_VAL_INVALID, requestedUserId);
+        return requestedUserId;
     }
 
     private ApplicationAuthorizationPo resolveApplicationAuthorization(PersonalStaticAccessTokenDto dto) {

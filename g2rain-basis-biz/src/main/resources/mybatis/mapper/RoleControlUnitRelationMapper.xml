@@ -418,4 +418,20 @@
             #{roleId, jdbcType=BIGINT}
         </foreach>
     </select>
+
+    <!-- 控制单元关联的开通机构（ADMIN + application_authorization） -->
+    <select id="listOrganIdsByControlUnitId" resultType="java.lang.Long">
+        SELECT DISTINCT aa.organ_id
+        FROM application_authorization aa
+        JOIN role_control_unit_relation rcur
+          ON rcur.application_authorization_id = aa.id
+         AND rcur.control_unit_id = #{controlUnitId, jdbcType=BIGINT}
+         AND rcur.delete_flag = 0
+        JOIN role r
+          ON r.id = rcur.role_id
+         AND r.organ_id = aa.organ_id
+         AND r.role_type = 'ADMIN'
+         AND r.delete_flag = 0
+        WHERE aa.delete_flag = 0
+    </select>
 </mapper>

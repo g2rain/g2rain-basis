@@ -18,7 +18,9 @@ import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.ControlUnitScope;
 import com.g2rain.basis.enums.ControlUnitStatus;
 import com.g2rain.basis.service.ControlUnitService;
+import com.g2rain.basis.service.MemberPermSyncService;
 import com.g2rain.basis.vo.ControlUnitVo;
+import com.g2rain.common.enums.SessionType;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
@@ -26,6 +28,7 @@ import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Moments;
+import com.g2rain.common.utils.Strings;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
@@ -71,6 +74,9 @@ public class ControlUnitServiceImpl implements ControlUnitService {
 
     @Resource(name = "controlDomainControlUnitRelationDao")
     private ControlDomainControlUnitRelationDao controlDomainControlUnitRelationDao;
+
+    @Resource
+    private MemberPermSyncService memberPermSyncService;
 
     private IdGenerator idGenerator;
 
@@ -124,6 +130,7 @@ public class ControlUnitServiceImpl implements ControlUnitService {
     public Long save(ControlUnitDto dto) {
         // 校验参数
         ControlUnitScope.fromName(dto.getControlUnitScope());
+        SessionType sessionType = parseSessionType(dto.getSessionType());
 
         // 验证应用是否存在
         ApplicationPo application = applicationDao.selectById(dto.getApplicationId());
@@ -147,9 +154,17 @@ public class ControlUnitServiceImpl implements ControlUnitService {
 
         // 转换 DTO 为 PO
         ControlUnitPo entity = ControlUnitConverter.INSTANCE.dto2po(dto);
+        entity.setSessionType(sessionType.name());
 
         // 更新：直接更新
         if (Objects.nonNull(id) && id != 0) {
+            ControlUnitPo existing = controlUnitDao.selectById(id);
+            Asserts.isTrue(Objects.nonNull(existing), SystemErrorCode.PARAM_VAL_INVALID, id);
+            if (!Objects.equals(existing.getSessionType(), sessionType.name())) {
+                throw new BusinessException(BasisErrorCode.SESSION_TYPE_UPDATE_ILLEGAL);
+            }
+            // 更新路径不改写 session_type（Mapper update 亦不包含该列）
+            entity.setSessionType(null);
             entity.setUpdateTime(Moments.now());
             int success = controlUnitDao.update(entity);
             Asserts.greaterThan(success, 0, SystemErrorCode.UPDATE_DATA_ERROR, id);
@@ -189,7 +204,9 @@ public class ControlUnitServiceImpl implements ControlUnitService {
         // 删除控制单元和资源的关联关系
         controlUnitResourceRelationDao.deleteByControlUnitId(id);
         // 删除控制单元
-        return controlUnitDao.delete(id);
+        int result = controlUnitDao.delete(id);
+        memberPermSyncService.notifyIfMember(unit);
+        return result;
     }
 
     /**
@@ -206,6 +223,9 @@ public class ControlUnitServiceImpl implements ControlUnitService {
          * 校验状态参数: 如果要修改控制单元状态为 `未发布`,
          * 需要确认[角色和控制单元的关联表是否存在激活状态 && 控制域是否关联了控制单元]
          */
+        ControlUnitPo existing = controlUnitDao.selectById(id);
+        Asserts.isTrue(Objects.nonNull(existing), SystemErrorCode.PARAM_VAL_INVALID, id);
+
         ControlUnitStatus status = ControlUnitStatus.fromName(dto.getStatus());
         if (ControlUnitStatus.UNPUBLISHED.equals(status)) {
             RoleControlUnitRelationSelectDto rcSelectDto = new RoleControlUnitRelationSelectDto();
@@ -224,6 +244,19 @@ public class ControlUnitServiceImpl implements ControlUnitService {
         entity.setId(id);
         entity.setUpdateTime(Moments.now());
         entity.setStatus(dto.getStatus());
-        return controlUnitDao.updateSelective(entity);
+        int result = controlUnitDao.updateSelective(entity);
+        memberPermSyncService.notifyIfMember(existing);
+        return result;
+    }
+
+    static SessionType parseSessionType(String name) {
+        if (Strings.isNotBlank(name)) {
+            for (SessionType type : SessionType.values()) {
+                if (type.name().equals(name)) {
+                    return type;
+                }
+            }
+        }
+        throw new BusinessException(SystemErrorCode.PARAM_VAL_INVALID, name);
     }
 }

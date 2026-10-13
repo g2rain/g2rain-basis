@@ -91,6 +91,20 @@ public interface LoginTokenApi {
     );
 
     /**
+     * 获取会员会话（SessionType=MEMBER）的登录令牌 JWT 载荷骨架。
+     *
+     * @param organId         可信租户机构 ID
+     * @param applicationCode 入口应用编码
+     * @return MEMBER 会话 JWT 载荷（不含 memberId）
+     */
+    @GetMapping("/member_token_context")
+    @Operation(summary = "获取会员登录令牌上下文", hidden = true, description = "根据机构与应用构建 MEMBER 会话 JWT 载荷骨架")
+    Result<TokenJWTPayload> fetchMemberTokenContext(
+        @Parameter(description = "机构 ID") @RequestParam Long organId,
+        @Parameter(description = "应用编码") @RequestParam String applicationCode
+    );
+
+    /**
      * 根据个人静态访问令牌（原始 API Key）解析状态与会话上下文。
      *
      * <p>

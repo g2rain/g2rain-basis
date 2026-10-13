@@ -61,6 +61,12 @@ public class PersonalStaticAccessTokenVo extends BaseVo {
     private String name;
 
     /**
+     * 静态访问令牌的哈希摘要（API Key 的 SHA-256 十六进制，不可直接作为请求凭证）
+     */
+    @Schema(description = "静态访问令牌哈希摘要（SHA-256 十六进制）")
+    private String tokenHash;
+
+    /**
      * 脱敏令牌
      */
     @Schema(description = "脱敏令牌")

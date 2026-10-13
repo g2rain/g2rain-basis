@@ -12,10 +12,12 @@ import com.g2rain.basis.converter.IdpEnterpriseOrganConverter;
 import com.g2rain.basis.dao.IdpEnterpriseOrganDao;
 import com.g2rain.basis.dao.po.IdpEnterpriseOrganPo;
 import com.g2rain.basis.dto.IdpEnterpriseOrganDto;
+import com.g2rain.basis.dto.IdpEnterpriseOrganResolveRequest;
 import com.g2rain.basis.dto.IdpEnterpriseOrganSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.IdpBindMode;
 import com.g2rain.basis.service.IdpEnterpriseOrganService;
+import com.g2rain.basis.vo.IdpEnterpriseOrganResolveVo;
 import com.g2rain.basis.vo.IdpEnterpriseOrganVo;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
@@ -146,6 +148,43 @@ public class IdpEnterpriseOrganServiceImpl implements IdpEnterpriseOrganService 
     @Override
     public int delete(Long id) {
         return idpEnterpriseOrganDao.delete(id);
+    }
+
+    @Override
+    public IdpEnterpriseOrganResolveVo resolve(IdpEnterpriseOrganResolveRequest request) {
+        if (Strings.isBlank(request.getIdpType())) {
+            throw new BusinessException(SystemErrorCode.PARAM_REQUIRED, "idpType");
+        }
+        String idpType = request.getIdpType().trim();
+        String enterpriseId = request.getEnterpriseId() == null ? null : request.getEnterpriseId().trim();
+        requireEnterpriseId(enterpriseId);
+
+        IdpEnterpriseOrganSelectDto query = new IdpEnterpriseOrganSelectDto();
+        query.setIdpType(idpType);
+        query.setEnterpriseId(enterpriseId);
+        query.setStatus(STATUS_ACTIVE);
+        if (Strings.isNotBlank(request.getBindMode())) {
+            String bindMode = request.getBindMode().trim();
+            IdpBindMode.validate(bindMode);
+            query.setBindMode(bindMode);
+        }
+
+        List<IdpEnterpriseOrganPo> records = idpEnterpriseOrganDao.selectList(query);
+        if (records.isEmpty()) {
+            throw new BusinessException(BasisErrorCode.IDP_ENTERPRISE_ORGAN_NOT_FOUND);
+        }
+        if (records.size() > 1) {
+            throw new BusinessException(BasisErrorCode.IDP_ENTERPRISE_ORGAN_AMBIGUOUS);
+        }
+
+        IdpEnterpriseOrganPo entity = records.getFirst();
+        IdpEnterpriseOrganResolveVo result = new IdpEnterpriseOrganResolveVo();
+        result.setOrganId(entity.getOrganId());
+        result.setIdpType(entity.getIdpType());
+        result.setEnterpriseId(entity.getEnterpriseId());
+        result.setBindMode(entity.getBindMode());
+        result.setStatus(entity.getStatus());
+        return result;
     }
 
     private void requireEnterpriseId(String enterpriseId) {

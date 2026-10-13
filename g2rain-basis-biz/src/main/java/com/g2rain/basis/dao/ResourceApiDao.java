@@ -110,4 +110,25 @@ public interface ResourceApiDao {
      * @return 常驻接口地址列表
      */
     List<AuthorityApiEndpointPo> listAuthorizedApisWithLanding(Long applicationId);
+
+    /**
+     * 按会话主体类型查询已发布控制单元关联的 API（不经角色链；非 MEMBER 目录用）
+     *
+     * @param sessionType 会话主体类型
+     * @return 接口地址列表
+     */
+    List<AuthorityApiEndpointPo> listAuthorizedApisBySessionType(@Param("sessionType") String sessionType);
+
+    /**
+     * 按会话主体类型与机构查询已开通控制单元关联的 API。
+     * <p>MEMBER：application_authorization ∩ ADMIN role_control_unit_relation ∩ 已发布 MEMBER 控制单元。</p>
+     *
+     * @param sessionType 会话主体类型
+     * @param organId     机构 ID
+     * @return 接口地址列表
+     */
+    List<AuthorityApiEndpointPo> listAuthorizedApisBySessionTypeAndOrgan(
+        @Param("sessionType") String sessionType,
+        @Param("organId") Long organId
+    );
 }

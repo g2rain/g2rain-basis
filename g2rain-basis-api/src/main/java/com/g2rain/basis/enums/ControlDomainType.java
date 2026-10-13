@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * <ul>
  *   <li>{@link #TRADE}：交易开通类型，表示与交易相关的功能开通。</li>
  *   <li>{@link #APPLICATION}：应用授权开通类型，表示与应用权限或授权相关的功能开通。</li>
+ *   <li>{@link #SELF}：租户自助开通类型，在应用授权确认时由系统自动开通全部该类控制域。</li>
  * </ul>
  *
  * <p>提供方法 {@link #fromName(String)} 用于根据字符串名称获取枚举实例，并校验其合法性。</p>
@@ -37,7 +38,13 @@ public enum ControlDomainType {
      * 应用授权开通
      */
     @Schema(description = "应用授权开通类型")
-    APPLICATION;
+    APPLICATION,
+
+    /**
+     * 租户自助开通
+     */
+    @Schema(description = "租户自助开通类型")
+    SELF;
 
     /**
      * 根据给定的字符串名称校验该名称是否存在于枚举中。

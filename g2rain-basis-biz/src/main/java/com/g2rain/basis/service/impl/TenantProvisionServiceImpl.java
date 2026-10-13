@@ -133,9 +133,7 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
 
         Long passportId = PrincipalContextHolder.getPassportId();
         Asserts.isTrue(passportId != null && passportId > 0, SystemErrorCode.UNAUTHORIZED);
-        if (hasIdpBinding(passportId)) {
-            verifyCreateOrganViaIam(passportId);
-        }
+        verifyCreateOrganViaIam(passportId);
 
         // 1. 创建机构、机构角色、开通功能
         OrganDto organDto = new OrganDto();
@@ -199,12 +197,6 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
             idpEnterpriseOrganService.ensureEnterpriseOrganBound(
                 organId, idpType.trim(), corpId.trim(), null, true);
         }
-    }
-
-    private boolean hasIdpBinding(Long passportId) {
-        PassportIdpBindingSelectDto query = new PassportIdpBindingSelectDto();
-        query.setPassportId(passportId);
-        return Collections.isNotEmpty(passportIdpBindingDao.selectList(query));
     }
 
     private void verifyCreateOrganViaIam(Long passportId) {

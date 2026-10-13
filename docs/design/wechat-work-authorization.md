@@ -239,7 +239,10 @@ IdpApplicationAuthorizationStatus
 POST /internal/idp/enterprise-application-authorization/upsert
 POST /internal/idp/enterprise-application-authorization/revoke
 POST /internal/idp/enterprise-application-authorization/resolve
+POST /internal/idp/enterprise-organ/resolve
 ```
+
+其中 `POST /internal/idp/enterprise-organ/resolve` 供 IAM 等受信服务按 `idpType + enterpriseId`（可选 `bindMode`）解析唯一 `ACTIVE` 的 `organId`：0 条返回 `IDP_ENTERPRISE_ORGAN_NOT_FOUND`，多条返回 `IDP_ENTERPRISE_ORGAN_AMBIGUOUS`。企业微信智能客服回调解密定租户时依赖该契约。
 
 以上内部接口不出现在对外 Swagger 文档中。API 接口的每个内部方法必须显式设置：
 
@@ -489,30 +492,29 @@ IdpEnterpriseApplicationAuthorizationClient
 
 三方模式相对钉钉的**唯一额外门禁**是步骤 7–9（Suite 安装授权 + AgentID 校验）；其余步骤与 `DingTalkOAuthService.finishLogin` 相同。
 
-## 10. 登录与 Organ 映射（与钉钉一致）
+## 10. 登录与 Organ 映射（员工闸门）
 
-### 10.1 IdP 扫码登录：不要求 Organ 映射
+与钉钉对称，详见 IAM 设计文档 `docs/design/idp-employee-login-tenant-gate.md`。
 
-与钉钉浏览器扫码登录（`DingTalkOAuthService` → `AuthService.authenticateDingTalk(..., true)`）保持一致：
+### 10.1 IdP 员工扫码：按 loginRole 收紧
 
-| 环节 | 钉钉 | 企业微信 |
+| 环节 | `loginRole=USER`（员工） | `loginRole=ADMIN`（开通意图） |
 |---|---|---|
-| 是否校验 `idp_enterprise_organ` | **否** | **否** |
-| 未绑定 Passport | 默认自动开户（`autoProvisionMissingPassport=true`） | 同左 |
-| 是否校验 G2Rain `application_authorization` | **否** | **否** |
-| 三方企业「已安装应用」校验 | 凭证在 IAM 配置，implicit | 显式查 `idp_enterprise_application_authorization` 为 `ACTIVE` 且 AgentID 一致 |
+| 是否校验 `idp_enterprise_organ` | **是**（resolve 失败拒绝） | **否**（可无 organ 登录） |
+| 未绑定 Passport | JIT passport + binding | 同左 |
+| JIT organ User | `POST /internal/idp/employee/ensure`（非 ADMIN） | 仅企业已映射时 ensure；登录不自动提权 |
+| 三方企业「已安装应用」校验 | 显式查 `idp_enterprise_application_authorization` | 同左 |
 
-因此：**已安装 Suite 的企业成员可以完成 IdP 登录并拿到 IAM Session**，即使尚未配置 `idp_enterprise_organ` 或 `application_authorization`。能否进入具体 G2Rain 业务应用，仍由现有 OAuth 客户端、`application_authorization` 及机构成员关系决定，与钉钉一致。
+企微 SSO `usertype=member` 对应本平台员工 **USER**，不是客服 `SessionType.MEMBER`。
 
-### 10.2 `idp_enterprise_organ` 的使用场景（与钉钉相同）
+### 10.2 `idp_enterprise_organ` 的使用场景
 
-`idp_enterprise_organ` **不是** IdP 扫码登录的前置条件，仅在以下场景参与（与钉钉共用同一套 Basis 能力）：
+- **员工扫码登录（USER）**：登录闸门，必须 resolve 成功。
+- **已登录绑定**：`POST /passport_idp_binding/bind`。
+- **租户通讯录同步**：按 `idpType + enterpriseId` 解析 Organ。
+- **租户开通**：仅 IdP 管理员；`provision_account` 一律经 IAM `verify_create_organ`。
 
-- **已登录绑定**：`POST /passport_idp_binding/bind` 时，企业型 IdP 须已有或允许自动建立企业–机构映射（机构管理员可 auto-provision）。
-- **租户通讯录同步**：`TenantIdpSyncServiceImpl` 按 `idpType + enterpriseId` 解析目标 Organ（当前仍仅支持 `DINGTALK`；企微同步后续单独立项）。
-- **租户开通**：`TenantProvisionServiceImpl` 建立外部企业与 Organ 关联。
-
-企业微信 Suite 安装授权（`idp_enterprise_application_authorization`）成功**不会**自动创建 `idp_enterprise_organ` 或 `application_authorization`。
+企业微信 Suite 安装授权成功**不会**自动创建 `idp_enterprise_organ`。
 
 ## 11. 两类授权的关系（数据层）
 

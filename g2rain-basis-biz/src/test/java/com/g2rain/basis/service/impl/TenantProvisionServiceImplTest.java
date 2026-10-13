@@ -90,15 +90,17 @@ class TenantProvisionServiceImplTest {
     }
 
     @Test
-    void provisionAccount_withoutIdpBinding_shouldSkipIamVerify() {
+    void provisionAccount_withoutIdpBinding_shouldStillCallIamVerify() {
         when(passportIdpBindingDao.selectList(any())).thenReturn(List.of());
+        when(tenantProvisionClient.verifyCreateOrgan(any(VerifyCreateOrganRequest.class)))
+            .thenReturn(Result.success(null));
 
         runAsPassport(() -> {
             UserVo result = service.provisionAccount(sampleDto());
             assertEquals(200L, result.getId());
         });
 
-        verify(tenantProvisionClient, never()).verifyCreateOrgan(any());
+        verify(tenantProvisionClient).verifyCreateOrgan(any(VerifyCreateOrganRequest.class));
         verify(organProvisionService).createOrganWithoutIsolation(any());
     }
 

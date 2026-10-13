@@ -21,6 +21,7 @@ import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.service.ApplicationService;
 import com.g2rain.basis.service.AuthorityService;
+import com.g2rain.basis.service.MemberPermSyncService;
 import com.g2rain.basis.service.PassportService;
 import com.g2rain.basis.service.UserService;
 import com.g2rain.basis.vo.ApplicationScopeVo;
@@ -33,7 +34,9 @@ import com.g2rain.basis.vo.AuthorityResourceVo;
 import com.g2rain.basis.vo.AuthorityUserVo;
 import com.g2rain.basis.vo.BaseAuthorityApiVo;
 import com.g2rain.basis.vo.PassportVo;
+import com.g2rain.basis.vo.SessionApiPermissionVo;
 import com.g2rain.basis.vo.UserVo;
+import com.g2rain.common.enums.SessionType;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.utils.Asserts;
@@ -120,6 +123,9 @@ public class AuthorityServiceImpl implements AuthorityService {
      */
     @Resource(name = "resourceApiDao")
     private ResourceApiDao resourceApiDao;
+
+    @Resource
+    private MemberPermSyncService memberPermSyncService;
 
     /**
      * 机构 DAO
@@ -296,6 +302,35 @@ public class AuthorityServiceImpl implements AuthorityService {
 
         return resourceApiDao.listAuthorizedApisWithLanding(applications.getFirst().getId())
             .stream().map(AuthorityApiEndpointPo::getId).toList();
+    }
+
+    /**
+     * 按会话主体类型查询 API 权限快照。
+     * <p>MEMBER 必须带 organId，按租户已开通的 MEMBER 控制单元计算。</p>
+     */
+    @Override
+    public SessionApiPermissionVo getSessionApiPermissions(String sessionType, Long organId) {
+        SessionType type = ControlUnitServiceImpl.parseSessionType(sessionType);
+        SessionApiPermissionVo vo = new SessionApiPermissionVo();
+        vo.setSessionType(type.name());
+
+        if (SessionType.isMember(type)) {
+            Asserts.isTrue(Objects.nonNull(organId) && organId > 0, SystemErrorCode.PARAM_VAL_INVALID, "organId");
+            List<Long> apiIds = resourceApiDao.listAuthorizedApisBySessionTypeAndOrgan(type.name(), organId).stream()
+                .map(AuthorityApiEndpointPo::getId)
+                .toList();
+            vo.setOrganId(organId);
+            vo.setApiIds(apiIds);
+            vo.setVersion(memberPermSyncService.currentVersion(organId));
+            return vo;
+        }
+
+        List<Long> apiIds = resourceApiDao.listAuthorizedApisBySessionType(type.name()).stream()
+            .map(AuthorityApiEndpointPo::getId)
+            .toList();
+        vo.setApiIds(apiIds);
+        vo.setVersion(0L);
+        return vo;
     }
 
     /**

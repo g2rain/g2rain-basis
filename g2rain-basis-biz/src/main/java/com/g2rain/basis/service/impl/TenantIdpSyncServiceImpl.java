@@ -90,7 +90,7 @@ public class TenantIdpSyncServiceImpl implements TenantIdpSyncService {
         EnterpriseSyncContext enterpriseContext = resolveEnterpriseContext(dto, idpType);
         String bindMode = enterpriseContext.bindMode();
 
-        IdpOrganizationSnapshot snapshot = fetchSnapshot(enterpriseContext.corpId(), bindMode);
+        IdpOrganizationSnapshot snapshot = fetchSnapshot(idpType, enterpriseContext.corpId(), bindMode);
         String idpApplicationCode = normalizeIdpApplicationCode(snapshot.getIdpApplicationCode());
 
         List<PassportIdpBindingPo> scopeBindings = loadScopeBindings(
@@ -198,13 +198,14 @@ public class TenantIdpSyncServiceImpl implements TenantIdpSyncService {
         return new EnterpriseSyncContext(bindMode, corpId.trim());
     }
 
-    private IdpOrganizationSnapshot fetchSnapshot(String corpId, String bindMode) {
+    private IdpOrganizationSnapshot fetchSnapshot(String idpType, String corpId, String bindMode) {
         IdpFetchSnapshotRequest request = new IdpFetchSnapshotRequest();
+        request.setIdpType(idpType);
         request.setCorpId(corpId);
         request.setBindMode(bindMode);
         Result<IdpOrganizationSnapshot> result;
         try {
-            result = idpSyncClient.fetchDingTalkSnapshot(request);
+            result = idpSyncClient.fetchSnapshot(request);
         } catch (Exception ex) {
             throw new BusinessException(BasisErrorCode.TENANT_IDP_SYNC_IDP_FETCH_FAILED);
         }

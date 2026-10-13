@@ -18,7 +18,12 @@ public enum BasisRedisKeyRule {
     /**
      * 邀请码消费分布式锁，格式 basis:organ:invite:consume:lock:{inviteCode}
      */
-    ORGAN_INVITE_CONSUME_LOCK("basis:organ:invite:consume:lock:%s");
+    ORGAN_INVITE_CONSUME_LOCK("basis:organ:invite:consume:lock:%s"),
+
+    /**
+     * 某机构 MEMBER 会话 API 权限版本，格式 basis:perm:member:version:{organId}
+     */
+    MEMBER_PERM_VERSION("basis:perm:member:version:%s");
 
     private final String key;
 

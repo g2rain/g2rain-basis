@@ -1,6 +1,7 @@
 package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.converter.LoginTokenConverter;
+import com.g2rain.basis.dao.ApplicationAuthorizationDao;
 import com.g2rain.basis.dao.ApplicationDao;
 import com.g2rain.basis.dao.ApplicationIdpProvisionDao;
 import com.g2rain.basis.dao.LoginTokenDao;
@@ -8,17 +9,20 @@ import com.g2rain.basis.dao.OrganDao;
 import com.g2rain.basis.dao.PassportIdpBindingDao;
 import com.g2rain.basis.dao.RoleControlUnitRelationDao;
 import com.g2rain.basis.dao.UserDao;
+import com.g2rain.basis.dao.po.ApplicationAuthorizationPo;
 import com.g2rain.basis.dao.po.ApplicationPo;
 import com.g2rain.basis.dao.po.CountRoleControlUnitPo;
 import com.g2rain.basis.dao.po.LoginTokenPo;
 import com.g2rain.basis.dao.po.OrganPo;
 import com.g2rain.basis.dao.po.UserPo;
+import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
 import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
 import com.g2rain.basis.dto.OrganSelectDto;
 import com.g2rain.basis.dto.RoleSelectDto;
 import com.g2rain.basis.dto.UserSelectDto;
+import com.g2rain.basis.enums.AuthorizationStatus;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.IdpBindMode;
 import com.g2rain.basis.enums.OrganStatus;
@@ -98,6 +102,9 @@ public class LoginTokenServiceImpl implements LoginTokenService {
 
     @Resource(name = "applicationDao")
     private ApplicationDao applicationDao;
+
+    @Resource(name = "applicationAuthorizationDao")
+    private ApplicationAuthorizationDao applicationAuthorizationDao;
 
     @Resource(name = "organDao")
     private OrganDao organDao;
@@ -226,7 +233,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      *     <li>查询应用信息及应用作用域，并封装到 {@link ApplicationScope} 列表中。</li>
      * </ol>
      *
-     * @param passportId         发码侧通行证 ID；三方换票且 {@code userId} 非空时必传，且须与用户的 {@code passport_id} 一致
+     * @param passportId         发码侧通行证 ID；{@code userId} 非空时必传，且须与用户的 {@code passport_id} 一致
      * @param userId             用户 ID，可为 null（表示 Passport 会话）
      * @param applicationCode    应用编码
      * @param thirdPartyIdpLogin 是否外部身份源授权链路发码；为 {@link Boolean#TRUE} 且 {@code userId} 非空时校验
@@ -284,14 +291,15 @@ public class LoginTokenServiceImpl implements LoginTokenService {
             SystemErrorCode.PARAM_VAL_INVALID, userId
         );
 
+        Asserts.isTrue(passportId != null && passportId > 0L,
+            SystemErrorCode.PARAM_VAL_INVALID, "passportId");
+        Asserts.isTrue(Objects.equals(passportId, user.getPassportId()),
+            SystemErrorCode.UNAUTHORIZED, userId);
+
         if (isIdpLogin(thirdPartyIdpLogin, bindMode)) {
             Asserts.isTrue(Strings.isNotBlank(idpType) && Strings.isNotBlank(idpSubject)
                     && Strings.isNotBlank(idpApplicationCode),
                 SystemErrorCode.PARAM_VAL_INVALID, "idpType,idpSubject,idpApplicationCode");
-            Asserts.isTrue(passportId != null && passportId > 0L,
-                SystemErrorCode.PARAM_VAL_INVALID, "passportId");
-            Asserts.isTrue(Objects.equals(passportId, user.getPassportId()),
-                SystemErrorCode.PARAM_VAL_INVALID, userId);
             String idpTypeTrim = idpType.trim();
             String idpSubjectTrim = idpSubject.trim();
             String idpAppTrim = idpApplicationCode.trim();
@@ -331,8 +339,16 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         // 需要外部的Starter 提供能力, 没有实现也没关系
         principalEnrichers.forEach(enricher -> enricher.enrich(payload));
 
-        // 如果入口应用不是 `默认应用`, 需要校验应用是否做过授权
+        // 如果入口应用不是 `默认应用`, 需要校验目标应用开通事实与可调用控制单元
         if (!isDefaultMain) {
+            ApplicationAuthorizationSelectDto authSelect = new ApplicationAuthorizationSelectDto();
+            authSelect.setOrganId(organ.getId());
+            authSelect.setApplicationId(application.getId());
+            authSelect.setStatus(AuthorizationStatus.ACTIVATED.name());
+            List<ApplicationAuthorizationPo> authorizations = applicationAuthorizationDao.selectList(authSelect);
+            Asserts.isTrue(Collections.isNotEmpty(authorizations),
+                BasisErrorCode.APPLICATION_AUTHORIZATION_MISSING, applicationCode);
+
             CountRoleControlUnitPo countRoleControlUnit = roleControlUnitRelationDao
                 .countRoleControlUnits(user.getId());
 
@@ -458,6 +474,63 @@ public class LoginTokenServiceImpl implements LoginTokenService {
             obj.getId(), obj.getApplicationCode(), obj.getOrganId()
         )));
         payload.setApplicationScopes(scopes);
+        return payload;
+    }
+
+    @Override
+    public TokenJWTPayload fetchMemberTokenContext(Long organId, String applicationCode) {
+        Asserts.isTrue(organId != null && organId > 0L, SystemErrorCode.PARAM_VAL_INVALID, organId);
+        Asserts.isTrue(Strings.isNotBlank(applicationCode), SystemErrorCode.PARAM_REQUIRED, "applicationCode");
+
+        ApplicationSelectDto appSelect = new ApplicationSelectDto();
+        appSelect.setApplicationCode(applicationCode);
+        List<ApplicationVo> applications = applicationService.selectList(appSelect);
+        Asserts.isTrue(Collections.isNotEmpty(applications),
+            SystemErrorCode.UNAUTHORIZED, applicationCode
+        );
+        ApplicationVo application = applications.getFirst();
+        Asserts.isTrue(application.getId() != null && application.getId() > 0L,
+            SystemErrorCode.UNAUTHORIZED, applicationCode
+        );
+        Asserts.isTrue(application.getOrganId() != null && application.getOrganId() > 0L,
+            SystemErrorCode.UNAUTHORIZED, applicationCode
+        );
+
+        OrganSelectDto organSelect = new OrganSelectDto();
+        organSelect.setId(organId);
+        List<OrganVo> organs = organService.selectList(organSelect);
+        Asserts.isTrue(Collections.isNotEmpty(organs),
+            SystemErrorCode.PARAM_VAL_INVALID, organId
+        );
+        OrganVo organ = organs.getFirst();
+        Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
+            BasisErrorCode.ORGAN_UNAVAILABLE
+        );
+        OrganType organType = OrganType.fromName(organ.getOrganType());
+        Asserts.isTrue(OrganType.isTenant(organType),
+            SystemErrorCode.PARAM_VAL_INVALID, organ.getOrganType()
+        );
+
+        TokenJWTPayload payload = new TokenJWTPayload();
+        payload.setSessionType(SessionType.MEMBER);
+        payload.setAdminUser(Boolean.FALSE);
+        payload.setOrganType(organType);
+        payload.setOrganId(organ.getId());
+        payload.setOrganName(organ.getOrganName());
+        payload.setAdminCompany(Boolean.FALSE);
+
+        Instant issuedAt = Instant.now();
+        payload.setIssuedAt(issuedAt.getEpochSecond());
+        payload.setExpireAt(issuedAt.plus(Duration.ofSeconds(
+            application.getAccessTokenExpiresIn()
+        )).getEpochSecond());
+        payload.setRefreshExpireAt(issuedAt.plus(Duration.ofSeconds(
+            application.getRefreshTokenExpiresIn()
+        )).getEpochSecond());
+
+        payload.setApplicationScopes(List.of(new ApplicationScope(
+            application.getId(), applicationCode, application.getOrganId()
+        )));
         return payload;
     }
 

@@ -12,6 +12,7 @@
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
         <!-- 业务字段（其他自定义字段） -->
         <result column="application_id" property="applicationId" jdbcType="BIGINT"/>
+        <result column="session_type" property="sessionType" jdbcType="VARCHAR"/>
         <result column="control_unit_name" property="controlUnitName" jdbcType="VARCHAR"/>
         <result column="control_unit_scope" property="controlUnitScope" jdbcType="VARCHAR"/>
         <result column="landing" property="landing" jdbcType="TINYINT"/>
@@ -50,6 +51,10 @@
                     </when>
                     <when test="item.column == 'applicationId'">
                         application_id
+                        <include refid="directionClause"/>
+                    </when>
+                    <when test="item.column == 'sessionType'">
+                        session_type
                         <include refid="directionClause"/>
                     </when>
                     <when test="item.column == 'controlUnitName'">
@@ -119,6 +124,9 @@
             <if test="applicationId != null">
                 AND application_id = #{applicationId, jdbcType=BIGINT}
             </if>
+            <if test="sessionType != null">
+                AND session_type = #{sessionType, jdbcType=VARCHAR}
+            </if>
             <if test="controlUnitName != null">
                 AND control_unit_name = #{controlUnitName, jdbcType=VARCHAR}
             </if>
@@ -153,7 +161,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        application_id, control_unit_name, control_unit_scope, status, description,
+        application_id, session_type, control_unit_name, control_unit_scope, status, description,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -164,7 +172,7 @@
         <!-- 基础字段值 -->
         #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
         <!-- 业务字段值 -->
-        #{applicationId, jdbcType=BIGINT}, #{controlUnitName, jdbcType=VARCHAR}, #{controlUnitScope, jdbcType=VARCHAR}, #{status, jdbcType=VARCHAR}, #{description, jdbcType=VARCHAR},
+        #{applicationId, jdbcType=BIGINT}, #{sessionType, jdbcType=VARCHAR}, #{controlUnitName, jdbcType=VARCHAR}, #{controlUnitScope, jdbcType=VARCHAR}, #{status, jdbcType=VARCHAR}, #{description, jdbcType=VARCHAR},
         <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
         0,
         <!-- version字段值（如果存在，设置默认值为0） -->
@@ -180,7 +188,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        application_id, control_unit_name, control_unit_scope, status, description,
+        application_id, session_type, control_unit_name, control_unit_scope, status, description,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -193,7 +201,7 @@
             <!-- 基础字段值 -->
             #{item.createTime, jdbcType=TIMESTAMP}, #{item.updateTime, jdbcType=TIMESTAMP},
             <!-- 业务字段值 -->
-            #{item.applicationId, jdbcType=BIGINT}, #{item.controlUnitName, jdbcType=VARCHAR}, #{item.controlUnitScope, jdbcType=VARCHAR}, #{item.status, jdbcType=VARCHAR}, #{item.description, jdbcType=VARCHAR},
+            #{item.applicationId, jdbcType=BIGINT}, #{item.sessionType, jdbcType=VARCHAR}, #{item.controlUnitName, jdbcType=VARCHAR}, #{item.controlUnitScope, jdbcType=VARCHAR}, #{item.status, jdbcType=VARCHAR}, #{item.description, jdbcType=VARCHAR},
             <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
             0,
             <!-- version字段值（如果存在，设置默认值为0） -->
@@ -308,7 +316,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        application_id, control_unit_name, control_unit_scope, landing, status, description,
+        application_id, session_type, control_unit_name, control_unit_scope, landing, status, description,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -327,7 +335,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        application_id, control_unit_name, control_unit_scope, landing, status, description,
+        application_id, session_type, control_unit_name, control_unit_scope, landing, status, description,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->

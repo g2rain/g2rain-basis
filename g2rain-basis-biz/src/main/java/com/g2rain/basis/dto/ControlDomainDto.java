@@ -38,10 +38,10 @@ public class ControlDomainDto extends BaseDto {
     private String controlDomainName;
 
     /**
-     * 控制域类型[TRADE("交易开通"), APPLICATION("应用授权开通")]
+     * 控制域类型[TRADE("交易开通"), APPLICATION("应用授权开通"), SELF("租户自助开通")]
      */
     @NotBlank
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "控制域类型[TRADE(\"交易开通\"), APPLICATION(\"应用授权开通\")]", allowableValues = {"TRADE", "APPLICATION"})
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "控制域类型[TRADE(\"交易开通\"), APPLICATION(\"应用授权开通\"), SELF(\"租户自助开通\")]", allowableValues = {"TRADE", "APPLICATION", "SELF"})
     private String controlDomainType;
 
     /**

@@ -28,8 +28,10 @@ import com.g2rain.basis.enums.ResourceStatus;
 import com.g2rain.basis.enums.ResourceType;
 import com.g2rain.basis.model.ControlUnitPair;
 import com.g2rain.basis.service.ControlUnitResourceRelationService;
+import com.g2rain.basis.service.MemberPermSyncService;
 import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.ControlUnitResourceRelationVo;
+import com.g2rain.common.enums.SessionType;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
@@ -100,6 +102,9 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
 
     @Resource
     private EventPublisherHub eventPublisherHub;
+
+    @Resource
+    private MemberPermSyncService memberPermSyncService;
 
     private IdGenerator idGenerator;
 
@@ -232,6 +237,13 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
                     BasisSyncerEnum.PASSPORT_PERM.name(),
                     resourceId
                 ));
+        }
+
+        boolean memberApiChanged = SessionType.MEMBER.name().equals(unit.getSessionType())
+            && (createRelations.stream().anyMatch(o -> ResourceType.API_ENDPOINT.name().equals(o.getResourceType()))
+            || deleteRelations.stream().anyMatch(o -> ResourceType.API_ENDPOINT.name().equals(o.getResourceType())));
+        if (memberApiChanged) {
+            memberPermSyncService.notifyOrgansHavingControlUnit(unit.getId());
         }
 
         return result;

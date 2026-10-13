@@ -161,7 +161,7 @@ public class TenantIdpMemberSyncServiceImpl implements TenantIdpMemberSyncServic
             return existing.getPassportId();
         }
 
-        ensureMemberInitializedFromIam(bindMode, idpApplicationCode, corpId, member);
+        ensureMemberInitializedFromIam(idpType, bindMode, idpApplicationCode, corpId, member);
         if (Strings.isBlank(member.getUnionId())) {
             throw new BusinessException(BasisErrorCode.TENANT_IDP_SYNC_IDP_FETCH_FAILED);
         }
@@ -218,6 +218,7 @@ public class TenantIdpMemberSyncServiceImpl implements TenantIdpMemberSyncServic
     }
 
     private void ensureMemberInitializedFromIam(
+        String idpType,
         String bindMode,
         String idpApplicationCode,
         String corpId,
@@ -227,13 +228,14 @@ public class TenantIdpMemberSyncServiceImpl implements TenantIdpMemberSyncServic
             return;
         }
         IdpFetchMemberRequest request = new IdpFetchMemberRequest();
+        request.setIdpType(idpType);
         request.setCorpId(corpId);
         request.setBindMode(bindMode);
         request.setIdpApplicationCode(idpApplicationCode);
         request.setIdpUserId(member.getIdpUserId().trim());
         Result<IdpMemberNode> remoteResult;
         try {
-            remoteResult = idpSyncClient.fetchDingTalkMember(request);
+            remoteResult = idpSyncClient.fetchMember(request);
         } catch (Exception ex) {
             throw new BusinessException(BasisErrorCode.TENANT_IDP_SYNC_IDP_FETCH_FAILED);
         }

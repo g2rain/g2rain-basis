@@ -17,9 +17,11 @@ import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.enums.RoleType;
 import com.g2rain.basis.model.RoleControlUnitRelation;
+import com.g2rain.basis.service.MemberPermSyncService;
 import com.g2rain.basis.service.RoleControlUnitRelationService;
 import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.RoleControlUnitRelationVo;
+import com.g2rain.common.enums.SessionType;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
 import com.g2rain.common.model.PageData;
@@ -68,6 +70,9 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
 
     @Resource
     private EventPublisherHub eventPublisherHub;
+
+    @Resource
+    private MemberPermSyncService memberPermSyncService;
 
     @Qualifier("idGenerator")
     @Autowired(required = false)
@@ -143,7 +148,9 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
 
         RoleControlUnitRelationSelectDto rs = new RoleControlUnitRelationSelectDto();
         rs.setRoleId(roles.getFirst().getId());
-        return selectList(rs);
+        return selectList(rs).stream()
+            .filter(vo -> SessionType.USER.name().equals(vo.getSessionType()))
+            .toList();
     }
 
     /**
@@ -219,6 +226,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
             Asserts.isTrue(controlUnitIds.size() == dto.getControlUnitIds().size(),
                 BasisErrorCode.CONTROL_UNIT_INVALID_FOR_ROLE
             );
+            assertUserSessionTypeControlUnits(dto.getControlUnitIds());
         }
 
         return doSave(dto);
@@ -377,11 +385,13 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
         }
 
         // 广播删除`接口权限`信息
+        Long organId = roles.getFirst().getOrganId();
         eventPublisherHub.sendDelete(
             Constants.SYNC_OUTPUT_BINDING,
             BasisSyncerEnum.USER_PERM.name(),
-            roles.getFirst().getOrganId()
+            organId
         );
+        memberPermSyncService.notifyOrgan(organId);
     }
 
 
@@ -446,9 +456,16 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
                 return 0;
             }
 
-            return roleControlUnitRelationDao.updateOrganUnitsStatus(
+            int activated = roleControlUnitRelationDao.updateOrganUnitsStatus(
                 organId, appAuthorizationId, controlUnitIds, status
             );
+            eventPublisherHub.sendDelete(
+                Constants.SYNC_OUTPUT_BINDING,
+                BasisSyncerEnum.USER_PERM.name(),
+                organId
+            );
+            memberPermSyncService.notifyOrgan(organId);
+            return activated;
         }
 
         // 处理关停的场景 -- 统计 ADMIN 角色下各 control_unit 激活数量
@@ -493,6 +510,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
             BasisSyncerEnum.USER_PERM.name(),
             organId
         );
+        memberPermSyncService.notifyOrgan(organId);
 
         return affected;
     }
@@ -526,9 +544,25 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
                 continue;
             }
             relation.setControlUnitName(unit.getControlUnitName());
+            relation.setSessionType(unit.getSessionType());
             relation.setDescription(unit.getDescription());
         }
 
         return relations;
+    }
+
+    /**
+     * 角色仅允许绑定 USER 会话类型的控制单元。
+     */
+    private void assertUserSessionTypeControlUnits(Set<Long> controlUnitIds) {
+        if (Collections.isEmpty(controlUnitIds)) {
+            return;
+        }
+        ControlUnitSelectDto selectDto = new ControlUnitSelectDto();
+        selectDto.setIds(controlUnitIds);
+        List<ControlUnitPo> units = controlUnitDao.selectList(selectDto);
+        boolean allUser = units.size() == controlUnitIds.size()
+            && units.stream().allMatch(unit -> SessionType.USER.name().equals(unit.getSessionType()));
+        Asserts.isTrue(allUser, BasisErrorCode.CONTROL_UNIT_SESSION_TYPE_INVALID_FOR_ROLE);
     }
 }

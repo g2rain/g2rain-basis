@@ -6,6 +6,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 /**
  * IAM IdP 通讯录同步 Feign 客户端。
  */
-@FeignClient(name = "g2rain-iam", contextId = "idpSyncClient", path = "/internal/idp_sync/dingtalk")
+@FeignClient(name = "g2rain-iam", contextId = "idpSyncClient", path = "/internal/idp_sync")
 public interface IdpSyncClient extends IdpSyncApi {
 }

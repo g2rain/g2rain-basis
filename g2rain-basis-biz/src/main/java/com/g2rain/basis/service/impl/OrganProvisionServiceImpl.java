@@ -88,7 +88,9 @@ public class OrganProvisionServiceImpl implements OrganProvisionService {
         domainSelect.setLanding(true);
         domainSelect.setControlDomainScope(ControlDomainScope.CUSTOMER.name());
         for (ControlDomainVo domain : controlDomainService.selectList(domainSelect)) {
-            if (ControlDomainType.TRADE.name().equals(domain.getControlDomainType())) {
+            String domainType = domain.getControlDomainType();
+            if (ControlDomainType.TRADE.name().equals(domainType)
+                || ControlDomainType.SELF.name().equals(domainType)) {
                 continue;
             }
             ApplicationAuthorizationDto authDto = new ApplicationAuthorizationDto();
@@ -108,21 +110,6 @@ public class OrganProvisionServiceImpl implements OrganProvisionService {
         relation.setRoleId(roleId);
         relation.setControlUnitIds(ids);
         roleControlUnitRelationService.internalSave(relation);
-
-        // 5. 为 landing 控制域自动开通应用授权
-        ControlDomainSelectDto domainSelect = new ControlDomainSelectDto();
-        domainSelect.setLanding(true);
-        domainSelect.setControlDomainScope(ControlDomainScope.CUSTOMER.name());
-        for (ControlDomainVo domain : controlDomainService.selectList(domainSelect)) {
-            if (ControlDomainType.TRADE.name().equals(domain.getControlDomainType())) {
-                continue;
-            }
-            ApplicationAuthorizationDto authDto = new ApplicationAuthorizationDto();
-            authDto.setOrganId(organId);
-            authDto.setApplicationId(domain.getApplicationId());
-            authDto.setControlDomainId(domain.getId());
-            applicationAuthorizationService.save(authDto);
-        }
 
         return organId;
     }

@@ -42,6 +42,9 @@
 
 - [企业微信三方应用授权与扫码登录](design/wechat-work-authorization.md)
 - [受信服务 API 与跨服务协作](design/trusted-service-collaboration.md)
+- [控制单元 SessionType 权限模型升级](design/control-unit-session-type-upgrade.md)
+
+应用授权确认：`ControlDomainType.SELF` 与 `POST /application_authorization/activate_self` 配合 IAM 统一 consent 页；预览由 IAM 本地拼装（无独立 `/application_consent` 或 `consent_preview`）；确认时自动开通该应用全部 SELF 控制域（无 SELF 时成功且不写开通）。主应用 `application_suite` 展开规则不变。
 
 ### 社区
 
