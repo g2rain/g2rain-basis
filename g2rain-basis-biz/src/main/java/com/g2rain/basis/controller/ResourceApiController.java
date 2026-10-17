@@ -13,6 +13,7 @@ import com.g2rain.common.model.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.Resource;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,6 +42,11 @@ public class ResourceApiController implements ResourceApiApi {
     }
 
     @Override
+    public Result<List<ResourceApiVo>> selectListWithDocument(ResourceApiSelectDto selectDto) {
+        return Result.success(resourceApiService.selectListWithDocument(selectDto));
+    }
+
+    @Override
     public Result<PageData<ResourceApiVo>> selectPage(PageSelectListDto<ResourceApiSelectDto> selectDto) {
         return Result.successPage(resourceApiService.selectPage(selectDto));
     }
@@ -52,13 +58,13 @@ public class ResourceApiController implements ResourceApiApi {
 
     @PostMapping("/save")
     @Operation(summary = "新增或更新资源接口", description = "新增或更新资源接口信息")
-    public Result<Long> save(@RequestBody ResourceApiDto dto) {
+    public Result<Long> save(@Validated @RequestBody ResourceApiDto dto) {
         return Result.success(resourceApiService.save(dto));
     }
 
     @PostMapping("/{serviceCode}/import")
-    @Operation(summary = "批量导入资源接口", description = "批量导入资源接口信息")
-    public Result<Long> batchImport(@Parameter(description = "资源接口标识") @PathVariable String serviceCode, @RequestBody UploadResourceApiDto dto) {
+    @Operation(summary = "导入 OpenAPI 文档", description = "提交整份 OpenAPI/Swagger JSON，拆成单接口最小文档后写入")
+    public Result<Long> batchImport(@Parameter(description = "服务编码") @PathVariable String serviceCode, @Validated @RequestBody UploadResourceApiDto dto) {
         return Result.success(resourceApiService.batchSave(serviceCode, dto));
     }
 

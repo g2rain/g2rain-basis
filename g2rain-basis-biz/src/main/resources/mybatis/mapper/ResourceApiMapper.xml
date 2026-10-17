@@ -23,6 +23,12 @@
         <result column="version" property="version" jdbcType="INTEGER"/>
     </resultMap>
 
+    <!-- 含 openapi_document 的结果集（仅带文档查询使用） -->
+    <resultMap id="DocumentResultMap" type="com.g2rain.basis.dao.po.ResourceApiPo" extends="BaseResultMap">
+        <result column="openapi_document" property="openapiDocument" jdbcType="LONGVARCHAR"/>
+        <result column="document_digest" property="documentDigest" jdbcType="CHAR"/>
+    </resultMap>
+
     <!-- 定义可复用排序方向片段 -->
     <sql id="directionClause">
         <choose>
@@ -113,7 +119,7 @@
         <!-- 基础字段 -->
         create_time, update_time,
         <!-- 业务字段 -->
-        service_code, api_tags, name, method, path, description,
+        service_code, api_tags, name, method, path, description, openapi_document, document_digest,
         <!-- deleteFlag字段（如果存在） -->
         delete_flag,
         <!-- version字段（如果存在） -->
@@ -128,6 +134,7 @@
             <!-- 业务字段值 -->
             #{item.serviceCode, jdbcType=VARCHAR}, #{item.apiTags, jdbcType=VARCHAR}, #{item.name, jdbcType=VARCHAR},
             #{item.method, jdbcType=VARCHAR}, #{item.path, jdbcType=VARCHAR}, #{item.description, jdbcType=VARCHAR},
+            #{item.openapiDocument, jdbcType=LONGVARCHAR}, #{item.documentDigest, jdbcType=CHAR},
             <!-- deleteFlag字段值（如果存在，设置默认值为0） -->
             0,
             <!-- version字段值（如果存在，设置默认值为0） -->
@@ -185,6 +192,16 @@
             description = CASE id
             <foreach collection="list" item="item">
                 WHEN #{item.id} THEN #{item.description}
+            </foreach>
+            END,
+            openapi_document = CASE id
+            <foreach collection="list" item="item">
+                WHEN #{item.id} THEN #{item.openapiDocument}
+            </foreach>
+            END,
+            document_digest = CASE id
+            <foreach collection="list" item="item">
+                WHEN #{item.id} THEN #{item.documentDigest}
             </foreach>
             END,
             update_time = CASE id
@@ -341,6 +358,80 @@
                 AND description = #{description, jdbcType=VARCHAR}
             </if>
             <!-- 过滤已删除的记录 -->
+            AND (delete_flag = 0 OR delete_flag IS NULL)
+        </where>
+        <include refid="dynamicOrderBy"/>
+    </select>
+
+    <!-- 带 openapi_document 的列表查询（供 MCP sync 等使用） -->
+    <select id="selectListWithDocument" parameterType="com.g2rain.basis.dto.ResourceApiSelectDto"
+            resultMap="DocumentResultMap">
+        SELECT
+        id,
+        create_time, update_time,
+        service_code, api_tags, name, method, path, description, openapi_document, document_digest,
+        delete_flag,
+        version
+        FROM resource_api
+        <where>
+            <if test="id != null">
+                AND id = #{id, jdbcType=BIGINT}
+            </if>
+            <if test="ids != null and ids.size() > 0">
+                AND id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item, jdbcType=BIGINT}
+                </foreach>
+            </if>
+            <if test="pairs != null and pairs.size() > 0">
+                AND (
+                <foreach collection="pairs" item="item" separator=" OR ">
+                    (method = #{item.method} AND path = #{item.path})
+                </foreach>
+                )
+            </if>
+            <if test="createTime != null">
+                <if test="createTime[0] != '' and (createTime.size() lt 2 or createTime[1] == '')">
+                    AND create_time >= #{createTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] == '' and createTime[1] != ''">
+                    AND create_time &lt;= #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="createTime.size() >= 2 and createTime[0] != '' and createTime[1] != ''">
+                    AND create_time BETWEEN #{createTime[0], jdbcType=TIMESTAMP}
+                    AND #{createTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="updateTime != null">
+                <if test="updateTime[0] != '' and (updateTime.size() lt 2 or updateTime[1] == '')">
+                    AND update_time >= #{updateTime[0], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] == '' and updateTime[1] != ''">
+                    AND update_time &lt;= #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+                <if test="updateTime.size() >= 2 and updateTime[0] != '' and updateTime[1] != ''">
+                    AND update_time BETWEEN #{updateTime[0], jdbcType=TIMESTAMP}
+                    AND #{updateTime[1], jdbcType=TIMESTAMP}
+                </if>
+            </if>
+            <if test="serviceCode != null">
+                AND service_code = #{serviceCode, jdbcType=VARCHAR}
+            </if>
+            <if test="apiTags != null">
+                AND api_tags = #{apiTags, jdbcType=VARCHAR}
+            </if>
+            <if test="name != null">
+                AND name = #{name, jdbcType=VARCHAR}
+            </if>
+            <if test="method != null">
+                AND method = #{method, jdbcType=VARCHAR}
+            </if>
+            <if test="path != null">
+                AND path = #{path, jdbcType=VARCHAR}
+            </if>
+            <if test="description != null">
+                AND description = #{description, jdbcType=VARCHAR}
+            </if>
             AND (delete_flag = 0 OR delete_flag IS NULL)
         </where>
         <include refid="dynamicOrderBy"/>
