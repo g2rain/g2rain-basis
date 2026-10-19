@@ -54,7 +54,7 @@ CREATE TABLE `passport_idp_binding` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_idp_type_subject_app` (`idp_type`, `idp_subject`, `idp_application_code`),
+    UNIQUE KEY `uk_idp_type_subject_app` (`idp_type`, `idp_subject`, `idp_application_code`, (IF(delete_flag = 0, 0, NULL))),
     KEY `idx_passport_id` (`passport_id`),
     KEY `idx_corp_idp` (`corp_id`, `idp_type`),
     KEY `idx_delete_flag` (`delete_flag`)
@@ -77,7 +77,7 @@ CREATE TABLE `application_idp_provision` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_idp_application` (`idp_type`, `idp_application_code`),
+    UNIQUE KEY `uk_idp_application` (`idp_type`, `idp_application_code`, (IF(delete_flag = 0, 0, NULL))),
     KEY `idx_application_id` (`application_id`),
     KEY `idx_delete_flag` (`delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '外部身份源应用与平台应用的绑定';
@@ -173,7 +173,7 @@ CREATE TABLE `idp_enterprise_application_authorization` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '乐观锁版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_idp_enterprise_application` (`idp_type`, `idp_application_code`, `enterprise_id`),
+    UNIQUE KEY `uk_idp_enterprise_application` (`idp_type`, `idp_application_code`, `enterprise_id`, (IF(delete_flag = 0, 0, NULL))),
     KEY `idx_idp_authorization_status` (`idp_type`, `authorization_status`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '外部 IdP 企业应用授权记录';
 
@@ -215,7 +215,7 @@ CREATE TABLE `service_registry` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_service_code` (`service_code`)
+    UNIQUE KEY `uk_service_code` (`service_code`, (IF(delete_flag = 0, 0, NULL)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '服务注册表';
 
 -- =============================================
@@ -231,12 +231,14 @@ CREATE TABLE `resource_api` (
     `method` VARCHAR(32) NOT NULL COMMENT                                                               '接口请求方法',
     `path` VARCHAR(512) NOT NULL COMMENT                                                                '接口请求路径',
     `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '资源接口说明',
+    `openapi_document` LONGTEXT DEFAULT NULL COMMENT                                                     '单接口最小 OpenAPI 文档',
+    `document_digest` CHAR(64) DEFAULT NULL COMMENT                                                      '规范化单接口文档的 sha256',
     `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_service_method_path` (`service_code`,`method`,`path`)
+    UNIQUE KEY `uk_service_method_path` (`service_code`,`method`,`path`, (IF(delete_flag = 0, 0, NULL)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '资源接口表';
 
 -- =============================================
@@ -521,7 +523,7 @@ CREATE TABLE `personal_static_access_token` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_token_hash` (`token_hash`),
+    UNIQUE KEY `uk_token_hash` (`token_hash`, (IF(delete_flag = 0, 0, NULL))),
     INDEX `idx_authorization_org_del` (`application_authorization_id`, `organ_id`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '个人静态访问令牌表';
 

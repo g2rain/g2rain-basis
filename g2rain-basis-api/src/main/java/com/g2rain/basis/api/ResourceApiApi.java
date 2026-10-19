@@ -33,6 +33,16 @@ public interface ResourceApiApi {
     Result<List<ResourceApiVo>> selectList(ResourceApiSelectDto selectDto);
 
     /**
+     * 根据条件查询列表（含单接口最小 OpenAPI 文档）
+     *
+     * @param selectDto 查询条件 DTO
+     * @return 数据列表
+     */
+    @GetMapping("/list_with_document")
+    @Operation(summary = "查询资源接口列表（含文档）", description = "返回含 openapiDocument 的资源接口列表，供 MCP 同步等使用")
+    Result<List<ResourceApiVo>> selectListWithDocument(ResourceApiSelectDto selectDto);
+
+    /**
      * 根据条件分页查询
      *
      * @param selectDto 查询条件DTO（包含分页参数）

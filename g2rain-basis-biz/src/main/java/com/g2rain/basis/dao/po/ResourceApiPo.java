@@ -51,6 +51,16 @@ public class ResourceApiPo extends BasePo {
     private String description;
 
     /**
+     * 单接口最小 OpenAPI 文档
+     */
+    private String openapiDocument;
+
+    /**
+     * 规范化单接口文档的 sha256
+     */
+    private String documentDigest;
+
+    /**
      * 删除标识[0:未删除, 1:已删除]
      */
     private Boolean deleteFlag;

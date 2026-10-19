@@ -81,6 +81,13 @@ public interface ResourceApiDao {
      */
     List<ResourceApiPo> selectList(ResourceApiSelectDto selectDto);
 
+    /**
+     * 根据查询入参 DTO 筛选列表（含 openapi_document）
+     *
+     * @param selectDto 查询条件 DTO
+     * @return 实体对象列表
+     */
+    List<ResourceApiPo> selectListWithDocument(ResourceApiSelectDto selectDto);
 
     /**
      * 查询指定用户的授权接口地址(通过角色分配的接口地址权限)
@@ -95,8 +102,8 @@ public interface ResourceApiDao {
     /**
      * 按角色 ID 集合查询授权接口地址（通过角色关联的控制单元）
      *
-     * @param roleIds         角色 ID 集合
-     * @param applicationId   需要查询的应用 ID
+     * @param roleIds       角色 ID 集合
+     * @param applicationId 需要查询的应用 ID
      * @return 可访问的接口地址列表
      */
     List<AuthorityApiEndpointPo> selectAuthorizedApisWithRoleIds(@Param("roleIds") List<Long> roleIds,
@@ -127,8 +134,5 @@ public interface ResourceApiDao {
      * @param organId     机构 ID
      * @return 接口地址列表
      */
-    List<AuthorityApiEndpointPo> listAuthorizedApisBySessionTypeAndOrgan(
-        @Param("sessionType") String sessionType,
-        @Param("organId") Long organId
-    );
+    List<AuthorityApiEndpointPo> listAuthorizedApisBySessionTypeAndOrgan(@Param("sessionType") String sessionType, @Param("organId") Long organId);
 }

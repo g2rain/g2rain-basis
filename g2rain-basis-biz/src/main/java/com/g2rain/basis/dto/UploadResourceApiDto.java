@@ -2,18 +2,15 @@ package com.g2rain.basis.dto;
 
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 /**
  * <p>上传的资源接口 DTO</p>
  *
- * <p>用于封装需要上传或同步的接口地址及请求方式信息。</p>
+ * <p>提交整份 OpenAPI / Swagger JSON，由服务端拆成单接口最小文档后整体替换。</p>
  *
  * <p><em>Author:</em> alpha</p>
  * <p><em>Since:</em> 2026/1/19</p>
@@ -24,10 +21,9 @@ import java.util.List;
 @Schema(description = "上传的资源接口 DTO")
 public class UploadResourceApiDto {
     /**
-     * 接口集合
+     * 整份 OpenAPI / Swagger JSON 文本
      */
-    @Valid
-    @NotEmpty
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "接口集合")
-    private List<UploadApiDto> apis;
+    @NotBlank
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "整份 OpenAPI / Swagger JSON")
+    private String document;
 }

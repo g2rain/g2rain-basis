@@ -66,6 +66,12 @@ public class ResourceApiVo extends BaseVo {
     private String description;
 
     /**
+     * 单接口最小 OpenAPI 文档（仅带文档列表接口返回）
+     */
+    @Schema(description = "单接口最小 OpenAPI 文档")
+    private String openapiDocument;
+
+    /**
      * 删除标识[0:未删除, 1:已删除]
      */
     @Schema(description = "删除标识[0:未删除, 1:已删除]")

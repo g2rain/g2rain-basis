@@ -21,7 +21,6 @@ import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
 import com.g2rain.basis.dto.OrganSelectDto;
 import com.g2rain.basis.dto.RoleSelectDto;
-import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.AuthorizationStatus;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.IdpBindMode;
