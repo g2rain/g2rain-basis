@@ -1,5 +1,7 @@
 package com.g2rain.basis.controller;
 
+
+import lombok.extern.slf4j.Slf4j;
 import com.g2rain.basis.api.ApplicationApi;
 import com.g2rain.basis.dto.AppIdNameMapSelectDto;
 import com.g2rain.basis.dto.ApplicationDto;
@@ -48,6 +50,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/application")
+@Slf4j
 public class ApplicationController implements ApplicationApi {
 
     @Resource(name = "applicationServiceImpl")
@@ -179,6 +182,7 @@ public class ApplicationController implements ApplicationApi {
         try {
             return Result.success(applicationService.upsertPublicKey(id, publicKeyAlgorithm, file.getBytes()));
         } catch (IOException e) {
+            log.error("failed to upsertPublicKey", e);
             throw new BusinessException(BasisErrorCode.PUB_KEY_INVALID_KEY);
         }
     }

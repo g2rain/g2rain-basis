@@ -28,7 +28,7 @@ import com.g2rain.basis.enums.ResourceStatus;
 import com.g2rain.basis.enums.ResourceType;
 import com.g2rain.basis.model.ControlUnitPair;
 import com.g2rain.basis.service.ControlUnitResourceRelationService;
-import com.g2rain.basis.service.MemberPermSyncService;
+import com.g2rain.basis.service.SessionPermSyncService;
 import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.ControlUnitResourceRelationVo;
 import com.g2rain.common.enums.SessionType;
@@ -104,7 +104,7 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
     private EventPublisherHub eventPublisherHub;
 
     @Resource
-    private MemberPermSyncService memberPermSyncService;
+    private SessionPermSyncService sessionPermSyncService;
 
     private IdGenerator idGenerator;
 
@@ -239,11 +239,11 @@ public class ControlUnitResourceRelationServiceImpl implements ControlUnitResour
                 ));
         }
 
-        boolean memberApiChanged = SessionType.MEMBER.name().equals(unit.getSessionType())
+        boolean organScopedApiChanged = SessionPermSyncService.isOrganScoped(unit.getSessionType())
             && (createRelations.stream().anyMatch(o -> ResourceType.API_ENDPOINT.name().equals(o.getResourceType()))
             || deleteRelations.stream().anyMatch(o -> ResourceType.API_ENDPOINT.name().equals(o.getResourceType())));
-        if (memberApiChanged) {
-            memberPermSyncService.notifyOrgansHavingControlUnit(unit.getId());
+        if (organScopedApiChanged) {
+            sessionPermSyncService.notifyOrgansHavingControlUnit(unit.getId(), SessionType.valueOf(unit.getSessionType()));
         }
 
         return result;

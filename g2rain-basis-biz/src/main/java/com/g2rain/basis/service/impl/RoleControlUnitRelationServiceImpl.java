@@ -17,7 +17,7 @@ import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.enums.RoleType;
 import com.g2rain.basis.model.RoleControlUnitRelation;
-import com.g2rain.basis.service.MemberPermSyncService;
+import com.g2rain.basis.service.SessionPermSyncService;
 import com.g2rain.basis.service.RoleControlUnitRelationService;
 import com.g2rain.basis.utils.Constants;
 import com.g2rain.basis.vo.RoleControlUnitRelationVo;
@@ -72,7 +72,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
     private EventPublisherHub eventPublisherHub;
 
     @Resource
-    private MemberPermSyncService memberPermSyncService;
+    private SessionPermSyncService sessionPermSyncService;
 
     @Qualifier("idGenerator")
     @Autowired(required = false)
@@ -391,7 +391,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
             BasisSyncerEnum.USER_PERM.name(),
             organId
         );
-        memberPermSyncService.notifyOrgan(organId);
+        sessionPermSyncService.notifyOrgan(organId);
     }
 
 
@@ -464,7 +464,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
                 BasisSyncerEnum.USER_PERM.name(),
                 organId
             );
-            memberPermSyncService.notifyOrgan(organId);
+            sessionPermSyncService.notifyOrgan(organId);
             return activated;
         }
 
@@ -510,7 +510,7 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
             BasisSyncerEnum.USER_PERM.name(),
             organId
         );
-        memberPermSyncService.notifyOrgan(organId);
+        sessionPermSyncService.notifyOrgan(organId);
 
         return affected;
     }

@@ -1,6 +1,5 @@
 package com.g2rain.basis.controller;
 
-
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.service.ResourceService;
 import com.g2rain.common.model.Result;
@@ -15,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 资源管理控制器
  * <p>
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
  * @author Alpha
  * @since 2026/1/19
  */
+@Slf4j
 @RestController
 @RequestMapping("/resource")
 @Tag(name = "资源上传", description = "资源上传相关接口")
@@ -51,6 +53,7 @@ public class ResourceController {
             resourceService.resourceUpload(applicationId, new String(file.getBytes()));
             return Result.success();
         } catch (Exception e) {
+            log.error("failed to upload resource, applicationId={}", applicationId, e);
             return Result.error(BasisErrorCode.RESOURCE_UPLOAD_FAIL);
         }
     }

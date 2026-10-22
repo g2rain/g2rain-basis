@@ -23,7 +23,12 @@ public enum BasisRedisKeyRule {
     /**
      * 某机构 MEMBER 会话 API 权限版本，格式 basis:perm:member:version:{organId}
      */
-    MEMBER_PERM_VERSION("basis:perm:member:version:%s");
+    MEMBER_PERM_VERSION("basis:perm:member:version:%s"),
+
+    /**
+     * 某机构 ANONYMOUS 会话 API 权限版本，格式 basis:perm:anonymous:version:{organId}
+     */
+    ANONYMOUS_PERM_VERSION("basis:perm:anonymous:version:%s");
 
     private final String key;
 

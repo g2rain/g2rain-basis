@@ -83,15 +83,26 @@ public interface LoginTokenService {
                                       String idpType, String idpSubject, String idpApplicationCode, String bindMode);
 
     /**
-     * 构建匿名会话的 Token JWT 载荷信息。
+     * 授权码换票：按接入码构建匿名会话的 Token JWT 载荷信息。
      *
-     * @param organId         机构 ID
+     * @param entryKey        接入码
      * @param applicationCode 应用编码
-     * @param roleIds         可选；非空时使用指定角色，为空时回退机构 ADMIN 角色
+     * @param thumbprint      DPoP 公钥指纹（RFC 7638，由 IAM 计算）
      * @return 匿名会话的 {@link TokenJWTPayload}
-     * @throws BusinessException 当机构或应用不存在，或机构不可用时抛出
+     * @throws BusinessException 接入码不可用、机构不可用或应用未开通时抛出
      */
-    TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode, List<Long> roleIds);
+    TokenJWTPayload fetchAnonymousTokenContext(String entryKey, String applicationCode, String thumbprint);
+
+    /**
+     * 刷新：按接入码 ID 复核并重建匿名会话的 Token JWT 载荷信息。
+     *
+     * @param entryId         接入码 ID（取自旧 token）
+     * @param applicationCode 应用编码
+     * @param thumbprint      DPoP 公钥指纹（RFC 7638，由 IAM 计算）
+     * @return 匿名会话的 {@link TokenJWTPayload}
+     * @throws BusinessException 接入码不可用、机构不可用或应用未开通时抛出
+     */
+    TokenJWTPayload fetchAnonymousRefreshContext(Long entryId, String applicationCode, String thumbprint);
 
     /**
      * 构建会员会话（SessionType=MEMBER）的 Token JWT 载荷骨架。

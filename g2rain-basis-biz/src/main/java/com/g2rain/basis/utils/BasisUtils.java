@@ -1,6 +1,8 @@
 package com.g2rain.basis.utils;
 
 
+
+import lombok.extern.slf4j.Slf4j;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.KeyAlgorithm;
 import com.g2rain.basis.enums.PublicKeyFormat;
@@ -54,6 +56,7 @@ import java.util.regex.Pattern;
  * @author alpha
  * @since 2026/1/10
  */
+@Slf4j
 public final class BasisUtils {
     /**
      * 私有构造函数，防止工具类被实例化。
@@ -196,6 +199,7 @@ public final class BasisUtils {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
+            log.error("failed to validateAndNormalizePublicKey", e);
             throw new BusinessException(BasisErrorCode.PUB_KEY_INVALID_KEY);
         }
     }
@@ -221,6 +225,7 @@ public final class BasisUtils {
         try {
             return pemToDerInternal(pem);
         } catch (IllegalArgumentException e) {
+            log.error("failed to toDer", e);
             throw new BusinessException(BasisErrorCode.PUB_KEY_INVALID_KEY);
         }
     }
@@ -258,6 +263,7 @@ public final class BasisUtils {
         try {
             return KeyAlgorithm.valueOf(algorithmStr.toUpperCase());
         } catch (Exception e) {
+            log.error("failed to parseAlgorithm", e);
             throw new BusinessException(BasisErrorCode.PUB_KEY_UNSUPPORTED_ALGORITHM);
         }
     }
@@ -292,6 +298,7 @@ public final class BasisUtils {
             // 拼接最终存储字符串：算法名$迭代次数$Base64盐$Base64哈希
             return ALGORITHM + "$" + ITERATIONS + "$" + base64Salt + "$" + base64Hash;
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            log.error("failed to hashPassword", e);
             throw new BusinessException(BasisErrorCode.PASSWORD_ENCRYPTION_FAILED);
         }
     }
@@ -328,6 +335,7 @@ public final class BasisUtils {
             // 使用安全方式比较存储哈希和计算哈希是否一致
             return MessageDigest.isEqual(storedHashBytes, calculatedHash);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            log.error("failed to verifyPassword", e);
             throw new BusinessException(BasisErrorCode.PASSWORD_ENCRYPTION_FAILED);
         }
     }

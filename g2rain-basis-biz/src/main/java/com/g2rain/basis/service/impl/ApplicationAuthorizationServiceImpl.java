@@ -32,7 +32,7 @@ import com.g2rain.basis.enums.ControlDomainType;
 import com.g2rain.basis.enums.RoleType;
 import com.g2rain.basis.model.RoleControlUnitRelation;
 import com.g2rain.basis.service.ApplicationAuthorizationService;
-import com.g2rain.basis.service.MemberPermSyncService;
+import com.g2rain.basis.service.SessionPermSyncService;
 import com.g2rain.basis.service.RoleControlUnitRelationService;
 import com.g2rain.basis.vo.ApplicationAuthorizationVo;
 import com.g2rain.common.exception.BusinessException;
@@ -105,7 +105,7 @@ public class ApplicationAuthorizationServiceImpl implements ApplicationAuthoriza
     private RoleControlUnitRelationService roleControlUnitRelationService;
 
     @Resource
-    private MemberPermSyncService memberPermSyncService;
+    private SessionPermSyncService sessionPermSyncService;
 
     private IdGenerator idGenerator;
 
@@ -179,7 +179,7 @@ public class ApplicationAuthorizationServiceImpl implements ApplicationAuthoriza
         }
 
         Long authorizationId = activateFeatures(roleId, dto);
-        memberPermSyncService.notifyOrgan(dto.getOrganId());
+        sessionPermSyncService.notifyOrgan(dto.getOrganId());
         return authorizationId;
     }
 
@@ -296,7 +296,7 @@ public class ApplicationAuthorizationServiceImpl implements ApplicationAuthoriza
         total += roleControlUnitRelationService.changeStatus(authorization.getOrganId(),
             authorization.getId(), status
         );
-        memberPermSyncService.notifyOrgan(authorization.getOrganId());
+        sessionPermSyncService.notifyOrgan(authorization.getOrganId());
         return total;
     }
 
