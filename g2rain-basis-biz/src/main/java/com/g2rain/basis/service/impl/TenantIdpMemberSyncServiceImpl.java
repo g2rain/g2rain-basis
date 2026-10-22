@@ -1,5 +1,7 @@
 package com.g2rain.basis.service.impl;
 
+
+import lombok.extern.slf4j.Slf4j;
 import com.g2rain.basis.client.IdpSyncClient;
 import com.g2rain.basis.dao.PassportIdpBindingDao;
 import com.g2rain.basis.dao.UserDao;
@@ -42,6 +44,7 @@ import java.util.Set;
  * 租户 IdP 成员同步服务实现。
  */
 @Service(value = "tenantIdpMemberSyncServiceImpl")
+@Slf4j
 public class TenantIdpMemberSyncServiceImpl implements TenantIdpMemberSyncService {
 
     private static final String DEFAULT_DISPLAY_NAME = "钉钉用户";
@@ -237,6 +240,7 @@ public class TenantIdpMemberSyncServiceImpl implements TenantIdpMemberSyncServic
         try {
             remoteResult = idpSyncClient.fetchMember(request);
         } catch (Exception ex) {
+            log.error("failed to ensureMemberInitializedFromIam", ex);
             throw new BusinessException(BasisErrorCode.TENANT_IDP_SYNC_IDP_FETCH_FAILED);
         }
         if (!remoteResult.isSuccess()) {

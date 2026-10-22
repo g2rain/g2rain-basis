@@ -4,7 +4,7 @@ import com.g2rain.basis.dao.ApplicationAuthorizationDao;
 import com.g2rain.basis.dao.po.ApplicationAuthorizationPo;
 import com.g2rain.basis.dto.UpdateStatusDto;
 import com.g2rain.basis.enums.AuthorizationStatus;
-import com.g2rain.basis.service.MemberPermSyncService;
+import com.g2rain.basis.service.SessionPermSyncService;
 import com.g2rain.basis.service.RoleControlUnitRelationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,22 +15,22 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class ApplicationAuthorizationServiceImplMemberPermNotifyTest {
+class ApplicationAuthorizationServiceImplSessionPermNotifyTest {
 
     private ApplicationAuthorizationServiceImpl service;
     private ApplicationAuthorizationDao applicationAuthorizationDao;
     private RoleControlUnitRelationService roleControlUnitRelationService;
-    private MemberPermSyncService memberPermSyncService;
+    private SessionPermSyncService sessionPermSyncService;
 
     @BeforeEach
     void setUp() {
         service = new ApplicationAuthorizationServiceImpl();
         applicationAuthorizationDao = mock(ApplicationAuthorizationDao.class);
         roleControlUnitRelationService = mock(RoleControlUnitRelationService.class);
-        memberPermSyncService = mock(MemberPermSyncService.class);
+        sessionPermSyncService = mock(SessionPermSyncService.class);
         ReflectionTestUtils.setField(service, "applicationAuthorizationDao", applicationAuthorizationDao);
         ReflectionTestUtils.setField(service, "roleControlUnitRelationService", roleControlUnitRelationService);
-        ReflectionTestUtils.setField(service, "memberPermSyncService", memberPermSyncService);
+        ReflectionTestUtils.setField(service, "sessionPermSyncService", sessionPermSyncService);
     }
 
     @Test
@@ -48,6 +48,6 @@ class ApplicationAuthorizationServiceImplMemberPermNotifyTest {
         dto.setStatus(AuthorizationStatus.DEACTIVATED.name());
         service.updateStatus(55L, dto);
 
-        verify(memberPermSyncService).notifyOrgan(eq(10001L));
+        verify(sessionPermSyncService).notifyOrgan(eq(10001L));
     }
 }

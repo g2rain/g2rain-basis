@@ -22,7 +22,7 @@ mvn clean verify
 g2rain/g2rain-basis:<tag>
 ```
 
-基础镜像为 `eclipse-temurin:25-jre`，主类为 `com.g2rain.basis.Application`。
+基础镜像为 `eclipse-temurin:25.0.4.1_1-jre`，主类为 `com.g2rain.basis.Application`。
 
 ## 部署前检查
 

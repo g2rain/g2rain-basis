@@ -22,6 +22,10 @@ public enum BasisSyncerEnum {
      * MEMBER 会话 API 权限：载荷为 organId（Long），网关按机构失效本地 MemberPerm 后按需回源。
      */
     MEMBER_PERM,
+    /**
+     * ANONYMOUS 会话 API 权限与启用中的接入码：载荷为 organId（Long），网关按机构失效本地 AnonymousPerm 后按需回源。
+     */
+    ANONYMOUS_PERM,
     USER_PERM,
     /**
      * 个人静态访问令牌：载荷为 {@link com.g2rain.basis.vo.StaticAccessTokenHashVo}（{@code tokenHash} 字段），

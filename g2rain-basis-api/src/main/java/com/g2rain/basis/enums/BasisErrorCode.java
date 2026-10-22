@@ -265,7 +265,10 @@ public enum BasisErrorCode implements ErrorCode {
     APPLICATION_SELF_ACTIVATE_ADMIN_REQUIRED("basis.40077", "仅租户管理员可以开通应用"),
 
     @Schema(description = "APPLICATION_AUTHORIZATION_MISSING")
-    APPLICATION_AUTHORIZATION_MISSING("basis.40080", "目标应用尚未开通或授权已停用");
+    APPLICATION_AUTHORIZATION_MISSING("basis.40080", "目标应用尚未开通或授权已停用"),
+
+    @Schema(description = "ANONYMOUS_ENTRY_UNAVAILABLE")
+    ANONYMOUS_ENTRY_UNAVAILABLE("basis.40081", "接入码不可用");
 
     private final String code;
 

@@ -18,7 +18,7 @@ import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.ControlUnitScope;
 import com.g2rain.basis.enums.ControlUnitStatus;
 import com.g2rain.basis.service.ControlUnitService;
-import com.g2rain.basis.service.MemberPermSyncService;
+import com.g2rain.basis.service.SessionPermSyncService;
 import com.g2rain.basis.vo.ControlUnitVo;
 import com.g2rain.common.enums.SessionType;
 import com.g2rain.common.exception.BusinessException;
@@ -76,7 +76,7 @@ public class ControlUnitServiceImpl implements ControlUnitService {
     private ControlDomainControlUnitRelationDao controlDomainControlUnitRelationDao;
 
     @Resource
-    private MemberPermSyncService memberPermSyncService;
+    private SessionPermSyncService sessionPermSyncService;
 
     private IdGenerator idGenerator;
 
@@ -205,7 +205,7 @@ public class ControlUnitServiceImpl implements ControlUnitService {
         controlUnitResourceRelationDao.deleteByControlUnitId(id);
         // 删除控制单元
         int result = controlUnitDao.delete(id);
-        memberPermSyncService.notifyIfMember(unit);
+        sessionPermSyncService.notifyIfOrganScoped(unit);
         return result;
     }
 
@@ -245,7 +245,7 @@ public class ControlUnitServiceImpl implements ControlUnitService {
         entity.setUpdateTime(Moments.now());
         entity.setStatus(dto.getStatus());
         int result = controlUnitDao.updateSelective(entity);
-        memberPermSyncService.notifyIfMember(existing);
+        sessionPermSyncService.notifyIfOrganScoped(existing);
         return result;
     }
 

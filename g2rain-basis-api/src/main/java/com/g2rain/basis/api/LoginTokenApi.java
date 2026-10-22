@@ -75,19 +75,35 @@ public interface LoginTokenApi {
     );
 
     /**
-     * 获取匿名会话的登录令牌 JWT 载荷信息。
+     * 授权码换票：按接入码构建匿名会话（SessionType=ANONYMOUS）的登录令牌 JWT 载荷。
      *
-     * @param organId         机构 ID
+     * @param entryKey        接入码
      * @param applicationCode 应用编码
-     * @param roleIds         可选；非空时使用 IAM 配置的角色 ID，为空时回退查询机构 ADMIN 角色
+     * @param thumbprint      DPoP 公钥指纹（RFC 7638，由 IAM 根据验签通过的公钥计算）
      * @return 匿名会话的 JWT 载荷信息
      */
     @GetMapping("/anonymous_token_context")
-    @Operation(summary = "获取匿名登录令牌上下文", hidden = true, description = "根据机构与应用构建匿名会话 JWT 载荷信息")
+    @Operation(summary = "获取匿名登录令牌上下文", hidden = true, description = "按接入码构建匿名会话 JWT 载荷信息")
     Result<TokenJWTPayload> fetchAnonymousTokenContext(
-        @Parameter(description = "机构 ID") @RequestParam Long organId,
+        @Parameter(description = "接入码") @RequestParam String entryKey,
         @Parameter(description = "应用编码") @RequestParam String applicationCode,
-        @Parameter(description = "角色 ID 列表；为空时使用机构 ADMIN 角色") @RequestParam(required = false) List<Long> roleIds
+        @Parameter(description = "DPoP 公钥指纹") @RequestParam String thumbprint
+    );
+
+    /**
+     * 刷新：按接入码 ID 复核并重建匿名会话的登录令牌 JWT 载荷。
+     *
+     * @param entryId         接入码 ID（取自旧 token）
+     * @param applicationCode 应用编码
+     * @param thumbprint      DPoP 公钥指纹（RFC 7638，由 IAM 根据验签通过的公钥计算）
+     * @return 匿名会话的 JWT 载荷信息
+     */
+    @GetMapping("/anonymous_refresh_context")
+    @Operation(summary = "刷新匿名登录令牌上下文", hidden = true, description = "按接入码 ID 复核并重建匿名会话 JWT 载荷信息")
+    Result<TokenJWTPayload> fetchAnonymousRefreshContext(
+        @Parameter(description = "接入码 ID") @RequestParam Long entryId,
+        @Parameter(description = "应用编码") @RequestParam String applicationCode,
+        @Parameter(description = "DPoP 公钥指纹") @RequestParam String thumbprint
     );
 
     /**

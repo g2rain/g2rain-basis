@@ -53,9 +53,13 @@ public class LoginTokenController implements LoginTokenApi {
     }
 
     @Override
-    public Result<TokenJWTPayload> fetchAnonymousTokenContext(Long organId, String applicationCode,
-                                                              List<Long> roleIds) {
-        return Result.success(loginTokenService.fetchAnonymousTokenContext(organId, applicationCode, roleIds));
+    public Result<TokenJWTPayload> fetchAnonymousTokenContext(String entryKey, String applicationCode, String thumbprint) {
+        return Result.success(loginTokenService.fetchAnonymousTokenContext(entryKey, applicationCode, thumbprint));
+    }
+
+    @Override
+    public Result<TokenJWTPayload> fetchAnonymousRefreshContext(Long entryId, String applicationCode, String thumbprint) {
+        return Result.success(loginTokenService.fetchAnonymousRefreshContext(entryId, applicationCode, thumbprint));
     }
 
     @Override

@@ -45,6 +45,8 @@ public interface ResourceApiConverter {
      */
     @Mapping(target = "version", ignore = true)
     @Mapping(target = "deleteFlag", ignore = true)
+    @Mapping(target = "openapiDocument", ignore = true)
+    @Mapping(target = "documentDigest", ignore = true)
     @Mapping(target = "createTime", source = "createTime", qualifiedByName = "stringToLocalDateTime")
     @Mapping(target = "updateTime", source = "updateTime", qualifiedByName = "stringToLocalDateTime")
     ResourceApiPo dto2po(ResourceApiDto dto);

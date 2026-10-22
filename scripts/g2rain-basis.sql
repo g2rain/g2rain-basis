@@ -597,6 +597,48 @@ CREATE TABLE `audit_event` (
     INDEX `idx_application_id` (`application_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '审计事件表';
 
+-- =============================================
+-- 26. 匿名接入码表 (anonymous_entry)
+-- 租户为某个应用开放的匿名入口；entry_key 为公开接入码，未删除记录中唯一
+-- =============================================
+DROP TABLE IF EXISTS `anonymous_entry`;
+
+CREATE TABLE `anonymous_entry` (
+    `id` BIGINT NOT NULL COMMENT                                                                        '接入码标识',
+    `organ_id` BIGINT NOT NULL COMMENT                                                                  '机构标识（租户机构）',
+    `application_id` BIGINT NOT NULL COMMENT                                                            '应用标识',
+    `entry_name` VARCHAR(64) NOT NULL COMMENT                                                           '接入码名称',
+    `entry_key` VARCHAR(40) NOT NULL COLLATE utf8mb4_bin COMMENT                                        '接入码（ek_ 前缀 + base62 随机串，区分大小写）',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT 											    '接入码状态[ACTIVE:有效, INACTIVE:无效]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_entry_key` (`entry_key`, (IF(delete_flag = 0, 0, NULL))),
+    INDEX `idx_organ_status` (`organ_id`, `status`, (IF(delete_flag = 0, 0, NULL)))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '匿名接入码表';
+
+-- =============================================
+-- 27. 匿名访客表 (anonymous_visitor)
+-- 访客身份 = 机构 + DPoP 公钥指纹（RFC 7638），id 即 visitorId，写入 token 的 userId
+-- =============================================
+DROP TABLE IF EXISTS `anonymous_visitor`;
+
+CREATE TABLE `anonymous_visitor` (
+    `id` BIGINT NOT NULL COMMENT                                                                        '访客标识（visitorId）',
+    `organ_id` BIGINT NOT NULL COMMENT                                                                  '机构标识',
+    `key_thumbprint` CHAR(43) NOT NULL COLLATE utf8mb4_bin COMMENT                                      'DPoP 公钥指纹（base64url，区分大小写）',
+    `entry_id` BIGINT NOT NULL COMMENT                                                                  '首次进入时的接入码标识',
+    `last_seen_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT                               '最近换票或刷新时间',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_organ_thumbprint` (`organ_id`, `key_thumbprint`, (IF(delete_flag = 0, 0, NULL)))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '匿名访客表';
+
 -- 账号
 INSERT INTO `passport`
 (`id`, `username`, `password`, `real_name`, `sex`, `birthday`, `id_no`, `mobile`, `email`, `status`, `create_time`, `update_time`)

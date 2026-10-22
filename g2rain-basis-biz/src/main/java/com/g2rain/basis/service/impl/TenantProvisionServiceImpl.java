@@ -1,6 +1,8 @@
 package com.g2rain.basis.service.impl;
 
 
+
+import lombok.extern.slf4j.Slf4j;
 import com.g2rain.basis.client.TenantProvisionClient;
 import com.g2rain.basis.client.dto.VerifyCreateOrganRequest;
 import com.g2rain.basis.dao.OrganDao;
@@ -71,6 +73,7 @@ import java.util.Objects;
  * @since 2026/1/30
  */
 @Service(value = "tenantProvisionServiceImpl")
+@Slf4j
 public class TenantProvisionServiceImpl implements TenantProvisionService {
     @Resource(name = "organProvisionServiceImpl")
     private OrganProvisionService organProvisionService;
@@ -204,6 +207,7 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         try {
             result = tenantProvisionClient.verifyCreateOrgan(new VerifyCreateOrganRequest(passportId));
         } catch (Exception ex) {
+            log.error("failed to verifyCreateOrganViaIam", ex);
             throw new BusinessException(BasisErrorCode.TENANT_PROVISION_VERIFY_FAILED);
         }
         if (!result.isSuccess()) {

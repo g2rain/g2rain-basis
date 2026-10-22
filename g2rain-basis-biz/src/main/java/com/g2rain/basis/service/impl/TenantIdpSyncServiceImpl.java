@@ -1,5 +1,7 @@
 package com.g2rain.basis.service.impl;
 
+
+import lombok.extern.slf4j.Slf4j;
 import com.g2rain.basis.client.DepartmentIdpSyncClient;
 import com.g2rain.basis.client.IdpSyncClient;
 import com.g2rain.basis.dao.PassportIdpBindingDao;
@@ -53,6 +55,7 @@ import java.util.Set;
  * 租户 IdP 同步编排服务实现。
  */
 @Service(value = "tenantIdpSyncServiceImpl")
+@Slf4j
 public class TenantIdpSyncServiceImpl implements TenantIdpSyncService {
 
     @Resource(name = "idpEnterpriseOrganServiceImpl")
@@ -207,6 +210,7 @@ public class TenantIdpSyncServiceImpl implements TenantIdpSyncService {
         try {
             result = idpSyncClient.fetchSnapshot(request);
         } catch (Exception ex) {
+            log.error("failed to fetchSnapshot", ex);
             throw new BusinessException(BasisErrorCode.TENANT_IDP_SYNC_IDP_FETCH_FAILED);
         }
         if (!result.isSuccess()) {
@@ -237,6 +241,7 @@ public class TenantIdpSyncServiceImpl implements TenantIdpSyncService {
         try {
             result = departmentIdpSyncClient.listMappedIdpDeptIds(organId, idpType);
         } catch (Exception ex) {
+            log.error("failed to loadMappedIdpDeptIds", ex);
             throw new BusinessException(BasisErrorCode.TENANT_IDP_SYNC_DEPARTMENT_FAILED);
         }
         if (!result.isSuccess()) {
@@ -269,6 +274,7 @@ public class TenantIdpSyncServiceImpl implements TenantIdpSyncService {
         try {
             result = departmentIdpSyncClient.sync(syncDto);
         } catch (Exception ex) {
+            log.error("failed to syncDepartments", ex);
             throw new BusinessException(BasisErrorCode.TENANT_IDP_SYNC_DEPARTMENT_FAILED);
         }
         if (!result.isSuccess()) {

@@ -10,7 +10,7 @@ import com.g2rain.basis.dao.po.ControlUnitPo;
 import com.g2rain.basis.dto.ControlUnitDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.ControlUnitStatus;
-import com.g2rain.basis.service.MemberPermSyncService;
+import com.g2rain.basis.service.SessionPermSyncService;
 import com.g2rain.common.enums.SessionType;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.id.IdGenerator;
@@ -33,7 +33,7 @@ class ControlUnitServiceImplTest {
     private ControlUnitServiceImpl service;
     private ControlUnitDao controlUnitDao;
     private ApplicationDao applicationDao;
-    private MemberPermSyncService memberPermSyncService;
+    private SessionPermSyncService sessionPermSyncService;
     private IdGenerator idGenerator;
 
     @BeforeEach
@@ -41,7 +41,7 @@ class ControlUnitServiceImplTest {
         service = new ControlUnitServiceImpl();
         controlUnitDao = mock(ControlUnitDao.class);
         applicationDao = mock(ApplicationDao.class);
-        memberPermSyncService = mock(MemberPermSyncService.class);
+        sessionPermSyncService = mock(SessionPermSyncService.class);
         idGenerator = mock(IdGenerator.class);
 
         ReflectionTestUtils.setField(service, "controlUnitDao", controlUnitDao);
@@ -52,7 +52,7 @@ class ControlUnitServiceImplTest {
             mock(RoleControlUnitRelationDao.class));
         ReflectionTestUtils.setField(service, "controlDomainControlUnitRelationDao",
             mock(ControlDomainControlUnitRelationDao.class));
-        ReflectionTestUtils.setField(service, "memberPermSyncService", memberPermSyncService);
+        ReflectionTestUtils.setField(service, "sessionPermSyncService", sessionPermSyncService);
         service.setIdGenerator(idGenerator);
 
         ApplicationPo app = new ApplicationPo();
