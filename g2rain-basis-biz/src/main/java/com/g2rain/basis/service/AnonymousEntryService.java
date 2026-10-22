@@ -78,7 +78,7 @@ public interface AnonymousEntryService {
     AnonymousEntryVo resolve(Long id, Long applicationId);
 
     /**
-     * 校验机构可开放匿名入口：机构有效、为租户且已开通该应用
+     * 校验机构可开放匿名入口：机构有效且已开通该应用（运营机构与租户机构均可）
      *
      * @param organId       机构 ID
      * @param applicationId 应用 ID

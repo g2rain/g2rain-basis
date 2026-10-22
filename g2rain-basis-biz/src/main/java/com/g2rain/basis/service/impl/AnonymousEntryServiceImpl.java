@@ -19,7 +19,6 @@ import com.g2rain.basis.service.AnonymousEntryService;
 import com.g2rain.basis.service.SessionPermSyncService;
 import com.g2rain.basis.vo.AnonymousEntryVo;
 import com.g2rain.basis.vo.OrganVo;
-import com.g2rain.common.enums.OrganType;
 import com.g2rain.common.enums.SessionType;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
@@ -108,7 +107,7 @@ public class AnonymousEntryServiceImpl implements AnonymousEntryService {
 
     /**
      * 新增或更新接入码。
-     * <p>新增：接入码由服务端生成，状态固定 {@code ACTIVE}；非运营公司只能为本机构创建；机构须为有效租户且已开通该应用。</p>
+     * <p>新增：接入码由服务端生成，状态固定 {@code ACTIVE}；非运营公司只能为本机构创建；机构须有效且已开通该应用。</p>
      * <p>更新：只允许改名称；机构、应用、接入码不可改，启停走 {@link #updateStatus}。</p>
      */
     @Override
@@ -193,8 +192,6 @@ public class AnonymousEntryServiceImpl implements AnonymousEntryService {
         OrganPo organ = organDao.selectById(organId);
         Asserts.isTrue(Objects.nonNull(organ), SystemErrorCode.PARAM_VAL_INVALID, organId);
         Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()), BasisErrorCode.ORGAN_UNAVAILABLE);
-        Asserts.isTrue(OrganType.isTenant(organ.getOrganType()),
-            SystemErrorCode.PARAM_VAL_INVALID, organ.getOrganType());
 
         ApplicationAuthorizationSelectDto authSelect = new ApplicationAuthorizationSelectDto();
         authSelect.setOrganId(organId);

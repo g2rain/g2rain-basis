@@ -89,10 +89,13 @@ class AnonymousEntryServiceImplTest {
     }
 
     @Test
-    void save_create_forAdminOrgan_shouldReject() {
+    void save_create_forAdminOrgan_shouldBeAllowed() {
         givenOpenOrgan(OrganType.COMPANY);
-        runAs(true, () -> assertThrows(BusinessException.class, () -> service.save(newDto())));
-        verify(anonymousEntryDao, never()).insert(any());
+        when(anonymousEntryDao.insert(any())).thenReturn(1);
+
+        runAs(true, () -> service.save(newDto()));
+
+        verify(anonymousEntryDao).insert(any());
     }
 
     @Test
