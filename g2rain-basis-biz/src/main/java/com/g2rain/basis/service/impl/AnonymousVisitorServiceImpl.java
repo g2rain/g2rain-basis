@@ -119,7 +119,7 @@ public class AnonymousVisitorServiceImpl implements AnonymousVisitorService {
         }
 
         AnonymousVisitorPo visitor = new AnonymousVisitorPo();
-        visitor.setId(idGenerator.generateId());
+        visitor.setId(idGenerator.generateSnowflakeId());
         visitor.setOrganId(organId);
         visitor.setKeyThumbprint(thumbprint);
         visitor.setEntryId(entryId);
