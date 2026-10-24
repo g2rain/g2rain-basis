@@ -1,26 +1,20 @@
 package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.converter.LoginTokenConverter;
-import com.g2rain.basis.dao.ApplicationAuthorizationDao;
 import com.g2rain.basis.dao.ApplicationDao;
 import com.g2rain.basis.dao.ApplicationIdpProvisionDao;
 import com.g2rain.basis.dao.LoginTokenDao;
 import com.g2rain.basis.dao.OrganDao;
 import com.g2rain.basis.dao.PassportIdpBindingDao;
-import com.g2rain.basis.dao.RoleControlUnitRelationDao;
 import com.g2rain.basis.dao.UserDao;
-import com.g2rain.basis.dao.po.ApplicationAuthorizationPo;
 import com.g2rain.basis.dao.po.ApplicationPo;
-import com.g2rain.basis.dao.po.CountRoleControlUnitPo;
 import com.g2rain.basis.dao.po.LoginTokenPo;
 import com.g2rain.basis.dao.po.OrganPo;
 import com.g2rain.basis.dao.po.UserPo;
-import com.g2rain.basis.dto.ApplicationAuthorizationSelectDto;
 import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
 import com.g2rain.basis.dto.OrganSelectDto;
-import com.g2rain.basis.enums.AuthorizationStatus;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.IdpBindMode;
 import com.g2rain.basis.enums.OrganStatus;
@@ -105,17 +99,14 @@ public class LoginTokenServiceImpl implements LoginTokenService {
     @Resource
     private ApplicationService applicationService;
 
-    @Resource(name = "roleControlUnitRelationDao")
-    private RoleControlUnitRelationDao roleControlUnitRelationDao;
-
     @Resource(name = "applicationDao")
     private ApplicationDao applicationDao;
 
-    @Resource(name = "applicationAuthorizationDao")
-    private ApplicationAuthorizationDao applicationAuthorizationDao;
-
     @Resource(name = "organDao")
     private OrganDao organDao;
+
+    @Resource(name = "applicationEntryExaminer")
+    private ApplicationEntryExaminer applicationEntryExaminer;
 
     @Resource(name = "userDao")
     private UserDao userDao;
@@ -261,9 +252,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
             SystemErrorCode.UNAUTHORIZED, applicationCode
         );
         ApplicationVo application = applications.getFirst();
-        Boolean canIntegrate = application.getCanIntegrate();
-        Boolean landing = application.getLanding();
-        boolean isDefaultMain = Boolean.TRUE.equals(landing) && Boolean.FALSE.equals(canIntegrate);
+        boolean isDefaultMain = ApplicationEntryExaminer.isDefaultMain(application);
 
         TokenJWTPayload payload = new TokenJWTPayload();
         if (Objects.isNull(userId)) {
@@ -334,9 +323,8 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         );
 
         OrganVo organ = organs.getFirst();
-        Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
-            BasisErrorCode.ORGAN_UNAVAILABLE
-        );
+        // 机构可用、应用开通与控制单元：与可切换身份列表共用规则
+        applicationEntryExaminer.check(user.getId(), organ, application);
         payload.setOrganType(OrganType.fromName(organ.getOrganType()));
         payload.setOrganId(organ.getId());
         payload.setOrganName(organ.getOrganName());
@@ -344,32 +332,6 @@ public class LoginTokenServiceImpl implements LoginTokenService {
 
         // 需要外部的Starter 提供能力, 没有实现也没关系
         principalEnrichers.forEach(enricher -> enricher.enrich(payload));
-
-        // 如果入口应用不是 `默认应用`, 需要校验目标应用开通事实与可调用控制单元
-        if (!isDefaultMain) {
-            ApplicationAuthorizationSelectDto authSelect = new ApplicationAuthorizationSelectDto();
-            authSelect.setOrganId(organ.getId());
-            authSelect.setApplicationId(application.getId());
-            authSelect.setStatus(AuthorizationStatus.ACTIVATED.name());
-            List<ApplicationAuthorizationPo> authorizations = applicationAuthorizationDao.selectList(authSelect);
-            Asserts.isTrue(Collections.isNotEmpty(authorizations),
-                BasisErrorCode.APPLICATION_AUTHORIZATION_MISSING, applicationCode);
-
-            CountRoleControlUnitPo countRoleControlUnit = roleControlUnitRelationDao
-                .countRoleControlUnits(user.getId());
-
-            // 如果没有授权, 权限不足
-            Asserts.greaterThan(Objects.isNull(countRoleControlUnit.getTotalControlUnitCount()) ? -1 :
-                    countRoleControlUnit.getTotalControlUnitCount(), 0,
-                SystemErrorCode.UNAUTHORIZED, organ.getOrganName()
-            );
-
-            // 如果没有有效的权限, 请续费
-            Asserts.greaterThan(Objects.isNull(countRoleControlUnit.getActiveControlUnitCount()) ? -1 :
-                    countRoleControlUnit.getActiveControlUnitCount(), 0,
-                BasisErrorCode.BUSINESS_CAPABILITY_DISABLED, organ.getOrganName()
-            );
-        }
 
         Instant issuedAt = Instant.now();
         payload.setIssuedAt(issuedAt.getEpochSecond());

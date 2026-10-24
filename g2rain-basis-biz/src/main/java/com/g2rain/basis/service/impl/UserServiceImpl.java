@@ -1,10 +1,14 @@
 package com.g2rain.basis.service.impl;
 
+import com.g2rain.basis.converter.ApplicationConverter;
+import com.g2rain.basis.converter.OrganConverter;
 import com.g2rain.basis.converter.UserConverter;
+import com.g2rain.basis.dao.ApplicationDao;
 import com.g2rain.basis.dao.OrganDao;
 import com.g2rain.basis.dao.PassportDao;
 import com.g2rain.basis.dao.RoleDao;
 import com.g2rain.basis.dao.UserDao;
+import com.g2rain.basis.dao.po.ApplicationPo;
 import com.g2rain.basis.dao.po.OrganPo;
 import com.g2rain.basis.dao.po.PassportPo;
 import com.g2rain.basis.dao.po.RolePo;
@@ -16,7 +20,9 @@ import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.ManagerFlag;
 import com.g2rain.basis.service.UserRoleRelationService;
 import com.g2rain.basis.service.UserService;
-import com.g2rain.basis.vo.UserOptionVo;
+import com.g2rain.basis.vo.ApplicationVo;
+import com.g2rain.basis.vo.OrganVo;
+import com.g2rain.basis.vo.UserIdentityVo;
 import com.g2rain.basis.vo.UserVo;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
@@ -41,7 +47,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -65,6 +70,12 @@ public class UserServiceImpl implements UserService {
 
     @Resource(name = "organDao")
     private OrganDao organDao;
+
+    @Resource(name = "applicationDao")
+    private ApplicationDao applicationDao;
+
+    @Resource(name = "applicationEntryExaminer")
+    private ApplicationEntryExaminer applicationEntryExaminer;
 
     @Resource(name = "roleDao")
     private RoleDao roleDao;
@@ -138,38 +149,54 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 获取用于下拉选择的用户列表
+     * 当前账号在当前应用中可切换的用户身份
      *
-     * @return 用户简要信息集合，包含用户 ID 和名称等用于展示的字段
-     * @see UserOptionVo
+     * <p>按当前 passportId 查名下用户（跨机构，不走数据隔离），再按换票同一规则过滤，
+     * 见 {@link ApplicationEntryExaminer}。当前应用取自网关校验后的请求身份。</p>
+     *
+     * @return 用户身份集合
+     * @see UserIdentityVo
      */
     @Override
-    public List<UserOptionVo> getUserOptions() {
+    public List<UserIdentityVo> selectIdentities() {
         Long passportId = PrincipalContextHolder.getPassportId();
-        if (Objects.isNull(passportId)) {
+        Long applicationId = PrincipalContextHolder.getApplicationId();
+        if (Objects.isNull(passportId) || Objects.isNull(applicationId)) {
             return List.of();
         }
 
+        ApplicationPo applicationPo = applicationDao.selectById(applicationId);
+        if (Objects.isNull(applicationPo)) {
+            return List.of();
+        }
+        ApplicationVo application = ApplicationConverter.INSTANCE.po2vo(applicationPo);
+
         UserSelectDto userSelectDto = new UserSelectDto();
         userSelectDto.setPassportId(passportId);
-        List<UserPo> users = userDao.selectList(userSelectDto);
-        Set<Long> organIds = users.stream().map(UserPo::getOrganId)
-            .collect(Collectors.toSet());
+        List<UserPo> users = userDao.selectListWithoutIsolation(userSelectDto);
+        if (users.isEmpty()) {
+            return List.of();
+        }
 
         OrganSelectDto organSelectDto = new OrganSelectDto();
-        organSelectDto.setIds(organIds);
-        Map<Long, String> id2name = organDao.selectList(organSelectDto).stream().collect(Collectors.toMap(
-            OrganPo::getId, OrganPo::getOrganName, (e, r) -> e
+        organSelectDto.setIds(users.stream().map(UserPo::getOrganId).collect(Collectors.toSet()));
+        Map<Long, OrganVo> organs = organDao.selectList(organSelectDto).stream().collect(Collectors.toMap(
+            OrganPo::getId, OrganConverter.INSTANCE::po2vo, (e, r) -> e
         ));
 
-        List<UserOptionVo> result = new ArrayList<>();
+        List<UserIdentityVo> result = new ArrayList<>();
         for (UserPo user : users) {
-            UserOptionVo option = new UserOptionVo();
-            option.setUserId(user.getId());
-            option.setUserName(user.getRealName());
-            option.setOrganId(user.getOrganId());
-            option.setOrganName(id2name.get(user.getOrganId()));
-            result.add(option);
+            OrganVo organ = organs.get(user.getOrganId());
+            if (Objects.isNull(organ) || !applicationEntryExaminer.permits(user.getId(), organ, application)) {
+                continue;
+            }
+
+            UserIdentityVo identity = new UserIdentityVo();
+            identity.setUserId(user.getId());
+            identity.setUserName(user.getRealName());
+            identity.setOrganId(organ.getId());
+            identity.setOrganName(organ.getOrganName());
+            result.add(identity);
         }
         return result;
     }
