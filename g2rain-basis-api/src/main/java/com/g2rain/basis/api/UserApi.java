@@ -1,7 +1,7 @@
 package com.g2rain.basis.api;
 
 import com.g2rain.basis.dto.UserSelectDto;
-import com.g2rain.basis.vo.UserOptionVo;
+import com.g2rain.basis.vo.UserIdentityVo;
 import com.g2rain.basis.vo.UserVo;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
@@ -33,14 +33,17 @@ public interface UserApi {
     Result<List<UserVo>> selectList(UserSelectDto selectDto);
 
     /**
-     * 获取用于下拉选择的用户列表
+     * 当前账号在当前应用中可切换的用户身份
      *
-     * @return 用户简要信息集合，包含用户 ID 和名称等用于展示的字段
-     * @see UserOptionVo
+     * <p>按当前 passportId 查名下用户，按换票同一规则过滤：机构可用；当前应用不是默认主应用时，
+     * 机构须已开通该应用且用户有可用的控制单元。当前应用取自网关校验后的请求身份。</p>
+     *
+     * @return 用户身份集合
+     * @see UserIdentityVo
      */
-    @GetMapping("/user_options")
-    @Operation(summary = "获取用户下拉选项", description = "返回用于下拉选择的用户简要信息集合")
-    Result<List<UserOptionVo>> getUserOptions();
+    @GetMapping("/identities")
+    @Operation(summary = "查询可切换的用户身份", description = "返回当前账号在当前应用中可切换的用户身份")
+    Result<List<UserIdentityVo>> selectIdentities();
 
     /**
      * 根据条件分页查询

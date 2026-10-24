@@ -6,17 +6,16 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * 用户表返回VO
+ * 当前账号可切换的用户身份
  * 关联表名: user
- * 功能：封装接口返回数据，继承BaseVo复用基础字段逻辑，隔离数据库实体与前端展示层
  *
  * @author Alpha
  */
 @Setter
 @Getter
 @NoArgsConstructor
-@Schema(description = "用户 VO")
-public class UserOptionVo {
+@Schema(description = "用户身份 VO")
+public class UserIdentityVo {
 
     /**
      * 用户标识

@@ -30,7 +30,7 @@ class AnonymousVisitorServiceImplTest {
         service = new AnonymousVisitorServiceImpl();
         anonymousVisitorDao = mock(AnonymousVisitorDao.class);
         IdGenerator idGenerator = mock(IdGenerator.class);
-        when(idGenerator.generateId()).thenReturn(77L);
+        when(idGenerator.generateSnowflakeId()).thenReturn(77L);
         service.setIdGenerator(idGenerator);
         ReflectionTestUtils.setField(service, "anonymousVisitorDao", anonymousVisitorDao);
     }
