@@ -43,9 +43,10 @@ public final class OpenApiDocSplitter {
         .collect(Collectors.toUnmodifiableSet());
 
     /**
-     * 拆分时不整块复制的顶层字段（paths 按接口重建；components/definitions 按 $ref 按需拷贝）。
+     * 拆分时不整块复制的顶层字段（paths 按接口重建；components/definitions 按 $ref 按需拷贝；
+     * tags 为整份文档的分组说明，单接口文档不需要）。
      */
-    private static final Set<String> ROOT_SKIP = Set.of("paths", "components", "definitions");
+    private static final Set<String> ROOT_SKIP = Set.of("paths", "components", "definitions", "tags");
 
     /**
      * 单次拆分允许拷贝的最大 $ref 数，防止恶意文档拖垮内存。
@@ -136,7 +137,7 @@ public final class OpenApiDocSplitter {
     }
 
     /**
-     * 复制顶层字段（跳过 paths/components/definitions），再放入当前 path + method。
+     * 复制顶层字段（跳过 paths/components/definitions/tags），再放入当前 path + method。
      */
     private static ObjectNode buildMiniDocument(ObjectNode root, String path, String method, ObjectNode operation) {
         ObjectNode mini = NODES.objectNode();

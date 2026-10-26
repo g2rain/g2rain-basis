@@ -323,7 +323,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         );
 
         OrganVo organ = organs.getFirst();
-        // 机构可用、应用开通与控制单元：与可切换身份列表共用规则
+        // 机构可用、应用开通与控制单元
         applicationEntryExaminer.check(user.getId(), organ, application);
         payload.setOrganType(OrganType.fromName(organ.getOrganType()));
         payload.setOrganId(organ.getId());
