@@ -63,7 +63,7 @@ public interface UserService {
      * 当前账号可切换的用户身份
      *
      * <p>按当前 passportId 查名下用户，只保留机构为 ACTIVE 的身份；能否以当前应用进入由换票校验。
-     * organType 由 shell 的 nginx 转发时固定写入，客户端传值会被丢弃。</p>
+     * organType 由 shell 的 nginx 转发时写入请求头 {@code X-Identity-Organ-Type}，覆盖客户端传值。</p>
      *
      * @param organType 机构类型；为空时不按类型过滤
      * @return 用户身份集合
