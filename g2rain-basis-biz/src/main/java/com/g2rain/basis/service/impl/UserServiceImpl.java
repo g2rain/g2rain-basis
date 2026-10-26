@@ -166,7 +166,7 @@ public class UserServiceImpl implements UserService {
         OrganSelectDto organSelectDto = new OrganSelectDto();
         organSelectDto.setIds(users.stream().map(UserPo::getOrganId).collect(Collectors.toSet()));
         organSelectDto.setStatus(OrganStatus.ACTIVE.name());
-        if (Objects.nonNull(organType)) {
+        if (!PrincipalContextHolder.isAdminCompany() && Objects.nonNull(organType)) {
             organSelectDto.setOrganType(organType.name());
         }
 
