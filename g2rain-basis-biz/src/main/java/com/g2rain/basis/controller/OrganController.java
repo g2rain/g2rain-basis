@@ -78,15 +78,18 @@ public class OrganController implements OrganApi {
     }
 
     /**
-     * 根据机构名称模糊搜索机构
+     * 按机构标识或名称关键字搜索机构
      *
+     * @param id        机构标识，同时按名称包含该数字匹配
      * @param organName 机构名称关键字
-     * @return 匹配的机构 ID 与名称列表
+     * @return 匹配的机构 ID 与名称列表，最多 50 条
      */
     @GetMapping("/search")
-    @Operation(summary = "搜索机构", description = "根据机构名称关键字模糊查询机构列表")
-    public Result<List<OrganIdNameVo>> searchOrgans(@Parameter(description = "机构名称关键字") @RequestParam(required = false) String organName) {
-        return Result.success(organService.searchOrgans(organName));
+    @Operation(summary = "搜索机构", description = "按机构标识或名称关键字查询机构列表，最多返回 50 条")
+    public Result<List<OrganIdNameVo>> searchOrgans(
+        @Parameter(description = "机构标识") @RequestParam(required = false) Long id,
+        @Parameter(description = "机构名称关键字") @RequestParam(required = false) String organName) {
+        return Result.success(organService.searchOrgans(id, organName));
     }
 
     /**
