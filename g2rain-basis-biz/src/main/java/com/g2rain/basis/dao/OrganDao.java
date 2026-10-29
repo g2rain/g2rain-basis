@@ -81,11 +81,12 @@ public interface OrganDao {
     List<OrganPo> selectListIsolation(OrganSelectDto selectDto);
 
     /**
-     * 根据机构名称模糊匹配机构
+     * 按机构标识或名称关键字搜索机构
      *
-     * @param organId   机构标识
-     * @param organName 机构名称
-     * @return 实体对象列表
+     * @param organId   数据隔离的机构标识
+     * @param id        机构标识，同时按名称包含该数字匹配
+     * @param organName 机构名称关键字
+     * @return 实体对象列表，最多 50 条
      */
-    List<OrganPo> searchOrgans(@Param("organId") Long organId, @Param("organName") String organName);
+    List<OrganPo> searchOrgans(@Param("organId") Long organId, @Param("id") Long id, @Param("organName") String organName);
 }

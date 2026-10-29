@@ -1,14 +1,10 @@
 package com.g2rain.basis.service.impl;
 
-import com.g2rain.basis.converter.ApplicationConverter;
-import com.g2rain.basis.converter.OrganConverter;
 import com.g2rain.basis.converter.UserConverter;
-import com.g2rain.basis.dao.ApplicationDao;
 import com.g2rain.basis.dao.OrganDao;
 import com.g2rain.basis.dao.PassportDao;
 import com.g2rain.basis.dao.RoleDao;
 import com.g2rain.basis.dao.UserDao;
-import com.g2rain.basis.dao.po.ApplicationPo;
 import com.g2rain.basis.dao.po.OrganPo;
 import com.g2rain.basis.dao.po.PassportPo;
 import com.g2rain.basis.dao.po.RolePo;
@@ -18,12 +14,12 @@ import com.g2rain.basis.dto.UserDto;
 import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.ManagerFlag;
+import com.g2rain.basis.enums.OrganStatus;
 import com.g2rain.basis.service.UserRoleRelationService;
 import com.g2rain.basis.service.UserService;
-import com.g2rain.basis.vo.ApplicationVo;
-import com.g2rain.basis.vo.OrganVo;
 import com.g2rain.basis.vo.UserIdentityVo;
 import com.g2rain.basis.vo.UserVo;
+import com.g2rain.common.enums.OrganType;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
@@ -37,6 +33,7 @@ import com.g2rain.common.web.PrincipalContextHolder;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -70,12 +67,6 @@ public class UserServiceImpl implements UserService {
 
     @Resource(name = "organDao")
     private OrganDao organDao;
-
-    @Resource(name = "applicationDao")
-    private ApplicationDao applicationDao;
-
-    @Resource(name = "applicationEntryExaminer")
-    private ApplicationEntryExaminer applicationEntryExaminer;
 
     @Resource(name = "roleDao")
     private RoleDao roleDao;
@@ -149,27 +140,21 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 当前账号在当前应用中可切换的用户身份
+     * 当前账号可切换的用户身份
      *
-     * <p>按当前 passportId 查名下用户（跨机构，不走数据隔离），再按换票同一规则过滤，
-     * 见 {@link ApplicationEntryExaminer}。当前应用取自网关校验后的请求身份。</p>
+     * <p>按当前 passportId 查名下用户（跨机构，不走数据隔离），只保留机构为 ACTIVE 且类型匹配的身份。
+     * 机构是否开通当前应用、用户是否有可用权限不在此判断，由换票时 {@link ApplicationEntryExaminer} 拦截。</p>
      *
+     * @param organType 机构类型；为空时不按类型过滤
      * @return 用户身份集合
      * @see UserIdentityVo
      */
     @Override
-    public List<UserIdentityVo> selectIdentities() {
+    public List<UserIdentityVo> selectIdentities(@Nullable OrganType organType) {
         Long passportId = PrincipalContextHolder.getPassportId();
-        Long applicationId = PrincipalContextHolder.getApplicationId();
-        if (Objects.isNull(passportId) || Objects.isNull(applicationId)) {
+        if (Objects.isNull(passportId)) {
             return List.of();
         }
-
-        ApplicationPo applicationPo = applicationDao.selectById(applicationId);
-        if (Objects.isNull(applicationPo)) {
-            return List.of();
-        }
-        ApplicationVo application = ApplicationConverter.INSTANCE.po2vo(applicationPo);
 
         UserSelectDto userSelectDto = new UserSelectDto();
         userSelectDto.setPassportId(passportId);
@@ -180,14 +165,18 @@ public class UserServiceImpl implements UserService {
 
         OrganSelectDto organSelectDto = new OrganSelectDto();
         organSelectDto.setIds(users.stream().map(UserPo::getOrganId).collect(Collectors.toSet()));
-        Map<Long, OrganVo> organs = organDao.selectList(organSelectDto).stream().collect(Collectors.toMap(
-            OrganPo::getId, OrganConverter.INSTANCE::po2vo, (e, r) -> e
-        ));
+        organSelectDto.setStatus(OrganStatus.ACTIVE.name());
+        if (!PrincipalContextHolder.isAdminCompany() && Objects.nonNull(organType)) {
+            organSelectDto.setOrganType(organType.name());
+        }
+
+        Map<Long, OrganPo> organs = organDao.selectList(organSelectDto).stream()
+            .collect(Collectors.toMap(OrganPo::getId, Function.identity(), (e, r) -> e));
 
         List<UserIdentityVo> result = new ArrayList<>();
         for (UserPo user : users) {
-            OrganVo organ = organs.get(user.getOrganId());
-            if (Objects.isNull(organ) || !applicationEntryExaminer.permits(user.getId(), organ, application)) {
+            OrganPo organ = organs.get(user.getOrganId());
+            if (Objects.isNull(organ)) {
                 continue;
             }
 

@@ -20,7 +20,7 @@ import java.util.Objects;
 /**
  * 应用准入校验器：判断用户能否以指定应用进入。
  * <p>
- * 换票（{@code fetchTokenContext}）与可切换身份列表共用同一套规则，避免"列表能切、切过去报错"：
+ * 换票（{@code fetchTokenContext}）时校验；可切换身份列表只过滤机构状态，其余由这里拦截：
  * 机构须为 ACTIVE；目标应用不是默认主应用时，机构须已开通该应用（ACTIVATED），且用户有可用的控制单元。
  * </p>
  *
@@ -74,7 +74,7 @@ public class ApplicationEntryExaminer {
         authSelect.setOrganId(organ.getId());
         authSelect.setApplicationId(application.getId());
         authSelect.setStatus(AuthorizationStatus.ACTIVATED.name());
-        // 不走数据隔离：切换列表里的机构不是当前登录机构
+        // 不走数据隔离：换票的目标机构不是当前登录机构
         Long authorized = applicationAuthorizationDao.checkApplicationAuthorizationExists(authSelect);
         Asserts.isTrue(Objects.nonNull(authorized) && authorized > 0,
             BasisErrorCode.APPLICATION_AUTHORIZATION_MISSING, application.getApplicationCode());

@@ -4,8 +4,10 @@ import com.g2rain.basis.dto.UserDto;
 import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.vo.UserIdentityVo;
 import com.g2rain.basis.vo.UserVo;
+import com.g2rain.common.enums.OrganType;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -58,15 +60,16 @@ public interface UserService {
     PageData<UserVo> selectPage(PageSelectListDto<UserSelectDto> selectDto);
 
     /**
-     * 当前账号在当前应用中可切换的用户身份
+     * 当前账号可切换的用户身份
      *
-     * <p>按当前 passportId 查名下用户，按换票同一规则过滤：机构可用；当前应用不是默认主应用时，
-     * 机构须已开通该应用且用户有可用的控制单元。当前应用取自网关校验后的请求身份。</p>
+     * <p>按当前 passportId 查名下用户，只保留机构为 ACTIVE 的身份；能否以当前应用进入由换票校验。
+     * organType 由 shell 的 nginx 转发时写入请求头 {@code X-Identity-Organ-Type}，覆盖客户端传值。</p>
      *
+     * @param organType 机构类型；为空时不按类型过滤
      * @return 用户身份集合
      * @see UserIdentityVo
      */
-    List<UserIdentityVo> selectIdentities();
+    List<UserIdentityVo> selectIdentities(@Nullable OrganType organType);
 
     /**
      * 根据条件查询列表
