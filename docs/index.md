@@ -28,6 +28,7 @@
 - [完成定义](development/definition-of-done.md)
 - [CRUD 代码生成](development/code-generation.md)
 - [需求设计与验收模板](requirements/README.md)
+- [发布记录](releases/README.md)
 - [架构决策记录](decisions/README.md)
 
 ### 运行与维护

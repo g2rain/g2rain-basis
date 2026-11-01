@@ -21,6 +21,38 @@
         Provides shared business support services and common domain capabilities used across a SaaS platform.
     </description>
 
+    <url>https://github.com/g2rain/g2rain-basis</url>
+
+    <scm>
+        <url>https://github.com/g2rain/g2rain-basis</url>
+        <connection>scm:git:https://github.com/g2rain/g2rain-basis.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/g2rain/g2rain-basis.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <organization>
+        <name>G2rain</name>
+        <url>https://www.g2rain.com/</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <id>g2rain</id>
+            <name>G2rain</name>
+            <email>g2rain_developer@163.com</email>
+            <organization>G2rain</organization>
+            <organizationUrl>https://www.g2rain.com/</organizationUrl>
+        </developer>
+    </developers>
+
     <modules>
         <module>g2rain-basis-api</module>
         <module>g2rain-basis-biz</module>
