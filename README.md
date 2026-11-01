@@ -10,7 +10,7 @@
 [![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.1.4-586069?logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud)
 [![Maven](https://img.shields.io/badge/build-Maven-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 
-G2rain（谷雨）是面向企业的开源智能体平台，连接模型、知识与业务工具，以 SaaS 基座和应用开发工具链支撑智能应用落地。`g2rain-basis` 是其中的核心主数据与权限治理服务，统一维护组织、用户、通行证、应用、资源、角色、功能权限以及外部身份提供方关系，为 IAM、网关、管理端和其他平台服务提供稳定的领域契约与运行时能力；它不代表或替代整个平台能力。
+G2rain（谷雨）是面向企业的开源智能体平台，连接模型、知识与业务工具，以 SaaS 基座和应用开发工具链支撑智能应用落地。智能体平台已开源，具体组件、版本与接入方式以各责任仓库的说明为准。`g2rain-basis` 是其中的核心主数据与权限治理服务，统一维护组织、用户、通行证、应用、资源、角色、功能权限以及外部身份提供方关系，为 IAM、网关、管理端和其他平台服务提供稳定的领域契约与运行时能力；它不代表或替代整个平台能力。
 
 [官网](https://www.g2rain.com) · [完整文档](docs/index.md) · [中央架构 Profile](https://github.com/g2rain/g2rain/tree/architecture-v1.0.0/docs/architecture/profiles/java-domain-service) · [架构说明](docs/architecture/overview.md) · [代码规范](docs/development/code-conventions.md) · [Issues](https://github.com/g2rain/g2rain/issues) · [Discussions](https://github.com/g2rain/g2rain/discussions)
 
