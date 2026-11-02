@@ -28,6 +28,14 @@ public interface ResourceApiService {
     List<ResourceApiVo> selectList(ResourceApiSelectDto selectDto);
 
     /**
+     * 根据条件查询列表（含 openapi_document）
+     *
+     * @param selectDto 查询条件 DTO
+     * @return VO 对象列表
+     */
+    List<ResourceApiVo> selectListWithDocument(ResourceApiSelectDto selectDto);
+
+    /**
      * 根据条件分页查询
      *
      * @param selectDto 查询条件DTO（包含分页参数）

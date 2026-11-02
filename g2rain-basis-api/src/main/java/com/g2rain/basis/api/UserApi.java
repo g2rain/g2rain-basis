@@ -1,14 +1,17 @@
 package com.g2rain.basis.api;
 
 import com.g2rain.basis.dto.UserSelectDto;
-import com.g2rain.basis.vo.UserOptionVo;
+import com.g2rain.basis.vo.UserIdentityVo;
 import com.g2rain.basis.vo.UserVo;
+import com.g2rain.common.enums.OrganType;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.model.Result;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
@@ -33,14 +36,21 @@ public interface UserApi {
     Result<List<UserVo>> selectList(UserSelectDto selectDto);
 
     /**
-     * 获取用于下拉选择的用户列表
+     * 当前账号可切换的用户身份
      *
-     * @return 用户简要信息集合，包含用户 ID 和名称等用于展示的字段
-     * @see UserOptionVo
+     * <p>按当前 passportId 查名下用户，只保留机构为 ACTIVE 的身份；能否以当前应用进入由换票校验。
+     * organType 由 shell 的 nginx 转发时写入请求头 {@code X-Identity-Organ-Type}，覆盖客户端传值。</p>
+     *
+     * @param organType 机构类型；为空时不按类型过滤
+     * @return 用户身份集合
+     * @see UserIdentityVo
      */
-    @GetMapping("/user_options")
-    @Operation(summary = "获取用户下拉选项", description = "返回用于下拉选择的用户简要信息集合")
-    Result<List<UserOptionVo>> getUserOptions();
+    @GetMapping("/identities")
+    @Operation(summary = "查询可切换的用户身份", description = "返回当前账号名下机构可用的用户身份，可按机构类型过滤")
+    Result<List<UserIdentityVo>> selectIdentities(
+        @Parameter(description = "机构类型；由 shell 的 nginx 写入请求头")
+        @RequestHeader(value = "X-Identity-Organ-Type", required = false) OrganType organType
+    );
 
     /**
      * 根据条件分页查询

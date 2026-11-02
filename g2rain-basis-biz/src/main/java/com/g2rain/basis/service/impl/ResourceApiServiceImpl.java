@@ -11,13 +11,14 @@ import com.g2rain.basis.dto.ControlUnitResourceRelationSelectDto;
 import com.g2rain.basis.dto.ResourceApiDto;
 import com.g2rain.basis.dto.ResourceApiSelectDto;
 import com.g2rain.basis.dto.ServiceRegistrySelectDto;
-import com.g2rain.basis.dto.UploadApiDto;
 import com.g2rain.basis.dto.UploadResourceApiDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.BasisSyncerEnum;
 import com.g2rain.basis.enums.ResourceType;
 import com.g2rain.basis.service.ResourceApiService;
+import com.g2rain.basis.utils.BasisUtils;
 import com.g2rain.basis.utils.Constants;
+import com.g2rain.basis.utils.OpenApiDocSplitter;
 import com.g2rain.basis.vo.ResourceApiVo;
 import com.g2rain.basis.vo.RouteDefinitionVo;
 import com.g2rain.common.exception.BusinessException;
@@ -35,6 +36,7 @@ import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -77,6 +79,11 @@ public class ResourceApiServiceImpl implements ResourceApiService {
     @Override
     public List<ResourceApiVo> selectList(ResourceApiSelectDto selectDto) {
         return mergeServiceNames(resourceApiDao.selectList(selectDto));
+    }
+
+    @Override
+    public List<ResourceApiVo> selectListWithDocument(ResourceApiSelectDto selectDto) {
+        return mergeServiceNames(resourceApiDao.selectListWithDocument(selectDto));
     }
 
     @Override
@@ -147,27 +154,26 @@ public class ResourceApiServiceImpl implements ResourceApiService {
     }
 
     /**
-     * 批量新增或更新资源接口数据
-     *
-     * <p>逻辑说明：
+     * 导入整份 OpenAPI / Swagger 文档：拆成单接口最小文档后按 method+path 新增或更新。
      *
      * @param serviceCode 服务编码
-     * @param resourceApi 资源接口数据列表
+     * @param resourceApi 含整份文档的上传 DTO
      * @return 成功操作的记录数
-     * @throws BusinessException 当接口编码重复或字段缺失时抛出
      */
     @Override
+    @Transactional
     public Long batchSave(String serviceCode, UploadResourceApiDto resourceApi) {
-        List<UploadApiDto> apis = resourceApi.getApis();
-        // 2. 查询应用下已有接口，一次性获取
+        List<OpenApiDocSplitter.SplitResult> apis = OpenApiDocSplitter.split(resourceApi.getDocument());
+        Asserts.isTrue(!apis.isEmpty(), SystemErrorCode.PARAM_VAL_INVALID, "document.paths");
+
         List<ApiEndpointPairDto> pairs = apis.stream()
-            .map(dto -> new ApiEndpointPairDto(dto.getMethod(), dto.getPath()))
+            .map(dto -> new ApiEndpointPairDto(dto.method(), dto.path()))
             .toList();
 
         ResourceApiSelectDto selectDto = new ResourceApiSelectDto();
         selectDto.setServiceCode(serviceCode);
-        selectDto.setPairs(pairs); // DAO 支持批量查询
-        List<ResourceApiPo> existingEndpoints = resourceApiDao.selectList(selectDto);
+        selectDto.setPairs(pairs);
+        List<ResourceApiPo> existingEndpoints = resourceApiDao.selectListWithDocument(selectDto);
         Map<String, ResourceApiPo> methodPathToEntity = existingEndpoints.stream().collect(Collectors.toMap(
             e -> e.getMethod() + "||" + e.getPath(), Function.identity(), (e, r) -> e
         ));
@@ -175,56 +181,62 @@ public class ResourceApiServiceImpl implements ResourceApiService {
         List<ResourceApiPo> toInsert = new ArrayList<>();
         List<ResourceApiPo> toUpdate = new ArrayList<>();
         LocalDateTime now = Moments.now();
-        for (UploadApiDto api : apis) {
-            String apiTags = api.getApiTags();
-            String name = api.getName();
-            ResourceApiPo ra = methodPathToEntity.get(api.getMethod() + "||" + api.getPath());
+        for (OpenApiDocSplitter.SplitResult api : apis) {
+            String apiTags = api.apiTags();
+            String name = api.name();
+            String description = api.description();
+            String openapiDocument = api.openapiDocument();
+            String documentDigest = BasisUtils.sha256Hex(Objects.requireNonNullElse(openapiDocument, ""));
+            ResourceApiPo ra = methodPathToEntity.get(api.method() + "||" + api.path());
             if (Objects.isNull(ra)) {
-                // 新增
                 ra = new ResourceApiPo();
                 ra.setId(idGenerator.generateId());
                 ra.setServiceCode(serviceCode);
                 ra.setApiTags(apiTags);
                 ra.setName(name);
-                ra.setMethod(api.getMethod());
-                ra.setPath(api.getPath());
-                ra.setDescription(api.getDescription());
+                ra.setMethod(api.method());
+                ra.setPath(api.path());
+                ra.setDescription(description);
+                ra.setOpenapiDocument(openapiDocument);
+                ra.setDocumentDigest(documentDigest);
                 ra.setCreateTime(now);
                 ra.setUpdateTime(now);
                 toInsert.add(ra);
                 continue;
             }
 
-            if (!Strings.equals(apiTags, ra.getApiTags()) || !Strings.equals(name, ra.getName())) {
-                // 更新
+            boolean metaChanged = !Strings.equals(apiTags, ra.getApiTags())
+                || !Strings.equals(name, ra.getName())
+                || !Strings.equals(description, ra.getDescription());
+            boolean docChanged = !Strings.equals(documentDigest, ra.getDocumentDigest());
+            if (metaChanged || docChanged) {
                 ra.setApiTags(apiTags);
                 ra.setName(name);
-                ra.setDescription(api.getDescription());
+                ra.setDescription(description);
+                ra.setOpenapiDocument(openapiDocument);
+                ra.setDocumentDigest(documentDigest);
                 ra.setUpdateTime(now);
                 toUpdate.add(ra);
             }
         }
 
         long count = 0L;
-        // DAO 批量插入
+
+        if (!toUpdate.isEmpty()) {
+            count += resourceApiDao.updateBatchCase(toUpdate);
+        }
+
         if (!toInsert.isEmpty()) {
             count += resourceApiDao.insertMultiple(toInsert);
 
-            // 对循环查询的资源接口, 循环广播发送`资源接口`消息
             List<RouteDefinitionVo> routes = mergeServices(toInsert);
             for (RouteDefinitionVo route : routes) {
-                // 广播新增`资源接口`信息
                 eventPublisherHub.sendCreate(
                     Constants.SYNC_OUTPUT_BINDING,
                     BasisSyncerEnum.API_ROUTE.name(),
                     route
                 );
             }
-        }
-
-        // DAO 批量更新
-        if (!toUpdate.isEmpty()) {
-            count += resourceApiDao.updateBatchCase(toUpdate);
         }
 
         return count;

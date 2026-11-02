@@ -340,7 +340,7 @@
         </trim>
     </select>
 
-    <!-- 根据机构名称模糊匹配机构 -->
+    <!-- 按机构标识或名称关键字搜索机构 -->
     <select id="searchOrgans" parameterType="java.util.Map" resultMap="BaseResultMap">
         SELECT DISTINCT o.id, o.organ_name
         FROM organ o
@@ -358,9 +358,15 @@
             </otherwise>
         </choose>
 
-        <if test="organName != null and organName != ''">
-            AND o.organ_name LIKE CONCAT('%', #{organName, jdbcType=VARCHAR}, '%')
-        </if>
+        <choose>
+            <when test="id != null">
+                AND (o.id = #{id, jdbcType=BIGINT} OR o.organ_name LIKE CONCAT('%', #{id, jdbcType=BIGINT}, '%'))
+            </when>
+            <when test="organName != null and organName != ''">
+                AND o.organ_name LIKE CONCAT('%', #{organName, jdbcType=VARCHAR}, '%')
+            </when>
+        </choose>
         ORDER BY CHAR_LENGTH(o.organ_name) DESC
+        LIMIT 50
     </select>
 </mapper>

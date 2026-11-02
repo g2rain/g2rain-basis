@@ -93,4 +93,12 @@ public interface PersonalStaticAccessTokenDao {
      */
     @IgnoreIsolation
     Long checkStaticAccessTokenExists(PersonalStaticAccessTokenSelectDto selectDto);
+
+    /**
+     * 根据查询条件统计个人静态访问令牌数量（走租户数据隔离）。
+     *
+     * @param selectDto 查询条件 DTO
+     * @return 命中总数
+     */
+    Long selectCount(PersonalStaticAccessTokenSelectDto selectDto);
 }

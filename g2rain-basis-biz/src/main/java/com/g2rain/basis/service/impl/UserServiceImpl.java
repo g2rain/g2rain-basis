@@ -14,10 +14,12 @@ import com.g2rain.basis.dto.UserDto;
 import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.ManagerFlag;
+import com.g2rain.basis.enums.OrganStatus;
 import com.g2rain.basis.service.UserRoleRelationService;
 import com.g2rain.basis.service.UserService;
-import com.g2rain.basis.vo.UserOptionVo;
+import com.g2rain.basis.vo.UserIdentityVo;
 import com.g2rain.basis.vo.UserVo;
+import com.g2rain.common.enums.OrganType;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.id.IdGenerator;
@@ -31,6 +33,7 @@ import com.g2rain.common.web.PrincipalContextHolder;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
 import jakarta.annotation.Resource;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -41,7 +44,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -138,13 +140,17 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 获取用于下拉选择的用户列表
+     * 当前账号可切换的用户身份
      *
-     * @return 用户简要信息集合，包含用户 ID 和名称等用于展示的字段
-     * @see UserOptionVo
+     * <p>按当前 passportId 查名下用户（跨机构，不走数据隔离），只保留机构为 ACTIVE 且类型匹配的身份。
+     * 机构是否开通当前应用、用户是否有可用权限不在此判断，由换票时 {@link ApplicationEntryExaminer} 拦截。</p>
+     *
+     * @param organType 机构类型；为空时不按类型过滤
+     * @return 用户身份集合
+     * @see UserIdentityVo
      */
     @Override
-    public List<UserOptionVo> getUserOptions() {
+    public List<UserIdentityVo> selectIdentities(@Nullable OrganType organType) {
         Long passportId = PrincipalContextHolder.getPassportId();
         if (Objects.isNull(passportId)) {
             return List.of();
@@ -152,24 +158,34 @@ public class UserServiceImpl implements UserService {
 
         UserSelectDto userSelectDto = new UserSelectDto();
         userSelectDto.setPassportId(passportId);
-        List<UserPo> users = userDao.selectList(userSelectDto);
-        Set<Long> organIds = users.stream().map(UserPo::getOrganId)
-            .collect(Collectors.toSet());
+        List<UserPo> users = userDao.selectListWithoutIsolation(userSelectDto);
+        if (users.isEmpty()) {
+            return List.of();
+        }
 
         OrganSelectDto organSelectDto = new OrganSelectDto();
-        organSelectDto.setIds(organIds);
-        Map<Long, String> id2name = organDao.selectList(organSelectDto).stream().collect(Collectors.toMap(
-            OrganPo::getId, OrganPo::getOrganName, (e, r) -> e
-        ));
+        organSelectDto.setIds(users.stream().map(UserPo::getOrganId).collect(Collectors.toSet()));
+        organSelectDto.setStatus(OrganStatus.ACTIVE.name());
+        if (!PrincipalContextHolder.isAdminCompany() && Objects.nonNull(organType)) {
+            organSelectDto.setOrganType(organType.name());
+        }
 
-        List<UserOptionVo> result = new ArrayList<>();
+        Map<Long, OrganPo> organs = organDao.selectList(organSelectDto).stream()
+            .collect(Collectors.toMap(OrganPo::getId, Function.identity(), (e, r) -> e));
+
+        List<UserIdentityVo> result = new ArrayList<>();
         for (UserPo user : users) {
-            UserOptionVo option = new UserOptionVo();
-            option.setUserId(user.getId());
-            option.setUserName(user.getRealName());
-            option.setOrganId(user.getOrganId());
-            option.setOrganName(id2name.get(user.getOrganId()));
-            result.add(option);
+            OrganPo organ = organs.get(user.getOrganId());
+            if (Objects.isNull(organ)) {
+                continue;
+            }
+
+            UserIdentityVo identity = new UserIdentityVo();
+            identity.setUserId(user.getId());
+            identity.setUserName(user.getRealName());
+            identity.setOrganId(organ.getId());
+            identity.setOrganName(organ.getOrganName());
+            result.add(identity);
         }
         return result;
     }

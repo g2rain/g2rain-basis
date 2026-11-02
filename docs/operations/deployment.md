@@ -10,19 +10,46 @@ mvn clean verify
 
 ## 本地构建镜像
 
-仓库通过 Jib 构建镜像，`build.sh` 会先安装全部模块，再在 Startup 模块执行 `jib:dockerBuild`：
+仓库通过 Jib 构建镜像，`build.sh` 会先安装全部模块（包含 Maven 测试阶段），再在 Startup 模块执行 `jib:dockerBuild`：
 
 ```bash
 ./build.sh 1.0.0
 ```
 
-未提供标签时默认使用 `latest`。目标镜像名为：
+未提供标签时本地脚本默认使用 `latest`；稳定版发布不会使用该标签。目标镜像名为：
 
 ```text
-g2rain/g2rain-basis:<tag>
+ghcr.io/g2rain/g2rain-basis:<tag>
 ```
 
-基础镜像为 `eclipse-temurin:25-jre`，主类为 `com.g2rain.basis.Application`。
+本地模式需要 Docker daemon，且不会推送。`./build.sh <tag> push` 使用已由 `docker login` 保存的凭据调用 `jib:build` 推送，不需要 Docker daemon。两种模式复用相同的 Jib 配置、Eclipse Temurin Java 25 JRE 基础镜像、`com.g2rain.basis.Application` 入口和端口 `8080`。根目录保留的 Startup `Dockerfile` 不是本地脚本或 CI 发布路径；不要将它与 Jib 产物混用。
+
+## 容器镜像发布（GHCR）
+
+`.github/workflows/image.yml` 只会在推送精确格式的稳定 tag（例如 `v1.0.0`）时触发；普通分支推送和手动触发均不会发布。工作流会严格验证 tag 格式、其提交已进入 `origin/main` 历史、根 Maven 版本与 tag 一致，并检查该提交的 `docs/releases/v<版本>.md` 非空。随后使用 Temurin JDK 25 执行 `mvn clean verify`，再复用 `build.sh` 的 Jib 配置推送：
+
+```text
+ghcr.io/g2rain/g2rain-basis:<版本>
+ghcr.io/g2rain/g2rain-basis:sha-<完整提交 SHA>
+```
+
+认证使用 GitHub Actions 提供的 `GITHUB_TOKEN`，工作流只声明 `contents: read` 和 `packages: write`，不使用 PAT Secret。Jib 的两个标签都成功推送后才会写入 Actions Summary；Docker 登录成功、构建成功或部分 layer 上传不表示发布成功。工作流不会创建 GitHub Release、部署服务或更新 `latest`。
+
+首次成功推送后，在 **GitHub Packages → g2rain-basis → Package settings → Change visibility → Public** 将包设为公开；若组织管理员禁止修改，请联系管理员。已有 GHCR 包即使工作流有 `packages: write`，仍可能需要在 **Package settings → Actions access** 向 `g2rain/g2rain-basis` 授予写权限。若出现 `denied`，优先检查该设置和组织 Packages 策略。
+
+发布顺序为：将发布改动、工作流和同名发布说明按 `feature/* → develop → main` 流程合入 `main`，在该提交完成验证，再创建并推送 `v1.0.0`；确认摘要列出两个标签后，按环境部署指定版本。包公开后才可匿名执行：
+
+```bash
+docker pull ghcr.io/g2rain/g2rain-basis:1.0.0
+```
+
+私有包需要具备 `read:packages` 权限的凭据。镜像发布、匿名拉取、容器启动、在线演示和实际部署验证是独立事项；本文件不将其中任何一项视为另一项已经完成。
+
+## 镜像内容与敏感配置
+
+Jib 从 `g2rain-basis-startup` 的 Spring Boot 可执行 Jar 组装最终镜像，不复制仓库源代码、`codegen.properties` 或 Docker 构建上下文。打包资源规则会将 `application.yml`、`application-dev.yml`、`application-nacos.yml`、`banner.txt` 和 `logback-spring.xml` 写入 Jar，因此它们会进入镜像。
+
+`g2rain-basis-startup/src/main/resources/application.yml`、`application-dev.yml` 和 `application-nacos.yml` 已跟踪且包含 Nacos、数据库等开发默认凭据。它们会随镜像公开，属于风险；维护者须在首次公开前将这些值迁移为环境变量、Secret 或受控 Nacos 配置，并在曾被复用时轮换。不要依赖 Docker 忽略规则处理这些已打入 Jar 的文件。生产环境应注入数据库、Redis、Kafka 和 Nacos 的真实配置与密钥，不能把生产密钥烘焙进镜像。
 
 ## 部署前检查
 

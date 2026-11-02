@@ -31,6 +31,13 @@ public class ControlUnitSelectDto extends BaseSelectListDto {
     private Long applicationId;
 
     /**
+     * 会话主体类型[SessionType: USER|MEMBER|PASSPORT|ANONYMOUS]
+     */
+    @Schema(description = "会话主体类型[SessionType: USER|MEMBER|PASSPORT|ANONYMOUS]",
+        allowableValues = {"USER", "MEMBER", "PASSPORT", "ANONYMOUS"})
+    private String sessionType;
+
+    /**
      * 控制单元名称
      */
     @Schema(description = "控制单元名称")

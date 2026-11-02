@@ -31,6 +31,15 @@ public class ControlUnitDto extends BaseDto {
     private Long applicationId;
 
     /**
+     * 会话主体类型[SessionType: USER|MEMBER|PASSPORT|ANONYMOUS]
+     */
+    @NotBlank
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED,
+        description = "会话主体类型[SessionType: USER|MEMBER|PASSPORT|ANONYMOUS]",
+        allowableValues = {"USER", "MEMBER", "PASSPORT", "ANONYMOUS"})
+    private String sessionType;
+
+    /**
      * 控制单元名称
      */
     @NotBlank

@@ -6,11 +6,11 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-25-437291?logo=openjdk&logoColor=white)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.5-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.1.1-586069?logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.2-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.1.4-586069?logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud)
 [![Maven](https://img.shields.io/badge/build-Maven-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 
-g2rain 平台核心主数据与权限治理服务，统一维护组织、用户、通行证、应用、资源、角色、功能权限以及外部身份提供方关系，为 IAM、网关、管理端和其他平台服务提供稳定的领域契约与运行时能力。
+G2rain（谷雨）是面向企业的开源智能体平台，连接模型、知识与业务工具，以 SaaS 基座和应用开发工具链支撑智能应用落地。智能体平台已开源，具体组件、版本与接入方式以各责任仓库的说明为准。`g2rain-basis` 是其中的核心主数据与权限治理服务，统一维护组织、用户、通行证、应用、资源、角色、功能权限以及外部身份提供方关系，为 IAM、网关、管理端和其他平台服务提供稳定的领域契约与运行时能力；它不代表或替代整个平台能力。
 
 [官网](https://www.g2rain.com) · [完整文档](docs/index.md) · [中央架构 Profile](https://github.com/g2rain/g2rain/tree/architecture-v1.0.0/docs/architecture/profiles/java-domain-service) · [架构说明](docs/architecture/overview.md) · [代码规范](docs/development/code-conventions.md) · [Issues](https://github.com/g2rain/g2rain/issues) · [Discussions](https://github.com/g2rain/g2rain/discussions)
 
@@ -79,7 +79,7 @@ g2rain-basis-startup
 
 | 类别 | 技术 |
 | --- | --- |
-| 运行时 | Java 25、Spring Boot 4.0.5、Spring Cloud 2025.1.1 |
+| 运行时 | Java 25、Spring Boot 4.1.2、Spring Cloud 2025.1.4 |
 | 数据访问 | MyBatis、MySQL、MapStruct |
 | 平台基础设施 | Redis、Nacos、Kafka、OpenFeign |
 | API 与文档 | Spring Web、Jakarta Validation、OpenAPI |
@@ -117,6 +117,15 @@ mvn -pl g2rain-basis-startup -am spring-boot:run
 GET /actuator/health
 ```
 
+## GHCR 镜像
+
+- 镜像地址：`ghcr.io/g2rain/g2rain-basis`。
+- 稳定版使用 `1.0.0` 这类版本标签，并同时发布 `sha-<完整提交 SHA>` 可追溯标签；不会更新 `latest`。
+- 包公开后可拉取：`docker pull ghcr.io/g2rain/g2rain-basis:1.0.0`。
+- 仅推送精确格式的 `v<major>.<minor>.<patch>` Git tag 才会触发发布；tag 提交必须在 `main` 历史中，并含同名发布说明。
+
+完整的 GHCR 权限、首次公开、发布顺序、配置与部署说明见[构建与部署](docs/operations/deployment.md#容器镜像发布ghcr)。
+
 ## CRUD 代码生成
 
 项目通过 `g2rain-crafter` 根据数据库表生成标准 CRUD 骨架：
@@ -140,6 +149,7 @@ mvn g2rain-crafter:bootstrap
 | 测试与完成定义 | [测试策略](docs/development/testing.md) · [Definition of Done](docs/development/definition-of-done.md) |
 | 需求设计 | [docs/requirements/README.md](docs/requirements/README.md) |
 | CRUD 代码生成 | [docs/development/code-generation.md](docs/development/code-generation.md) |
+| 发布记录 | [docs/releases/README.md](docs/releases/README.md) |
 | 模块职责 | [docs/architecture/modules.md](docs/architecture/modules.md) |
 | 核心运行流程 | [docs/architecture/runtime-flows.md](docs/architecture/runtime-flows.md) |
 | 配置与敏感信息 | [docs/operations/configuration.md](docs/operations/configuration.md) |

@@ -135,4 +135,12 @@ public interface RoleControlUnitRelationDao {
      * @return 控制单元数量
      */
     CountRoleControlUnitPo countRoleControlUnitsByRoleIds(@Param("roleIds") List<Long> roleIds);
+
+    /**
+     * 按控制单元查询已关联开通事实的机构 ID（ADMIN + application_authorization）
+     *
+     * @param controlUnitId 控制单元 ID
+     * @return 机构 ID 列表
+     */
+    List<Long> listOrganIdsByControlUnitId(@Param("controlUnitId") Long controlUnitId);
 }

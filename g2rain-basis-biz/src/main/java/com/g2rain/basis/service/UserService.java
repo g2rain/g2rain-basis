@@ -2,10 +2,12 @@ package com.g2rain.basis.service;
 
 import com.g2rain.basis.dto.UserDto;
 import com.g2rain.basis.dto.UserSelectDto;
-import com.g2rain.basis.vo.UserOptionVo;
+import com.g2rain.basis.vo.UserIdentityVo;
 import com.g2rain.basis.vo.UserVo;
+import com.g2rain.common.enums.OrganType;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -58,12 +60,16 @@ public interface UserService {
     PageData<UserVo> selectPage(PageSelectListDto<UserSelectDto> selectDto);
 
     /**
-     * 获取用于下拉选择的用户列表
+     * 当前账号可切换的用户身份
      *
-     * @return 用户简要信息集合，包含用户 ID 和名称等用于展示的字段
-     * @see UserOptionVo
+     * <p>按当前 passportId 查名下用户，只保留机构为 ACTIVE 的身份；能否以当前应用进入由换票校验。
+     * organType 由 shell 的 nginx 转发时写入请求头 {@code X-Identity-Organ-Type}，覆盖客户端传值。</p>
+     *
+     * @param organType 机构类型；为空时不按类型过滤
+     * @return 用户身份集合
+     * @see UserIdentityVo
      */
-    List<UserOptionVo> getUserOptions();
+    List<UserIdentityVo> selectIdentities(@Nullable OrganType organType);
 
     /**
      * 根据条件查询列表

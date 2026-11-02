@@ -16,7 +16,12 @@ import lombok.Setter;
 public class IdpFetchSnapshotRequest {
 
     @NotBlank
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "企业/租户标识（钉钉 corpId）")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "身份源类型（IdpType 枚举名）",
+        allowableValues = {"DINGTALK", "WECHAT_WORK"})
+    private String idpType;
+
+    @NotBlank
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "企业/租户标识（如钉钉 corpId）")
     private String corpId;
 
     @NotBlank
@@ -24,6 +29,6 @@ public class IdpFetchSnapshotRequest {
         allowableValues = {"INTERNAL", "THIRD_PARTY"})
     private String bindMode;
 
-    @Schema(description = "IdP 侧应用标识（钉钉 clientId）；为空时由 IAM 按 bindMode 从配置解析")
+    @Schema(description = "IdP 侧应用标识；为空时由 IAM 按 bindMode 从配置解析")
     private String idpApplicationCode;
 }

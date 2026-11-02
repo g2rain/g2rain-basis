@@ -34,12 +34,45 @@ public interface PersonalStaticAccessTokenService {
     PageData<PersonalStaticAccessTokenVo> selectPage(PageSelectListDto<PersonalStaticAccessTokenSelectDto> selectDto);
 
     /**
+     * 根据条件统计数量
+     *
+     * @param selectDto 查询条件 DTO
+     * @return 命中总数
+     */
+    Long selectCount(PersonalStaticAccessTokenSelectDto selectDto);
+
+    /**
+     * 查询本租户全部个人静态访问令牌列表（不强制当前用户）。
+     *
+     * @param selectDto 查询条件 DTO
+     * @return VO 对象列表
+     */
+    List<PersonalStaticAccessTokenVo> selectListAll(PersonalStaticAccessTokenSelectDto selectDto);
+
+    /**
+     * 分页查询本租户全部个人静态访问令牌（不强制当前用户）。
+     *
+     * @param selectDto 查询条件DTO（包含分页参数）
+     * @return 分页 VO 数据
+     */
+    PageData<PersonalStaticAccessTokenVo> selectPageAll(PageSelectListDto<PersonalStaticAccessTokenSelectDto> selectDto);
+
+    /**
      * 新增或更新数据
      *
      * @param dto 数据传输对象
      * @return 操作结果（影响行数）
      */
     Long save(PersonalStaticAccessTokenDto dto);
+
+    /**
+     * 为指定用户新增或更新个人静态访问令牌。
+     * {@code dto.userId} 必填，且须与应用授权同机构。
+     *
+     * @param dto 数据传输对象
+     * @return 主键 ID
+     */
+    Long saveForUser(PersonalStaticAccessTokenDto dto);
 
     /**
      * 根据原始 API Key 查询个人静态访问令牌（内部对 apiKey 做 SHA-256 后与 {@code token_hash} 匹配）。
@@ -50,7 +83,9 @@ public interface PersonalStaticAccessTokenService {
     PersonalStaticAccessTokenVo selectByApiKey(String apiKey);
 
     /**
-     * 修改个人静态访问令牌状态
+     * 修改个人静态访问令牌状态。
+     * 运营公司可跨租户修改；其余调用方仅可修改本机构令牌。
+     * 租户管理员是否可调用由 Gateway 控制单元鉴权。
      *
      * @param id 个人静态访问令牌 ID
      * @param dto 修改状态参数

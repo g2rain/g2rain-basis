@@ -2,6 +2,7 @@ package com.g2rain.basis.api;
 
 
 import com.g2rain.basis.vo.BaseAuthorityApiVo;
+import com.g2rain.basis.vo.SessionApiPermissionVo;
 import com.g2rain.common.model.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,4 +41,20 @@ public interface AuthorityApi {
     @GetMapping("/passport_api_permissions")
     @Operation(summary = "查询账号的接口权限集合", hidden = true, description = "查询账号的接口权限集合")
     Result<List<Long>> getPassportApiPermissions();
+
+    /**
+     * 按会话主体类型查询 API 权限快照。
+     * <p>MEMBER 必须传 organId，按租户已开通的 MEMBER 控制单元计算；禁止退回全平台清单。</p>
+     *
+     * @param sessionType 会话主体类型
+     * @param organId     机构 ID；sessionType=MEMBER 时必填
+     * @return 权限快照
+     */
+    @GetMapping("/session_api_permissions")
+    @Operation(summary = "查询会话 API 权限快照", hidden = true,
+        description = "MEMBER 必须带 organId，返回该租户已开通 MEMBER 控制单元关联的 resource_api.id")
+    Result<SessionApiPermissionVo> getSessionApiPermissions(
+        @Parameter(description = "会话主体类型") @RequestParam String sessionType,
+        @Parameter(description = "机构标识；MEMBER 必填") @RequestParam(required = false) Long organId
+    );
 }

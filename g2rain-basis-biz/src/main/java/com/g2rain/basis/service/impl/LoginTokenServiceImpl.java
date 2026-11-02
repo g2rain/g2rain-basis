@@ -6,10 +6,8 @@ import com.g2rain.basis.dao.ApplicationIdpProvisionDao;
 import com.g2rain.basis.dao.LoginTokenDao;
 import com.g2rain.basis.dao.OrganDao;
 import com.g2rain.basis.dao.PassportIdpBindingDao;
-import com.g2rain.basis.dao.RoleControlUnitRelationDao;
 import com.g2rain.basis.dao.UserDao;
 import com.g2rain.basis.dao.po.ApplicationPo;
-import com.g2rain.basis.dao.po.CountRoleControlUnitPo;
 import com.g2rain.basis.dao.po.LoginTokenPo;
 import com.g2rain.basis.dao.po.OrganPo;
 import com.g2rain.basis.dao.po.UserPo;
@@ -17,25 +15,23 @@ import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
 import com.g2rain.basis.dto.OrganSelectDto;
-import com.g2rain.basis.dto.RoleSelectDto;
-import com.g2rain.basis.dto.UserSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
 import com.g2rain.basis.enums.IdpBindMode;
 import com.g2rain.basis.enums.OrganStatus;
-import com.g2rain.basis.enums.RoleType;
 import com.g2rain.basis.enums.StaticTokenStatus;
+import com.g2rain.basis.service.AnonymousEntryService;
+import com.g2rain.basis.service.AnonymousVisitorService;
 import com.g2rain.basis.service.ApplicationService;
 import com.g2rain.basis.service.LoginTokenService;
 import com.g2rain.basis.service.OrganService;
 import com.g2rain.basis.service.PersonalStaticAccessTokenService;
-import com.g2rain.basis.service.RoleService;
 import com.g2rain.basis.service.UserService;
+import com.g2rain.basis.vo.AnonymousEntryVo;
 import com.g2rain.basis.vo.ApplicationScopeVo;
 import com.g2rain.basis.vo.ApplicationVo;
 import com.g2rain.basis.vo.LoginTokenVo;
 import com.g2rain.basis.vo.OrganVo;
 import com.g2rain.basis.vo.PersonalStaticAccessTokenVo;
-import com.g2rain.basis.vo.RoleVo;
 import com.g2rain.basis.vo.StaticAccessTokenContextVo;
 import com.g2rain.basis.vo.StaticAccessTokenResolveVo;
 import com.g2rain.basis.vo.UserVo;
@@ -65,7 +61,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -87,20 +82,31 @@ import java.util.Objects;
 @Service(value = "loginTokenServiceImpl")
 public class LoginTokenServiceImpl implements LoginTokenService {
 
+    /**
+     * RFC 7638 SHA-256 指纹的 base64url 长度
+     */
+    private static final int THUMBPRINT_LENGTH = 43;
+
     @Resource(name = "loginTokenDao")
     private LoginTokenDao loginTokenDao;
 
+    @Resource(name = "anonymousEntryServiceImpl")
+    private AnonymousEntryService anonymousEntryService;
+
+    @Resource(name = "anonymousVisitorServiceImpl")
+    private AnonymousVisitorService anonymousVisitorService;
+
     @Resource
     private ApplicationService applicationService;
-
-    @Resource(name = "roleControlUnitRelationDao")
-    private RoleControlUnitRelationDao roleControlUnitRelationDao;
 
     @Resource(name = "applicationDao")
     private ApplicationDao applicationDao;
 
     @Resource(name = "organDao")
     private OrganDao organDao;
+
+    @Resource(name = "applicationEntryExaminer")
+    private ApplicationEntryExaminer applicationEntryExaminer;
 
     @Resource(name = "userDao")
     private UserDao userDao;
@@ -111,8 +117,6 @@ public class LoginTokenServiceImpl implements LoginTokenService {
     @Resource
     private OrganService organService;
 
-    @Resource
-    private RoleService roleService;
 
     @Resource(name = "personalStaticAccessTokenServiceImpl")
     private PersonalStaticAccessTokenService personalStaticAccessTokenService;
@@ -226,7 +230,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
      *     <li>查询应用信息及应用作用域，并封装到 {@link ApplicationScope} 列表中。</li>
      * </ol>
      *
-     * @param passportId         发码侧通行证 ID；三方换票且 {@code userId} 非空时必传，且须与用户的 {@code passport_id} 一致
+     * @param passportId         发码侧通行证 ID；{@code userId} 非空时必传，且须与用户的 {@code passport_id} 一致
      * @param userId             用户 ID，可为 null（表示 Passport 会话）
      * @param applicationCode    应用编码
      * @param thirdPartyIdpLogin 是否外部身份源授权链路发码；为 {@link Boolean#TRUE} 且 {@code userId} 非空时校验
@@ -248,9 +252,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
             SystemErrorCode.UNAUTHORIZED, applicationCode
         );
         ApplicationVo application = applications.getFirst();
-        Boolean canIntegrate = application.getCanIntegrate();
-        Boolean landing = application.getLanding();
-        boolean isDefaultMain = Boolean.TRUE.equals(landing) && Boolean.FALSE.equals(canIntegrate);
+        boolean isDefaultMain = ApplicationEntryExaminer.isDefaultMain(application);
 
         TokenJWTPayload payload = new TokenJWTPayload();
         if (Objects.isNull(userId)) {
@@ -284,14 +286,15 @@ public class LoginTokenServiceImpl implements LoginTokenService {
             SystemErrorCode.PARAM_VAL_INVALID, userId
         );
 
+        Asserts.isTrue(passportId != null && passportId > 0L,
+            SystemErrorCode.PARAM_VAL_INVALID, "passportId");
+        Asserts.isTrue(Objects.equals(passportId, user.getPassportId()),
+            SystemErrorCode.UNAUTHORIZED, userId);
+
         if (isIdpLogin(thirdPartyIdpLogin, bindMode)) {
             Asserts.isTrue(Strings.isNotBlank(idpType) && Strings.isNotBlank(idpSubject)
                     && Strings.isNotBlank(idpApplicationCode),
                 SystemErrorCode.PARAM_VAL_INVALID, "idpType,idpSubject,idpApplicationCode");
-            Asserts.isTrue(passportId != null && passportId > 0L,
-                SystemErrorCode.PARAM_VAL_INVALID, "passportId");
-            Asserts.isTrue(Objects.equals(passportId, user.getPassportId()),
-                SystemErrorCode.PARAM_VAL_INVALID, userId);
             String idpTypeTrim = idpType.trim();
             String idpSubjectTrim = idpSubject.trim();
             String idpAppTrim = idpApplicationCode.trim();
@@ -320,9 +323,8 @@ public class LoginTokenServiceImpl implements LoginTokenService {
         );
 
         OrganVo organ = organs.getFirst();
-        Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
-            BasisErrorCode.ORGAN_UNAVAILABLE
-        );
+        // 机构可用、应用开通与控制单元
+        applicationEntryExaminer.check(user.getId(), organ, application);
         payload.setOrganType(OrganType.fromName(organ.getOrganType()));
         payload.setOrganId(organ.getId());
         payload.setOrganName(organ.getOrganName());
@@ -330,24 +332,6 @@ public class LoginTokenServiceImpl implements LoginTokenService {
 
         // 需要外部的Starter 提供能力, 没有实现也没关系
         principalEnrichers.forEach(enricher -> enricher.enrich(payload));
-
-        // 如果入口应用不是 `默认应用`, 需要校验应用是否做过授权
-        if (!isDefaultMain) {
-            CountRoleControlUnitPo countRoleControlUnit = roleControlUnitRelationDao
-                .countRoleControlUnits(user.getId());
-
-            // 如果没有授权, 权限不足
-            Asserts.greaterThan(Objects.isNull(countRoleControlUnit.getTotalControlUnitCount()) ? -1 :
-                    countRoleControlUnit.getTotalControlUnitCount(), 0,
-                SystemErrorCode.UNAUTHORIZED, organ.getOrganName()
-            );
-
-            // 如果没有有效的权限, 请续费
-            Asserts.greaterThan(Objects.isNull(countRoleControlUnit.getActiveControlUnitCount()) ? -1 :
-                    countRoleControlUnit.getActiveControlUnitCount(), 0,
-                BasisErrorCode.BUSINESS_CAPABILITY_DISABLED, organ.getOrganName()
-            );
-        }
 
         Instant issuedAt = Instant.now();
         payload.setIssuedAt(issuedAt.getEpochSecond());
@@ -377,68 +361,55 @@ public class LoginTokenServiceImpl implements LoginTokenService {
     }
 
     /**
-     * 构建匿名会话的 Token JWT 载荷信息。
+     * 授权码换票：按接入码构建匿名会话的 Token JWT 载荷。
      *
-     * <p>查询机构、应用及机构超管角色，不查询账号或用户；{@code sessionType} 为 {@link SessionType#ANONYMOUS}。</p>
-     *
-     * @param organId         机构 ID
+     * @param entryKey        接入码
      * @param applicationCode 应用编码
-     * @param roleIds         可选；非空时使用指定角色，为空时回退机构 ADMIN 角色
+     * @param thumbprint      DPoP 公钥指纹（RFC 7638，由 IAM 计算）
      * @return 匿名会话的 {@link TokenJWTPayload}
-     * @throws BusinessException 当机构或应用不存在，或机构不可用时抛出
      */
     @Override
-    public TokenJWTPayload fetchAnonymousTokenContext(Long organId, String applicationCode, List<Long> roleIds) {
-        ApplicationSelectDto appSelect = new ApplicationSelectDto();
-        appSelect.setApplicationCode(applicationCode);
-        List<ApplicationVo> applications = applicationService.selectList(appSelect);
-        Asserts.isTrue(Collections.isNotEmpty(applications),
-            SystemErrorCode.UNAUTHORIZED, applicationCode
-        );
+    public TokenJWTPayload fetchAnonymousTokenContext(String entryKey, String applicationCode, String thumbprint) {
+        ApplicationVo application = requireApplication(applicationCode);
+        AnonymousEntryVo entry = anonymousEntryService.resolve(entryKey, application.getId());
+        return buildAnonymousPayload(entry, application, thumbprint);
+    }
 
-        OrganSelectDto organSelect = new OrganSelectDto();
-        organSelect.setId(organId);
-        List<OrganVo> organs = organService.selectList(organSelect);
-        Asserts.isTrue(Collections.isNotEmpty(organs),
-            SystemErrorCode.PARAM_VAL_INVALID, organId
-        );
+    /**
+     * 刷新：按 token 中的接入码 ID 复核并重建匿名会话的 Token JWT 载荷。
+     *
+     * @param entryId         接入码 ID
+     * @param applicationCode 应用编码
+     * @param thumbprint      DPoP 公钥指纹（RFC 7638，由 IAM 计算）
+     * @return 匿名会话的 {@link TokenJWTPayload}
+     */
+    @Override
+    public TokenJWTPayload fetchAnonymousRefreshContext(Long entryId, String applicationCode, String thumbprint) {
+        ApplicationVo application = requireApplication(applicationCode);
+        AnonymousEntryVo entry = anonymousEntryService.resolve(entryId, application.getId());
+        return buildAnonymousPayload(entry, application, thumbprint);
+    }
 
-        OrganVo organ = organs.getFirst();
-        Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
-            BasisErrorCode.ORGAN_UNAVAILABLE
-        );
+    /**
+     * 组装 ANONYMOUS 载荷：userId 为访客 ID，不带账号、会员与角色；权限由 ANONYMOUS 控制单元按机构决定。
+     */
+    private TokenJWTPayload buildAnonymousPayload(AnonymousEntryVo entry, ApplicationVo application, String thumbprint) {
+        Asserts.isTrue(Strings.isNotBlank(thumbprint) && thumbprint.length() == THUMBPRINT_LENGTH,
+            SystemErrorCode.PARAM_VAL_INVALID, "thumbprint");
 
-        List<Long> resolvedRoleIds = resolveAnonymousRoleIds(organId, roleIds);
+        OrganVo organ = anonymousEntryService.requireOpenOrgan(entry.getOrganId(), application.getId());
+        Long visitorId = anonymousVisitorService.resolve(organ.getId(), thumbprint, entry.getId());
 
         TokenJWTPayload payload = new TokenJWTPayload();
-        payload.setPassportId(idGenerator.generateSnowflakeId());
-        payload.setUserId(idGenerator.generateSnowflakeId());
-        payload.setName("匿名用户");
-        payload.setAdminUser(Boolean.FALSE);
         payload.setSessionType(SessionType.ANONYMOUS);
+        payload.setUserId(visitorId);
+        payload.setName("访客");
+        payload.setAdminUser(Boolean.FALSE);
+        payload.setAdminCompany(Boolean.FALSE);
         payload.setOrganType(OrganType.fromName(organ.getOrganType()));
         payload.setOrganId(organ.getId());
         payload.setOrganName(organ.getOrganName());
-        payload.setAdminCompany(Boolean.TRUE.equals(organ.getAdmin()));
-        payload.setRoleIds(resolvedRoleIds);
-
-        ApplicationVo application = applications.getFirst();
-        Boolean landing = application.getLanding();
-        Boolean canIntegrate = application.getCanIntegrate();
-        if (!(Boolean.TRUE.equals(landing) && Boolean.FALSE.equals(canIntegrate))) {
-            CountRoleControlUnitPo countRoleControlUnit = roleControlUnitRelationDao
-                .countRoleControlUnitsByRoleIds(resolvedRoleIds);
-
-            Asserts.greaterThan(Objects.isNull(countRoleControlUnit.getTotalControlUnitCount()) ? -1 :
-                    countRoleControlUnit.getTotalControlUnitCount(), 0,
-                SystemErrorCode.UNAUTHORIZED, organ.getOrganName()
-            );
-
-            Asserts.greaterThan(Objects.isNull(countRoleControlUnit.getActiveControlUnitCount()) ? -1 :
-                    countRoleControlUnit.getActiveControlUnitCount(), 0,
-                BasisErrorCode.BUSINESS_CAPABILITY_DISABLED, organ.getOrganName()
-            );
-        }
+        payload.setEntryId(entry.getId());
 
         Instant issuedAt = Instant.now();
         payload.setIssuedAt(issuedAt.getEpochSecond());
@@ -449,41 +420,76 @@ public class LoginTokenServiceImpl implements LoginTokenService {
             application.getRefreshTokenExpiresIn()
         )).getEpochSecond());
 
-        List<ApplicationScopeVo> applicationScopes = applicationService.selectApplicationScopeByRoleIds(
-            resolvedRoleIds, application.getId()
-        );
-        List<ApplicationScope> scopes = new ArrayList<>(applicationScopes.size() + 1);
-        scopes.add(new ApplicationScope(application.getId(), applicationCode, application.getOrganId()));
-        applicationScopes.forEach(obj -> scopes.add(new ApplicationScope(
-            obj.getId(), obj.getApplicationCode(), obj.getOrganId()
+        payload.setApplicationScopes(List.of(new ApplicationScope(
+            application.getId(), application.getApplicationCode(), application.getOrganId()
         )));
-        payload.setApplicationScopes(scopes);
         return payload;
     }
 
-    /**
-     * 解析匿名会话角色：传入 roleIds 时校验其属于 organId；否则回退机构 ADMIN 角色。
-     */
-    private List<Long> resolveAnonymousRoleIds(Long organId, List<Long> roleIds) {
-        if (Collections.isNotEmpty(roleIds)) {
-            RoleSelectDto roleSelect = new RoleSelectDto();
-            roleSelect.setOrganId(organId);
-            roleSelect.setIds(new HashSet<>(roleIds));
-            List<RoleVo> roles = roleService.selectListWithoutIsolation(roleSelect);
-            Asserts.isTrue(roles.size() == roleIds.size(),
-                SystemErrorCode.PARAM_VAL_INVALID, "roleIds"
-            );
-            return roles.stream().map(RoleVo::getId).toList();
-        }
+    private ApplicationVo requireApplication(String applicationCode) {
+        Asserts.isTrue(Strings.isNotBlank(applicationCode), SystemErrorCode.PARAM_REQUIRED, "applicationCode");
+        ApplicationSelectDto appSelect = new ApplicationSelectDto();
+        appSelect.setApplicationCode(applicationCode);
+        List<ApplicationVo> applications = applicationService.selectList(appSelect);
+        Asserts.isTrue(Collections.isNotEmpty(applications), SystemErrorCode.UNAUTHORIZED, applicationCode);
+        return applications.getFirst();
+    }
 
-        RoleSelectDto roleSelect = new RoleSelectDto();
-        roleSelect.setOrganId(organId);
-        roleSelect.setRoleType(RoleType.ADMIN.name());
-        List<RoleVo> roles = roleService.selectListWithoutIsolation(roleSelect);
-        Asserts.isTrue(Collections.isNotEmpty(roles),
-            BasisErrorCode.ADMIN_ROLE_NOT_EXISTS_ILLEGAL
+    @Override
+    public TokenJWTPayload fetchMemberTokenContext(Long organId, String applicationCode) {
+        Asserts.isTrue(organId != null && organId > 0L, SystemErrorCode.PARAM_VAL_INVALID, organId);
+        Asserts.isTrue(Strings.isNotBlank(applicationCode), SystemErrorCode.PARAM_REQUIRED, "applicationCode");
+
+        ApplicationSelectDto appSelect = new ApplicationSelectDto();
+        appSelect.setApplicationCode(applicationCode);
+        List<ApplicationVo> applications = applicationService.selectList(appSelect);
+        Asserts.isTrue(Collections.isNotEmpty(applications),
+            SystemErrorCode.UNAUTHORIZED, applicationCode
         );
-        return roles.stream().map(RoleVo::getId).toList();
+        ApplicationVo application = applications.getFirst();
+        Asserts.isTrue(application.getId() != null && application.getId() > 0L,
+            SystemErrorCode.UNAUTHORIZED, applicationCode
+        );
+        Asserts.isTrue(application.getOrganId() != null && application.getOrganId() > 0L,
+            SystemErrorCode.UNAUTHORIZED, applicationCode
+        );
+
+        OrganSelectDto organSelect = new OrganSelectDto();
+        organSelect.setId(organId);
+        List<OrganVo> organs = organService.selectList(organSelect);
+        Asserts.isTrue(Collections.isNotEmpty(organs),
+            SystemErrorCode.PARAM_VAL_INVALID, organId
+        );
+        OrganVo organ = organs.getFirst();
+        Asserts.isTrue(OrganStatus.ACTIVE.name().equals(organ.getStatus()),
+            BasisErrorCode.ORGAN_UNAVAILABLE
+        );
+        OrganType organType = OrganType.fromName(organ.getOrganType());
+        Asserts.isTrue(OrganType.isTenant(organType),
+            SystemErrorCode.PARAM_VAL_INVALID, organ.getOrganType()
+        );
+
+        TokenJWTPayload payload = new TokenJWTPayload();
+        payload.setSessionType(SessionType.MEMBER);
+        payload.setAdminUser(Boolean.FALSE);
+        payload.setOrganType(organType);
+        payload.setOrganId(organ.getId());
+        payload.setOrganName(organ.getOrganName());
+        payload.setAdminCompany(Boolean.FALSE);
+
+        Instant issuedAt = Instant.now();
+        payload.setIssuedAt(issuedAt.getEpochSecond());
+        payload.setExpireAt(issuedAt.plus(Duration.ofSeconds(
+            application.getAccessTokenExpiresIn()
+        )).getEpochSecond());
+        payload.setRefreshExpireAt(issuedAt.plus(Duration.ofSeconds(
+            application.getRefreshTokenExpiresIn()
+        )).getEpochSecond());
+
+        payload.setApplicationScopes(List.of(new ApplicationScope(
+            application.getId(), applicationCode, application.getOrganId()
+        )));
+        return payload;
     }
 
     /**

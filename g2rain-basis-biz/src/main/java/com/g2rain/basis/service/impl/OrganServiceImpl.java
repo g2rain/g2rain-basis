@@ -150,13 +150,14 @@ public class OrganServiceImpl implements OrganService {
     }
 
     /**
-     * 根据机构名称模糊匹配机构
+     * 按机构标识或名称关键字搜索机构
      *
-     * @param organName 机构名称
+     * @param id        机构标识，同时按名称包含该数字匹配
+     * @param organName 机构名称关键字
      * @return 实体对象列表
      */
     @Override
-    public List<OrganIdNameVo> searchOrgans(String organName) {
+    public List<OrganIdNameVo> searchOrgans(Long id, String organName) {
         Long organId = null;
         // 如果非运营公司, 非用户登陆, 禁止查看
         if (!PrincipalContextHolder.isAdminCompany() && !PrincipalContextHolder.isBackEnd()) {
@@ -166,7 +167,7 @@ public class OrganServiceImpl implements OrganService {
             }
         }
 
-        return organDao.searchOrgans(organId, organName).stream().map(o ->
+        return organDao.searchOrgans(organId, id, organName).stream().map(o ->
             new OrganIdNameVo(o.getId(), o.getOrganName())
         ).toList();
     }

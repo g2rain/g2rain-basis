@@ -45,10 +45,33 @@ public class PersonalStaticAccessTokenController implements PersonalStaticAccess
         return Result.successPage(personalStaticAccessTokenService.selectPage(selectDto));
     }
 
+    @Override
+    public Result<Long> selectCount(PersonalStaticAccessTokenSelectDto selectDto) {
+        return Result.success(personalStaticAccessTokenService.selectCount(selectDto));
+    }
+
+    @Override
+    public Result<List<PersonalStaticAccessTokenVo>> selectListAll(PersonalStaticAccessTokenSelectDto selectDto) {
+        return Result.success(personalStaticAccessTokenService.selectListAll(selectDto));
+    }
+
+    @Override
+    public Result<PageData<PersonalStaticAccessTokenVo>> selectPageAll(
+        PageSelectListDto<PersonalStaticAccessTokenSelectDto> selectDto) {
+        return Result.successPage(personalStaticAccessTokenService.selectPageAll(selectDto));
+    }
+
     @PostMapping("/save")
     @Operation(summary = "新增或更新个人静态访问令牌信息", description = "新增或更新个人静态访问令牌基础信息")
     public Result<Long> save(@RequestBody PersonalStaticAccessTokenDto dto) {
         return Result.success(personalStaticAccessTokenService.save(dto));
+    }
+
+    @PostMapping("/save_for_user")
+    @Operation(summary = "为指定用户新增或更新个人静态访问令牌",
+        description = "管理员为指定用户创建或更新个人静态访问令牌；权限由 Gateway 控制单元鉴权")
+    public Result<Long> saveForUser(@RequestBody PersonalStaticAccessTokenDto dto) {
+        return Result.success(personalStaticAccessTokenService.saveForUser(dto));
     }
 
     /**
@@ -59,7 +82,8 @@ public class PersonalStaticAccessTokenController implements PersonalStaticAccess
      * @return 受影响的记录行数
      */
     @PostMapping("/{id}/status")
-    @Operation(summary = "修改个人静态访问令牌记录状态", description = "修改个人静态访问令牌记录状态")
+    @Operation(summary = "修改个人静态访问令牌记录状态",
+        description = "运营公司可跨租户修改；本机构调用方仅可修改本机构令牌，权限由 Gateway 控制单元鉴权")
     public Result<Integer> updateStatus(@Parameter(description = "个人静态访问令牌记录状态标识") @PathVariable Long id, @RequestBody @Validated UpdateStatusDto dto) {
         return Result.success(personalStaticAccessTokenService.updateStatus(id, dto));
     }

@@ -54,7 +54,7 @@ CREATE TABLE `passport_idp_binding` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_idp_type_subject_app` (`idp_type`, `idp_subject`, `idp_application_code`),
+    UNIQUE KEY `uk_idp_type_subject_app` (`idp_type`, `idp_subject`, `idp_application_code`, (IF(delete_flag = 0, 0, NULL))),
     KEY `idx_passport_id` (`passport_id`),
     KEY `idx_corp_idp` (`corp_id`, `idp_type`),
     KEY `idx_delete_flag` (`delete_flag`)
@@ -77,7 +77,7 @@ CREATE TABLE `application_idp_provision` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_idp_application` (`idp_type`, `idp_application_code`),
+    UNIQUE KEY `uk_idp_application` (`idp_type`, `idp_application_code`, (IF(delete_flag = 0, 0, NULL))),
     KEY `idx_application_id` (`application_id`),
     KEY `idx_delete_flag` (`delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '外部身份源应用与平台应用的绑定';
@@ -173,7 +173,7 @@ CREATE TABLE `idp_enterprise_application_authorization` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '乐观锁版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_idp_enterprise_application` (`idp_type`, `idp_application_code`, `enterprise_id`),
+    UNIQUE KEY `uk_idp_enterprise_application` (`idp_type`, `idp_application_code`, `enterprise_id`, (IF(delete_flag = 0, 0, NULL))),
     KEY `idx_idp_authorization_status` (`idp_type`, `authorization_status`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '外部 IdP 企业应用授权记录';
 
@@ -215,7 +215,7 @@ CREATE TABLE `service_registry` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_service_code` (`service_code`)
+    UNIQUE KEY `uk_service_code` (`service_code`, (IF(delete_flag = 0, 0, NULL)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '服务注册表';
 
 -- =============================================
@@ -231,12 +231,14 @@ CREATE TABLE `resource_api` (
     `method` VARCHAR(32) NOT NULL COMMENT                                                               '接口请求方法',
     `path` VARCHAR(512) NOT NULL COMMENT                                                                '接口请求路径',
     `description` VARCHAR(512) DEFAULT NULL COMMENT                                                     '资源接口说明',
+    `openapi_document` LONGTEXT DEFAULT NULL COMMENT                                                     '单接口最小 OpenAPI 文档',
+    `document_digest` CHAR(64) DEFAULT NULL COMMENT                                                      '规范化单接口文档的 sha256',
     `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_service_method_path` (`service_code`,`method`,`path`)
+    UNIQUE KEY `uk_service_method_path` (`service_code`,`method`,`path`, (IF(delete_flag = 0, 0, NULL)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '资源接口表';
 
 -- =============================================
@@ -307,6 +309,7 @@ DROP TABLE IF EXISTS `control_unit`;
 CREATE TABLE `control_unit` (
     `id` BIGINT NOT NULL COMMENT 													                    '控制单元标识',
     `application_id` BIGINT NOT NULL COMMENT 													        '应用标识',
+    `session_type` VARCHAR(32) NOT NULL COMMENT                                                         '会话主体类型[SessionType: USER|MEMBER|PASSPORT|ANONYMOUS]',
     `control_unit_name` VARCHAR(128) NOT NULL COMMENT                                                   '控制单元名称',
     `control_unit_scope` VARCHAR(32) NOT NULL COMMENT                                                   '控制单元类型[OPERATION("运营功能"), CUSTOMER("客户功能"), PERPETUAL("永久有效功能")]',
     `landing` TINYINT NOT NULL DEFAULT 0 COMMENT                                                        '默认数据[0:否, 1:是]',
@@ -316,7 +319,8 @@ CREATE TABLE `control_unit` (
     `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    INDEX `idx_control_unit_session_status` (`session_type`, `status`, (IF(delete_flag = 0, 0, NULL)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '控制单元表';
 
 -- =============================================
@@ -519,7 +523,7 @@ CREATE TABLE `personal_static_access_token` (
     `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
     `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_token_hash` (`token_hash`),
+    UNIQUE KEY `uk_token_hash` (`token_hash`, (IF(delete_flag = 0, 0, NULL))),
     INDEX `idx_authorization_org_del` (`application_authorization_id`, `organ_id`, `delete_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '个人静态访问令牌表';
 
@@ -593,6 +597,48 @@ CREATE TABLE `audit_event` (
     INDEX `idx_application_id` (`application_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '审计事件表';
 
+-- =============================================
+-- 26. 匿名接入码表 (anonymous_entry)
+-- 租户为某个应用开放的匿名入口；entry_key 为公开接入码，未删除记录中唯一
+-- =============================================
+DROP TABLE IF EXISTS `anonymous_entry`;
+
+CREATE TABLE `anonymous_entry` (
+    `id` BIGINT NOT NULL COMMENT                                                                        '接入码标识',
+    `organ_id` BIGINT NOT NULL COMMENT                                                                  '机构标识（租户机构）',
+    `application_id` BIGINT NOT NULL COMMENT                                                            '应用标识',
+    `entry_name` VARCHAR(64) NOT NULL COMMENT                                                           '接入码名称',
+    `entry_key` VARCHAR(40) NOT NULL COLLATE utf8mb4_bin COMMENT                                        '接入码（ek_ 前缀 + base62 随机串，区分大小写）',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' COMMENT 											    '接入码状态[ACTIVE:有效, INACTIVE:无效]',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_entry_key` (`entry_key`, (IF(delete_flag = 0, 0, NULL))),
+    INDEX `idx_organ_status` (`organ_id`, `status`, (IF(delete_flag = 0, 0, NULL)))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '匿名接入码表';
+
+-- =============================================
+-- 27. 匿名访客表 (anonymous_visitor)
+-- 访客身份 = 机构 + DPoP 公钥指纹（RFC 7638），id 即 visitorId，写入 token 的 userId
+-- =============================================
+DROP TABLE IF EXISTS `anonymous_visitor`;
+
+CREATE TABLE `anonymous_visitor` (
+    `id` BIGINT NOT NULL COMMENT                                                                        '访客标识（visitorId）',
+    `organ_id` BIGINT NOT NULL COMMENT                                                                  '机构标识',
+    `key_thumbprint` CHAR(43) NOT NULL COLLATE utf8mb4_bin COMMENT                                      'DPoP 公钥指纹（base64url，区分大小写）',
+    `entry_id` BIGINT NOT NULL COMMENT                                                                  '首次进入时的接入码标识',
+    `last_seen_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT                               '最近换票或刷新时间',
+    `create_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT                                      '创建时间',
+    `update_time` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT          '更新时间',
+    `version` INT NOT NULL DEFAULT 0 COMMENT                                                            '记录版本',
+    `delete_flag` TINYINT NOT NULL DEFAULT 0 COMMENT                                                    '删除标识[0:未删除, 1:已删除]',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_organ_thumbprint` (`organ_id`, `key_thumbprint`, (IF(delete_flag = 0, 0, NULL)))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=                             '匿名访客表';
+
 -- 账号
 INSERT INTO `passport`
 (`id`, `username`, `password`, `real_name`, `sex`, `birthday`, `id_no`, `mobile`, `email`, `status`, `create_time`, `update_time`)
@@ -648,14 +694,14 @@ VALUES
 
 -- 控制单元
 INSERT INTO `control_unit`
-(`id`, `application_id`, `control_unit_name`, `control_unit_scope`, `landing`, `status`, `description`, `create_time`, `update_time`)
+(`id`, `application_id`, `session_type`, `control_unit_name`, `control_unit_scope`, `landing`, `status`, `description`, `create_time`, `update_time`)
 VALUES
-    (14, 7, '盘古',   'PERPETUAL', 1, 'PUBLISHED', '平台准入基础能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (15, 8, '燧人氏', 'OPERATION', 1, 'PUBLISHED', '平台保障技术能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (16, 9, '女娲',   'OPERATION',  1, 'PUBLISHED', '核心运营支撑组件', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (17, 10, '颛顼',   'OPERATION',  0, 'PUBLISHED', '权限模型运营配置', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (18, 9, '有巢氏',   'CUSTOMER',  1, 'PUBLISHED', '租户空间构建逻辑', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
-    (19, 10, '大禹',   'CUSTOMER',  0, 'PUBLISHED', '部门权限租户配置', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
+    (14, 7, 'PASSPORT', '盘古',   'PERPETUAL', 1, 'PUBLISHED', '平台准入基础能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (15, 8, 'USER', '燧人氏', 'OPERATION', 1, 'PUBLISHED', '平台保障技术能力', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (16, 9, 'USER', '女娲',   'OPERATION',  1, 'PUBLISHED', '核心运营支撑组件', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (17, 10, 'USER', '颛顼',   'OPERATION',  0, 'PUBLISHED', '权限模型运营配置', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (18, 9, 'USER', '有巢氏',   'CUSTOMER',  1, 'PUBLISHED', '租户空间构建逻辑', '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (19, 10, 'USER', '大禹',   'CUSTOMER',  0, 'PUBLISHED', '部门权限租户配置', '2026-02-01 09:12:28', '2026-02-01 09:12:28');
 
 -- 角色控制单元关联
 INSERT INTO `role_control_unit_relation`
@@ -725,7 +771,7 @@ VALUES
     (61, 'G2RAIN_BASIS', '资源授权', '查询菜单权限列表', 'GET', '/authority/menus', '查询当前用户可访问的菜单权限列表', '2026-05-07 18:03:52', '2026-05-07 18:03:52'),
     (62, 'G2RAIN_BASIS', '用户', '新增或更新用户信息', 'POST', '/user/save', '新增或更新用户基础信息', '2026-05-07 18:03:52', '2026-05-07 18:03:52'),
     (63, 'G2RAIN_BASIS', '用户', '删除用户记录', 'DELETE', '/user/{id}', '根据主键删除用户记录', '2026-05-07 18:03:52', '2026-05-07 18:03:52'),
-    (64, 'G2RAIN_BASIS', '用户', '获取用户下拉选项', 'GET', '/user/user_options', '返回用于下拉选择的用户简要信息集合', '2026-05-07 18:03:52', '2026-05-07 18:03:52'),
+    (64, 'G2RAIN_BASIS', '用户', '查询可切换的用户身份', 'GET', '/user/identities', '返回当前账号名下机构可用的用户身份，可按机构类型过滤', '2026-05-07 18:03:52', '2026-05-07 18:03:52'),
     (65, 'G2RAIN_BASIS', '用户', '按角色查询用户列表', 'GET', '/user/role/{roleId}', '根据角色主键查询已关联用户列表', '2026-05-07 18:03:52', '2026-05-07 18:03:52'),
     (66, 'G2RAIN_BASIS', '用户', '分页查询用户列表', 'GET', '/user/page', '分页查询用户列表', '2026-05-07 18:03:52', '2026-05-07 18:03:52'),
     (67, 'G2RAIN_BASIS', '用户', '查询用户列表', 'GET', '/user/list', '根据查询条件返回用户列表', '2026-05-07 18:03:52', '2026-05-07 18:03:52'),
@@ -813,7 +859,7 @@ VALUES
     (149, 'G2RAIN_BASIS', '应用归类关系', '查询应用归类关系列表', 'GET', '/application_suite/list', '根据查询条件返回应用归类关系列表', '2026-05-07 18:03:52', '2026-05-07 18:03:52'),
     (150, 'G2RAIN_BASIS', '个人静态访问令牌', '新增或更新个人静态访问令牌信息', 'POST', '/personal_static_access_token/save', '新增或更新个人静态访问令牌基础信息', '2026-05-20 01:31:01', '2026-05-20 01:31:01'),
     (151, 'G2RAIN_BASIS', '个人静态访问令牌', '删除个人静态访问令牌记录', 'DELETE', '/personal_static_access_token/{id}', '根据主键删除个人静态访问令牌记录', '2026-05-20 01:31:01', '2026-05-20 01:31:01'),
-    (152, 'G2RAIN_BASIS', '个人静态访问令牌', '修改个人静态访问令牌记录状态', 'POST', '/personal_static_access_token/{id}/status', '修改个人静态访问令牌记录状态', '2026-05-20 01:31:01', '2026-05-20 01:31:01'),
+    (152, 'G2RAIN_BASIS', '个人静态访问令牌', '修改个人静态访问令牌记录状态', 'POST', '/personal_static_access_token/{id}/status', '运营公司可跨租户修改；本机构调用方仅可修改本机构令牌', '2026-05-20 01:31:01', '2026-05-20 01:31:01'),
     (153, 'G2RAIN_BASIS', '个人静态访问令牌', '分页查询个人静态访问令牌列表', 'GET', '/personal_static_access_token/page', '分页查询个人静态访问令牌列表', '2026-05-20 01:31:01', '2026-05-20 01:31:01'),
     (154, 'G2RAIN_BASIS', '个人静态访问令牌', '查询个人静态访问令牌列表', 'GET', '/personal_static_access_token/list', '根据查询条件返回个人静态访问令牌列表', '2026-05-20 01:31:01', '2026-05-20 01:31:01'),
     (155, 'G2RAIN_BASIS', '外部企业与机构关联', '新增或更新关联', 'POST', '/idp_enterprise_organ/save', '新增或更新外部企业/租户与平台机构关联信息', '2026-05-20 01:31:01', '2026-05-20 01:31:01'),
@@ -882,7 +928,10 @@ VALUES
     (218, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '分页查询授权', 'GET', '/idp_enterprise_application_authorization/page', '分页查询外部 IdP 企业应用授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00'),
     (219, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '服务间写入授权', 'POST', '/internal/idp/enterprise-application-authorization/upsert', '仅供受信服务间幂等写入授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00'),
     (220, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '服务间撤销授权', 'POST', '/internal/idp/enterprise-application-authorization/revoke', '仅供受信服务间撤销授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00'),
-    (221, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '服务间解析授权', 'POST', '/internal/idp/enterprise-application-authorization/resolve', '仅供受信服务间解析授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00');
+    (221, 'G2RAIN_BASIS', '外部 IdP 企业应用授权', '服务间解析授权', 'POST', '/internal/idp/enterprise-application-authorization/resolve', '仅供受信服务间解析授权', '2026-07-24 00:00:00', '2026-07-24 00:00:00'),
+    (222, 'G2RAIN_BASIS', '个人静态访问令牌', '查询全部个人静态访问令牌列表', 'GET', '/personal_static_access_token/list_all', '按条件查询本租户全部个人静态访问令牌，不强制当前用户', '2026-09-17 00:00:00', '2026-09-17 00:00:00'),
+    (223, 'G2RAIN_BASIS', '个人静态访问令牌', '分页查询全部个人静态访问令牌列表', 'GET', '/personal_static_access_token/page_all', '分页查询本租户全部个人静态访问令牌，不强制当前用户', '2026-09-17 00:00:00', '2026-09-17 00:00:00'),
+    (224, 'G2RAIN_BASIS', '个人静态访问令牌', '为指定用户新增或更新个人静态访问令牌', 'POST', '/personal_static_access_token/save_for_user', '管理员为指定用户创建或更新个人静态访问令牌', '2026-09-17 00:00:00', '2026-09-17 00:00:00');
 
 -- 应用资源菜单
 INSERT INTO `resource_menu`
@@ -1482,6 +1531,9 @@ VALUES
     (753, 16, 170, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (754, 16, 171, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (755, 16, 172, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (849, 16, 222, 'API_ENDPOINT', NULL, '2026-09-17 00:00:00', '2026-09-17 00:00:00'),
+    (850, 16, 223, 'API_ENDPOINT', NULL, '2026-09-17 00:00:00', '2026-09-17 00:00:00'),
+    (851, 16, 224, 'API_ENDPOINT', NULL, '2026-09-17 00:00:00', '2026-09-17 00:00:00'),
 
     -- 颛顼 api
     (756, 17, 58, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
@@ -1539,6 +1591,11 @@ VALUES
     (806, 18, 167, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (807, 18, 168, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
     (808, 18, 170, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),
+    (852, 18, 222, 'API_ENDPOINT', NULL, '2026-09-17 00:00:00', '2026-09-17 00:00:00'),
+    (853, 18, 223, 'API_ENDPOINT', NULL, '2026-09-17 00:00:00', '2026-09-17 00:00:00'),
+    (854, 18, 224, 'API_ENDPOINT', NULL, '2026-09-17 00:00:00', '2026-09-17 00:00:00'),
+    (855, 18, 152, 'API_ENDPOINT', NULL, '2026-09-18 00:00:00', '2026-09-18 00:00:00'),
+    (856, 18, 328, 'PAGE_ELEMENT', 'ENABLED', '2026-09-18 00:00:00', '2026-09-18 00:00:00'),
 
     -- 大禹 api
     (809, 19, 51, 'API_ENDPOINT', NULL, '2026-02-01 09:12:28', '2026-02-01 09:12:28'),

@@ -45,12 +45,13 @@ public interface OrganService {
     List<OrganHierarchicalRelationVo> getHierarchicalRelations();
 
     /**
-     * 根据机构名称模糊匹配机构
+     * 按机构标识或名称关键字搜索机构
      *
-     * @param organName 机构名称
+     * @param id        机构标识，同时按名称包含该数字匹配
+     * @param organName 机构名称关键字
      * @return 实体对象列表
      */
-    List<OrganIdNameVo> searchOrgans(String organName);
+    List<OrganIdNameVo> searchOrgans(Long id, String organName);
 
     /**
      * 根据机构 ID 集合获取对应的 ID–名称映射

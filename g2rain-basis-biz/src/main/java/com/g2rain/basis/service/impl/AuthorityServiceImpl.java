@@ -6,6 +6,7 @@ import com.g2rain.basis.converter.ResourceMenuConverter;
 import com.g2rain.basis.converter.ResourcePageConverter;
 import com.g2rain.basis.converter.ResourcePageElementConverter;
 import com.g2rain.basis.converter.UserConverter;
+import com.g2rain.basis.dao.AnonymousEntryDao;
 import com.g2rain.basis.dao.OrganDao;
 import com.g2rain.basis.dao.ResourceApiDao;
 import com.g2rain.basis.dao.ResourceMenuDao;
@@ -17,10 +18,14 @@ import com.g2rain.basis.dao.po.AuthorityPageElementPo;
 import com.g2rain.basis.dao.po.CountRoleControlUnitPo;
 import com.g2rain.basis.dao.po.ResourceMenuPo;
 import com.g2rain.basis.dao.po.ResourcePagePo;
+import com.g2rain.basis.dao.po.AnonymousEntryPo;
+import com.g2rain.basis.dto.AnonymousEntrySelectDto;
 import com.g2rain.basis.dto.ApplicationSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.EntryStatus;
 import com.g2rain.basis.service.ApplicationService;
 import com.g2rain.basis.service.AuthorityService;
+import com.g2rain.basis.service.SessionPermSyncService;
 import com.g2rain.basis.service.PassportService;
 import com.g2rain.basis.service.UserService;
 import com.g2rain.basis.vo.ApplicationScopeVo;
@@ -33,7 +38,9 @@ import com.g2rain.basis.vo.AuthorityResourceVo;
 import com.g2rain.basis.vo.AuthorityUserVo;
 import com.g2rain.basis.vo.BaseAuthorityApiVo;
 import com.g2rain.basis.vo.PassportVo;
+import com.g2rain.basis.vo.SessionApiPermissionVo;
 import com.g2rain.basis.vo.UserVo;
+import com.g2rain.common.enums.SessionType;
 import com.g2rain.common.exception.BusinessException;
 import com.g2rain.common.exception.SystemErrorCode;
 import com.g2rain.common.utils.Asserts;
@@ -120,6 +127,12 @@ public class AuthorityServiceImpl implements AuthorityService {
      */
     @Resource(name = "resourceApiDao")
     private ResourceApiDao resourceApiDao;
+
+    @Resource
+    private SessionPermSyncService sessionPermSyncService;
+
+    @Resource(name = "anonymousEntryDao")
+    private AnonymousEntryDao anonymousEntryDao;
 
     /**
      * 机构 DAO
@@ -296,6 +309,50 @@ public class AuthorityServiceImpl implements AuthorityService {
 
         return resourceApiDao.listAuthorizedApisWithLanding(applications.getFirst().getId())
             .stream().map(AuthorityApiEndpointPo::getId).toList();
+    }
+
+    /**
+     * 按会话主体类型查询 API 权限快照。
+     * <p>MEMBER、ANONYMOUS 必须带 organId，按租户已开通的同类型控制单元计算；ANONYMOUS 另附该机构启用中的接入码。</p>
+     */
+    @Override
+    public SessionApiPermissionVo getSessionApiPermissions(String sessionType, Long organId) {
+        SessionType type = ControlUnitServiceImpl.parseSessionType(sessionType);
+        SessionApiPermissionVo vo = new SessionApiPermissionVo();
+        vo.setSessionType(type.name());
+
+        if (SessionPermSyncService.isOrganScoped(type.name())) {
+            Asserts.isTrue(Objects.nonNull(organId) && organId > 0, SystemErrorCode.PARAM_VAL_INVALID, "organId");
+            List<Long> apiIds = resourceApiDao.listAuthorizedApisBySessionTypeAndOrgan(type.name(), organId).stream()
+                .map(AuthorityApiEndpointPo::getId)
+                .toList();
+            vo.setOrganId(organId);
+            vo.setApiIds(apiIds);
+            vo.setVersion(sessionPermSyncService.currentVersion(type, organId));
+            if (SessionType.isAnonymous(type)) {
+                vo.setEntryIds(listActiveEntryIds(organId));
+            }
+            return vo;
+        }
+
+        List<Long> apiIds = resourceApiDao.listAuthorizedApisBySessionType(type.name()).stream()
+            .map(AuthorityApiEndpointPo::getId)
+            .toList();
+        vo.setApiIds(apiIds);
+        vo.setVersion(0L);
+        return vo;
+    }
+
+    /**
+     * 查询机构启用中的匿名接入码 ID。
+     */
+    private List<Long> listActiveEntryIds(Long organId) {
+        AnonymousEntrySelectDto select = new AnonymousEntrySelectDto();
+        select.setOrganId(organId);
+        select.setStatus(EntryStatus.ACTIVE.name());
+        return anonymousEntryDao.selectListWithoutIsolation(select).stream()
+            .map(AnonymousEntryPo::getId)
+            .toList();
     }
 
     /**

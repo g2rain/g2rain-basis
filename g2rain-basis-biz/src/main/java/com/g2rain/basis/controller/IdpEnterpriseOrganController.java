@@ -2,8 +2,10 @@ package com.g2rain.basis.controller;
 
 import com.g2rain.basis.api.IdpEnterpriseOrganApi;
 import com.g2rain.basis.dto.IdpEnterpriseOrganDto;
+import com.g2rain.basis.dto.IdpEnterpriseOrganResolveRequest;
 import com.g2rain.basis.dto.IdpEnterpriseOrganSelectDto;
 import com.g2rain.basis.service.IdpEnterpriseOrganService;
+import com.g2rain.basis.vo.IdpEnterpriseOrganResolveVo;
 import com.g2rain.basis.vo.IdpEnterpriseOrganVo;
 import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
@@ -13,7 +15,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -25,7 +26,6 @@ import java.util.List;
  * @author G2rain Generator
  */
 @RestController
-@RequestMapping("/idp_enterprise_organ")
 public class IdpEnterpriseOrganController implements IdpEnterpriseOrganApi {
 
     @Resource(name = "idpEnterpriseOrganServiceImpl")
@@ -46,7 +46,12 @@ public class IdpEnterpriseOrganController implements IdpEnterpriseOrganApi {
         return Result.success(idpEnterpriseOrganService.save(dto));
     }
 
-    @DeleteMapping("/{id}")
+    @Override
+    public Result<IdpEnterpriseOrganResolveVo> resolve(IdpEnterpriseOrganResolveRequest request) {
+        return Result.success(idpEnterpriseOrganService.resolve(request));
+    }
+
+    @DeleteMapping("/idp_enterprise_organ/{id}")
     @Operation(summary = "删除关联记录", description = "根据主键删除外部企业与机构关联记录")
     public Result<Integer> delete(@Parameter(description = "关联记录标识") @PathVariable Long id) {
         return Result.success(idpEnterpriseOrganService.delete(id));

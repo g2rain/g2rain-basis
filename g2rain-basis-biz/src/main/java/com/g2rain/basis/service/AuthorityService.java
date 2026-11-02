@@ -6,6 +6,7 @@ import com.g2rain.basis.vo.AuthorityMenuVo;
 import com.g2rain.basis.vo.AuthorityResourceVo;
 import com.g2rain.basis.vo.AuthorityUserVo;
 import com.g2rain.basis.vo.BaseAuthorityApiVo;
+import com.g2rain.basis.vo.SessionApiPermissionVo;
 
 import java.util.List;
 
@@ -58,4 +59,13 @@ public interface AuthorityService {
      * @return 账号的接口权限集合
      */
     List<Long> getPassportApiPermissions();
+
+    /**
+     * 按会话主体类型查询 API 权限快照。
+     *
+     * @param sessionType 会话主体类型
+     * @param organId     机构 ID；MEMBER 必填
+     * @return 权限快照
+     */
+    SessionApiPermissionVo getSessionApiPermissions(String sessionType, Long organId);
 }

@@ -4,7 +4,6 @@ import com.g2rain.common.converter.CommonConverter;
 import com.g2rain.basis.dao.po.PersonalStaticAccessTokenPo;
 import com.g2rain.basis.dto.PersonalStaticAccessTokenDto;
 import com.g2rain.basis.vo.PersonalStaticAccessTokenVo;
-import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -31,7 +30,6 @@ public interface PersonalStaticAccessTokenConverter {
      * 自动将 createTime 和 updateTime 从 {@link LocalDateTime} 转换为 {@link String}
      */
     @Mapping(target = "userName", ignore = true)
-    @BeanMapping(ignoreUnmappedSourceProperties = {"tokenHash"})
     @Mapping(target = "createTime", source = "createTime", qualifiedByName = "localDateTimeToString")
     @Mapping(target = "updateTime", source = "updateTime", qualifiedByName = "localDateTimeToString")
     PersonalStaticAccessTokenVo po2vo(PersonalStaticAccessTokenPo po);

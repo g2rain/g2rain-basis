@@ -6,6 +6,7 @@ import com.g2rain.basis.vo.AuthorityMenuVo;
 import com.g2rain.basis.vo.AuthorityResourceVo;
 import com.g2rain.basis.vo.AuthorityUserVo;
 import com.g2rain.basis.vo.BaseAuthorityApiVo;
+import com.g2rain.basis.vo.SessionApiPermissionVo;
 import com.g2rain.common.model.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
@@ -49,6 +50,18 @@ public class AuthorityController implements AuthorityApi {
     @Override
     public Result<List<Long>> getPassportApiPermissions() {
         return Result.success(authorityService.getPassportApiPermissions());
+    }
+
+    /**
+     * 按会话主体类型查询 API 权限快照
+     *
+     * @param sessionType 会话主体类型
+     * @param organId     机构 ID；MEMBER 必填
+     * @return 权限快照
+     */
+    @Override
+    public Result<SessionApiPermissionVo> getSessionApiPermissions(String sessionType, Long organId) {
+        return Result.success(authorityService.getSessionApiPermissions(sessionType, organId));
     }
 
     /**

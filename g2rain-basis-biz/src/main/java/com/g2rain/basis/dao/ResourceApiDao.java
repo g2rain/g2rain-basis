@@ -81,6 +81,13 @@ public interface ResourceApiDao {
      */
     List<ResourceApiPo> selectList(ResourceApiSelectDto selectDto);
 
+    /**
+     * 根据查询入参 DTO 筛选列表（含 openapi_document）
+     *
+     * @param selectDto 查询条件 DTO
+     * @return 实体对象列表
+     */
+    List<ResourceApiPo> selectListWithDocument(ResourceApiSelectDto selectDto);
 
     /**
      * 查询指定用户的授权接口地址(通过角色分配的接口地址权限)
@@ -95,8 +102,8 @@ public interface ResourceApiDao {
     /**
      * 按角色 ID 集合查询授权接口地址（通过角色关联的控制单元）
      *
-     * @param roleIds         角色 ID 集合
-     * @param applicationId   需要查询的应用 ID
+     * @param roleIds       角色 ID 集合
+     * @param applicationId 需要查询的应用 ID
      * @return 可访问的接口地址列表
      */
     List<AuthorityApiEndpointPo> selectAuthorizedApisWithRoleIds(@Param("roleIds") List<Long> roleIds,
@@ -110,4 +117,22 @@ public interface ResourceApiDao {
      * @return 常驻接口地址列表
      */
     List<AuthorityApiEndpointPo> listAuthorizedApisWithLanding(Long applicationId);
+
+    /**
+     * 按会话主体类型查询已发布控制单元关联的 API（不经角色链；非 MEMBER 目录用）
+     *
+     * @param sessionType 会话主体类型
+     * @return 接口地址列表
+     */
+    List<AuthorityApiEndpointPo> listAuthorizedApisBySessionType(@Param("sessionType") String sessionType);
+
+    /**
+     * 按会话主体类型与机构查询已开通控制单元关联的 API。
+     * <p>MEMBER：application_authorization ∩ ADMIN role_control_unit_relation ∩ 已发布 MEMBER 控制单元。</p>
+     *
+     * @param sessionType 会话主体类型
+     * @param organId     机构 ID
+     * @return 接口地址列表
+     */
+    List<AuthorityApiEndpointPo> listAuthorizedApisBySessionTypeAndOrgan(@Param("sessionType") String sessionType, @Param("organId") Long organId);
 }

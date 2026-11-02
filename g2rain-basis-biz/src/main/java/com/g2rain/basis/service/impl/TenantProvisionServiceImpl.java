@@ -1,6 +1,8 @@
 package com.g2rain.basis.service.impl;
 
 
+
+import lombok.extern.slf4j.Slf4j;
 import com.g2rain.basis.client.TenantProvisionClient;
 import com.g2rain.basis.client.dto.VerifyCreateOrganRequest;
 import com.g2rain.basis.dao.OrganDao;
@@ -71,6 +73,7 @@ import java.util.Objects;
  * @since 2026/1/30
  */
 @Service(value = "tenantProvisionServiceImpl")
+@Slf4j
 public class TenantProvisionServiceImpl implements TenantProvisionService {
     @Resource(name = "organProvisionServiceImpl")
     private OrganProvisionService organProvisionService;
@@ -133,9 +136,7 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
 
         Long passportId = PrincipalContextHolder.getPassportId();
         Asserts.isTrue(passportId != null && passportId > 0, SystemErrorCode.UNAUTHORIZED);
-        if (hasIdpBinding(passportId)) {
-            verifyCreateOrganViaIam(passportId);
-        }
+        verifyCreateOrganViaIam(passportId);
 
         // 1. 创建机构、机构角色、开通功能
         OrganDto organDto = new OrganDto();
@@ -201,17 +202,12 @@ public class TenantProvisionServiceImpl implements TenantProvisionService {
         }
     }
 
-    private boolean hasIdpBinding(Long passportId) {
-        PassportIdpBindingSelectDto query = new PassportIdpBindingSelectDto();
-        query.setPassportId(passportId);
-        return Collections.isNotEmpty(passportIdpBindingDao.selectList(query));
-    }
-
     private void verifyCreateOrganViaIam(Long passportId) {
         Result<Void> result;
         try {
             result = tenantProvisionClient.verifyCreateOrgan(new VerifyCreateOrganRequest(passportId));
         } catch (Exception ex) {
+            log.error("failed to verifyCreateOrganViaIam", ex);
             throw new BusinessException(BasisErrorCode.TENANT_PROVISION_VERIFY_FAILED);
         }
         if (!result.isSuccess()) {
