@@ -39,25 +39,22 @@ public class ControlUnitResourceRelationsDto {
      *
      * <p>每一项必须有效且列表不能为空。</p>
      */
-    @Valid
     @Schema(description = "添加权限点与资源的关联关系列表")
-    private List<ControlUnitResourceRelationItemDto> createRelations;
+    private List<@Valid ControlUnitResourceRelationItemDto> createRelations;
 
     /**
      * <p>权限点与资源的关联关系列表</p>
      *
      * <p>每一项必须有效且列表不能为空。</p>
      */
-    @Valid
     @Schema(description = "修改权限点与资源的关联关系列表")
-    private List<ControlUnitResourceRelationItemDto> updateRelations;
+    private List<@Valid ControlUnitResourceRelationItemDto> updateRelations;
 
     /**
      * <p>权限点与资源的关联关系列表</p>
      *
      * <p>每一项必须有效且列表不能为空。</p>
      */
-    @Valid
     @Schema(description = "删除权限点与资源的关联关系列表")
-    private List<ControlUnitResourceRelationItemDto> deleteRelations;
+    private List<@Valid ControlUnitResourceRelationItemDto> deleteRelations;
 }
