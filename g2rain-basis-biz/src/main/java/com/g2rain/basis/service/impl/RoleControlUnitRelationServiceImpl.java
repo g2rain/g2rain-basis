@@ -165,17 +165,6 @@ public class RoleControlUnitRelationServiceImpl implements RoleControlUnitRelati
     }
 
     /**
-     * 非管理公司仅允许查询本机构可分配权限
-     */
-    private void assertOrganReadable(Long organId) {
-        if (PrincipalContextHolder.isAdminCompany()) {
-            return;
-        }
-        Long currentOrganId = PrincipalContextHolder.getOrganId();
-        Asserts.isTrue(Objects.equals(currentOrganId, organId), SystemErrorCode.PARAM_VAL_INVALID, "organId");
-    }
-
-    /**
      * 管理员为用户角色分配控制单元的接口方法。
      *
      * <p>设计理念：</p>
