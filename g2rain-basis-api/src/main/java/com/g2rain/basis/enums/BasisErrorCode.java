@@ -268,7 +268,10 @@ public enum BasisErrorCode implements ErrorCode {
     APPLICATION_AUTHORIZATION_MISSING("basis.40080", "目标应用尚未开通或授权已停用"),
 
     @Schema(description = "ANONYMOUS_ENTRY_UNAVAILABLE")
-    ANONYMOUS_ENTRY_UNAVAILABLE("basis.40081", "接入码不可用");
+    ANONYMOUS_ENTRY_UNAVAILABLE("basis.40081", "接入码不可用"),
+
+    @Schema(description = "CUSTOMER_DOMAIN_UNIT_SCOPE_ILLEGAL")
+    CUSTOMER_DOMAIN_UNIT_SCOPE_ILLEGAL("basis.40082", "客户交付范围只能关联客户功能或永久功能");
 
     private final String code;
 
