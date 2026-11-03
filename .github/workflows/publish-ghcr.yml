@@ -1,0 +1,106 @@
+name: Publish GHCR image
+on:
+  push:
+    tags: ['v[0-9]*']
+permissions:
+  contents: read
+  packages: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          server-id: github
+      - name: Configure GitHub Maven repositories
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          settings_path="$RUNNER_TEMP/g2rain-maven-settings.xml"
+          python3 - "$settings_path" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          root = ET.Element('settings', xmlns='http://maven.apache.org/SETTINGS/1.0.0')
+          servers = ET.SubElement(root, 'servers')
+          profile = ET.SubElement(ET.SubElement(root, 'profiles'), 'profile')
+          ET.SubElement(profile, 'id').text = 'g2rain-packages'
+          repositories = ET.SubElement(profile, 'repositories')
+          plugin_repositories = ET.SubElement(profile, 'pluginRepositories')
+          names = ('g2rain-common', 'g2rain-spring-boot-starter', 'g2rain-department',
+                   'g2rain-mybatis-extensions', 'g2rain-crafter', 'g2rain-generator-maven-plugin')
+          for name in names:
+              server = ET.SubElement(servers, 'server')
+              ET.SubElement(server, 'id').text = name
+              ET.SubElement(server, 'username').text = '${env.GITHUB_ACTOR}'
+              ET.SubElement(server, 'password').text = '${env.GITHUB_TOKEN}'
+              for parent, kind in ((repositories, 'repository'), (plugin_repositories, 'pluginRepository')):
+                  repository = ET.SubElement(parent, kind)
+                  ET.SubElement(repository, 'id').text = name
+                  ET.SubElement(repository, 'url').text = 'https://maven.pkg.github.com/g2rain/' + name
+                  ET.SubElement(ET.SubElement(repository, 'snapshots'), 'enabled').text = 'false'
+          ET.SubElement(ET.SubElement(root, 'activeProfiles'), 'activeProfile').text = 'g2rain-packages'
+          ET.ElementTree(root).write(sys.argv[1], encoding='utf-8', xml_declaration=True)
+          PY
+          chmod 600 "$settings_path"
+          echo "MAVEN_SETTINGS=$settings_path" >> "$GITHUB_ENV"
+          echo 'Configured authenticated G2rain Maven dependency repositories.'
+      - name: Validate tag and release branch
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid stable tag' >&2; exit 1; }
+          commit="$(git rev-parse "${GITHUB_REF_NAME}^{commit}")"
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$commit" origin/main || { echo 'Tag commit is outside main' >&2; exit 1; }
+          note="$(git show "${commit}:docs/releases/${GITHUB_REF_NAME}.md" 2>/dev/null)" || { echo 'Missing release notes' >&2; exit 1; }
+          [[ -n "${note//[[:space:]]/}" ]] || { echo 'Empty release notes' >&2; exit 1; }
+          version="${GITHUB_REF_NAME#v}"
+          actual="$(mvn --settings "$MAVEN_SETTINGS" --batch-mode --quiet -Dstyle.color=never -DforceStdout help:evaluate -Dexpression=project.version)"
+          [[ "$version" == "$actual" ]] || { echo "Tag $version differs from Maven $actual" >&2; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+      - name: Build and test all modules
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: mvn --settings "$MAVEN_SETTINGS" --batch-mode --no-transfer-progress -U clean install
+      - name: Login to GHCR
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Push both image tags
+        working-directory: g2rain-basis-startup
+        env:
+          IMAGE_NAME: ghcr.io/g2rain/g2rain-basis
+          IMAGE_TAG: ${{ steps.release.outputs.version }}
+          EXTRA_TAGS: sha-${{ steps.release.outputs.commit }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ -n "$EXTRA_TAGS" ]]; then
+            args+=("-Djib.to.tags=$EXTRA_TAGS")
+          fi
+          mvn --settings "$MAVEN_SETTINGS" --batch-mode --no-transfer-progress -DskipTests=true compile jib:build \
+            "-Djib.to.image=$IMAGE_NAME:$IMAGE_TAG" \
+            "${args[@]}"
+      - name: Report success
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          COMMIT: ${{ steps.release.outputs.commit }}
+        run: echo "Published ghcr.io/g2rain/g2rain-basis:$VERSION and ghcr.io/g2rain/g2rain-basis:sha-$COMMIT" >> "$GITHUB_STEP_SUMMARY"
+  publish-maven:
+    needs: publish
+    uses: ./.github/workflows/publish-maven.yml
+    permissions:
+      contents: read
+      packages: write

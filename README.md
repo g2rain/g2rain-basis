@@ -126,6 +126,8 @@ GET /actuator/health
 
 完整的 GHCR 权限、首次公开、发布顺序、配置与部署说明见[构建与部署](docs/operations/deployment.md#容器镜像发布ghcr)。
 
+API 契约制品为 `com.g2rain:g2rain-basis-api:1.0.0`，发布到 `https://maven.pkg.github.com/g2rain/g2rain-basis`。稳定版 tag 先发布 GHCR 镜像，再调用 Maven API 发布工作流；消费方的仓库与认证配置见[部署文档](docs/operations/deployment.md)。
+
 ## CRUD 代码生成
 
 项目通过 `g2rain-crafter` 根据数据库表生成标准 CRUD 骨架：
