@@ -11,6 +11,8 @@ import com.g2rain.basis.dto.ControlDomainControlUnitRelationSelectDto;
 import com.g2rain.basis.dto.ControlDomainControlUnitRelationsDto;
 import com.g2rain.basis.dto.ControlUnitSelectDto;
 import com.g2rain.basis.enums.BasisErrorCode;
+import com.g2rain.basis.enums.ControlDomainScope;
+import com.g2rain.basis.enums.ControlUnitScope;
 import com.g2rain.basis.enums.ControlUnitStatus;
 import com.g2rain.basis.model.ControlDomainPair;
 import com.g2rain.basis.service.ControlDomainControlUnitRelationService;
@@ -172,6 +174,12 @@ public class ControlDomainControlUnitRelationServiceImpl implements ControlDomai
             // 校验是否在同一个应用
             if (!domain.getApplicationId().equals(unit.getApplicationId())) {
                 throw new BusinessException(BasisErrorCode.CONTROL_UNIT_CROSS_APP_NOT_ALLOWED);
+            }
+
+            // 客户交付范围只允许关联客户功能或永久功能
+            if (ControlDomainScope.CUSTOMER.name().equals(domain.getControlDomainScope())
+                && ControlUnitScope.OPERATION.name().equals(unit.getControlUnitScope())) {
+                throw new BusinessException(BasisErrorCode.CUSTOMER_DOMAIN_UNIT_SCOPE_ILLEGAL);
             }
 
             // 校验已存在记录

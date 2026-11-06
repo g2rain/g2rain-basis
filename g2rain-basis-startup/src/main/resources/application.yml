@@ -93,3 +93,7 @@ g2rain:
         max-department-disable-ratio: 0.3
         block-incomplete-snapshot: true
         block-empty-snapshot-when-existing: true
+
+# g2rain-starter-spring-doc 已经实现, 但是未发版, 暂自行配置
+springdoc:
+  default-flat-param-object: true
