@@ -2,6 +2,7 @@ package com.g2rain.basis.service.impl;
 
 import com.g2rain.basis.dao.AnonymousVisitorDao;
 import com.g2rain.basis.dao.po.AnonymousVisitorPo;
+import com.g2rain.basis.dto.AnonymousVisitorSelectDto;
 import com.g2rain.common.id.IdGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,9 +13,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -69,6 +72,42 @@ class AnonymousVisitorServiceImplTest {
         when(anonymousVisitorDao.insertWithoutIsolation(any())).thenThrow(new DuplicateKeyException("dup"));
 
         assertEquals(66L, service.resolve(100L, THUMBPRINT, 5L));
+    }
+
+    @Test
+    void findId_existingVisitor_shouldReturnIdWithoutTouching() {
+        when(anonymousVisitorDao.selectListWithoutIsolation(any())).thenReturn(List.of(visitor(66L)));
+
+        assertEquals(66L, service.findId(100L, THUMBPRINT));
+
+        verify(anonymousVisitorDao, never()).updateWithoutIsolation(any());
+        verify(anonymousVisitorDao, never()).insertWithoutIsolation(any());
+    }
+
+    @Test
+    void findId_missingVisitor_shouldReturnNullWithoutCreating() {
+        when(anonymousVisitorDao.selectListWithoutIsolation(any())).thenReturn(List.of());
+
+        assertNull(service.findId(100L, THUMBPRINT));
+
+        verify(anonymousVisitorDao, never()).updateWithoutIsolation(any());
+        verify(anonymousVisitorDao, never()).insertWithoutIsolation(any());
+    }
+
+    @Test
+    void findId_sameThumbprintInDifferentOrgan_shouldNotCrossOrganizations() {
+        when(anonymousVisitorDao.selectListWithoutIsolation(any())).thenAnswer(invocation -> {
+            AnonymousVisitorSelectDto query = invocation.getArgument(0);
+            return query.getOrganId().equals(100L) ? List.of(visitor(66L)) : List.of();
+        });
+
+        assertEquals(66L, service.findId(100L, THUMBPRINT));
+        assertNull(service.findId(200L, THUMBPRINT));
+
+        ArgumentCaptor<AnonymousVisitorSelectDto> captor = ArgumentCaptor.forClass(AnonymousVisitorSelectDto.class);
+        verify(anonymousVisitorDao, times(2)).selectListWithoutIsolation(captor.capture());
+        assertEquals(100L, captor.getAllValues().get(0).getOrganId());
+        assertEquals(200L, captor.getAllValues().get(1).getOrganId());
     }
 
     private static AnonymousVisitorPo visitor(Long id) {

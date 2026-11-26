@@ -24,7 +24,8 @@ import java.util.List;
  * 登录信息表, 记录了当前登录状态的相关信息API接口
  * 表名: login_token
  *
- * @author Alpha
+ * @author alpha
+ * @since 2026/11/26
  */
 @Tag(name = "登录令牌", description = "登录令牌相关接口")
 public interface LoginTokenApi {
@@ -103,6 +104,21 @@ public interface LoginTokenApi {
     Result<TokenJWTPayload> fetchAnonymousRefreshContext(
         @Parameter(description = "接入码 ID") @RequestParam Long entryId,
         @Parameter(description = "应用编码") @RequestParam String applicationCode,
+        @Parameter(description = "DPoP 公钥指纹") @RequestParam String thumbprint
+    );
+
+    /**
+     * 按机构和 DPoP 公钥指纹查询已存在的访客 ID。
+     *
+     * @param organId 机构 ID
+     * @param thumbprint DPoP 公钥指纹（RFC 7638，由 IAM 计算）
+     * @return 访客 ID；不存在时 {@code data} 为空
+     * @since 2026/11/26
+     */
+    @GetMapping("/visitor_id")
+    @Operation(summary = "查询访客 ID", hidden = true, description = "只查不建，供 IAM 签发员工令牌使用")
+    Result<Long> findVisitorId(
+        @Parameter(description = "机构 ID") @RequestParam Long organId,
         @Parameter(description = "DPoP 公钥指纹") @RequestParam String thumbprint
     );
 

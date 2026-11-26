@@ -13,6 +13,7 @@ import com.g2rain.common.model.PageData;
 import com.g2rain.common.model.PageSelectListDto;
 import com.g2rain.common.utils.Asserts;
 import com.g2rain.common.utils.Moments;
+import com.g2rain.common.utils.Strings;
 import com.g2rain.common.validation.Validations;
 import com.g2rain.mybatis.pagination.PageContext;
 import com.g2rain.mybatis.pagination.model.Page;
@@ -134,6 +135,24 @@ public class AnonymousVisitorServiceImpl implements AnonymousVisitorService {
             Asserts.isTrue(Objects.nonNull(created), SystemErrorCode.CREATE_DATA_ERROR);
             return created.getId();
         }
+    }
+
+    /**
+     * 按机构和 DPoP 公钥指纹查询访客 ID，不创建访客，也不更新最近访问时间。
+     *
+     * @param organId 机构 ID
+     * @param thumbprint DPoP 公钥指纹
+     * @return 访客 ID；不存在时返回 {@code null}
+     * @since 2026/11/26
+     */
+    @Override
+    public Long findId(Long organId, String thumbprint) {
+        Asserts.isTrue(Objects.nonNull(organId) && organId > 0, SystemErrorCode.PARAM_VAL_INVALID, "organId");
+        Asserts.isTrue(Strings.isNotBlank(thumbprint) && thumbprint.length() == LoginTokenServiceImpl.THUMBPRINT_LENGTH,
+            SystemErrorCode.PARAM_VAL_INVALID, "thumbprint");
+
+        AnonymousVisitorPo visitor = find(organId, thumbprint);
+        return Objects.nonNull(visitor) ? visitor.getId() : null;
     }
 
     private AnonymousVisitorPo find(Long organId, String thumbprint) {

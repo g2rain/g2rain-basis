@@ -25,6 +25,7 @@ flowchart LR
 | IAM → Basis | `/internal/idp/enterprise-organ/resolve` | 查询 | 按外部企业标识解析唯一 ACTIVE 的 organId | 服务身份、多映射歧义拒绝、限流 |
 | IAM → Basis | `/internal/idp/employee/ensure` | 幂等写 | IdP 员工扫码登录时按 passportId+organId 确保非 ADMIN 机构 User | 服务身份、首用户 admin 语义规避、幂等与并发唯一键 |
 | IAM/Gateway → Basis | `/login_token/...` 隐藏接口 | 查询/写 | 登录令牌保存、JWT 上下文和静态 API Key 解析 | 每个接口的唯一调用方、原始 API Key 传输保护和限流 |
+| IAM → Basis | `GET /login_token/visitor_id` | 查询 | 按机构与 DPoP 公钥指纹查找已存在的访客 ID，不创建或更新访客 | 仅 IAM 使用；校验正数机构 ID 与指纹长度，保护可信调用边界 |
 | Basis → IAM | `TenantProvisionClient.verifyCreateOrgan` | 查询/校验 | 创建机构前校验 Passport 是否允许开户 | 超时策略、调用身份和 IAM 不可用时的明确结果 |
 | Basis → IAM | `IdpSyncClient` | 外部快照查询 | 按 `idpType` 拉取 IdP 部门与成员快照 | 超时、分页完整性、快照标识和可安全重试语义 |
 | Basis → Department | `DepartmentIdpSyncApi.listMappedIdpDeptIds` | 查询 | 同步前评估已有部门映射规模 | 调用身份、机构范围与超时 |

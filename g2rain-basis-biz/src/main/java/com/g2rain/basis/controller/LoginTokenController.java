@@ -3,6 +3,7 @@ package com.g2rain.basis.controller;
 import com.g2rain.basis.api.LoginTokenApi;
 import com.g2rain.basis.dto.LoginTokenDto;
 import com.g2rain.basis.dto.LoginTokenSelectDto;
+import com.g2rain.basis.service.AnonymousVisitorService;
 import com.g2rain.basis.service.LoginTokenService;
 import com.g2rain.basis.vo.LoginTokenVo;
 import com.g2rain.basis.vo.StaticAccessTokenResolveVo;
@@ -28,6 +29,9 @@ public class LoginTokenController implements LoginTokenApi {
 
     @Resource(name = "loginTokenServiceImpl")
     private LoginTokenService loginTokenService;
+
+    @Resource(name = "anonymousVisitorServiceImpl")
+    private AnonymousVisitorService anonymousVisitorService;
 
     @Override
     public Result<List<LoginTokenVo>> selectList(LoginTokenSelectDto selectDto) {
@@ -60,6 +64,11 @@ public class LoginTokenController implements LoginTokenApi {
     @Override
     public Result<TokenJWTPayload> fetchAnonymousRefreshContext(Long entryId, String applicationCode, String thumbprint) {
         return Result.success(loginTokenService.fetchAnonymousRefreshContext(entryId, applicationCode, thumbprint));
+    }
+
+    @Override
+    public Result<Long> findVisitorId(Long organId, String thumbprint) {
+        return Result.success(anonymousVisitorService.findId(organId, thumbprint));
     }
 
     @Override

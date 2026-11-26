@@ -85,7 +85,7 @@ public class LoginTokenServiceImpl implements LoginTokenService {
     /**
      * RFC 7638 SHA-256 指纹的 base64url 长度
      */
-    private static final int THUMBPRINT_LENGTH = 43;
+    static final int THUMBPRINT_LENGTH = 43;
 
     @Resource(name = "loginTokenDao")
     private LoginTokenDao loginTokenDao;

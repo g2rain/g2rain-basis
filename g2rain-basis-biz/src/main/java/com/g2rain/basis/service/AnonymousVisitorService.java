@@ -12,7 +12,8 @@ import java.util.List;
  * 匿名访客表服务接口
  * 表名: anonymous_visitor
  *
- * @author G2rain Generator
+ * @author alpha
+ * @since 2026/11/26
  */
 public interface AnonymousVisitorService {
 
@@ -57,4 +58,14 @@ public interface AnonymousVisitorService {
      * @return 访客 ID（visitorId）
      */
     Long resolve(Long organId, String thumbprint, Long entryId);
+
+    /**
+     * 按机构和 DPoP 公钥指纹查询访客 ID，不创建访客，也不更新最近访问时间。
+     *
+     * @param organId 机构 ID
+     * @param thumbprint DPoP 公钥指纹（RFC 7638）
+     * @return 访客 ID；不存在时返回 {@code null}
+     * @since 2026/11/26
+     */
+    Long findId(Long organId, String thumbprint);
 }
